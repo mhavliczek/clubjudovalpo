@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: judo-club
+    env: node
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: CLUB_NAME
+        value: Club de Judo Valpo
+      - key: JWT_SECRET
+        generateValue: true
+      - key: PORT
+        value: 3000
