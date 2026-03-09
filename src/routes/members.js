@@ -3,6 +3,7 @@ const router = express.Router();
 const db = require('../database');
 const { requireAdmin } = require('../middleware/auth');
 const { validarRut } = require('../utils/rut');
+const { calculatePaymentStatus, setPaymentStatusOverride, removePaymentStatusOverride } = require('../utils/paymentStatus');
 
 // Get all members (admin only)
 router.get('/', requireAdmin, (req, res) => {
@@ -19,20 +20,27 @@ router.get('/', requireAdmin, (req, res) => {
 
   try {
     const members = db.prepare(query).all(...params);
-    // Include guardian info, user info, belt grade history, and payments for each member
+    const currentYear = new Date().getFullYear();
+    
+    // Include guardian info, user info, belt grade history, payments, school info, and payment status
     const membersWithDetails = members.map(member => {
       const guardian = db.prepare('SELECT * FROM guardian_info WHERE member_id = ?').get(member.id);
       const user = db.prepare('SELECT id, email, role FROM users WHERE member_id = ?').get(member.id);
-      const beltHistory = db.prepare('SELECT * FROM belt_grade_history WHERE member_id = ? ORDER BY grade_date DESC').all(member.id);
+      const beltHistory = db.prepare('SELECT * FROM belt_grades WHERE member_id = ? ORDER BY grade_date DESC').all(member.id);
       const currentBelt = beltHistory.length > 0 ? beltHistory[0].belt_color : null;
       const payments = db.prepare('SELECT * FROM payments WHERE member_id = ? ORDER BY payment_date DESC').all(member.id);
-      return { 
-        ...member, 
+      const school = member.school_id ? db.prepare('SELECT id, name, school_type, commune FROM schools WHERE id = ?').get(member.school_id) : null;
+      const paymentStatus = calculatePaymentStatus(member.id);
+      
+      return {
+        ...member,
         guardian_info: guardian || null,
         user_info: user || null,
-        belt_grade_history: beltHistory,
+        belt_grades: beltHistory,
         current_belt: currentBelt,
-        payments: payments
+        payments: payments,
+        school_info: school || null,
+        payment_status: paymentStatus
       };
     });
     res.json(membersWithDetails);
@@ -52,12 +60,49 @@ router.get('/:id', (req, res) => {
     if (req.user.role !== 'admin' && req.user.member_id?.toString() !== req.params.id) {
       return res.status(403).json({ error: 'Access denied' });
     }
-    // Include guardian info and belt grade history
+    // Include guardian info, belt grade history, school info, payments, and payment status
     const guardian = db.prepare('SELECT * FROM guardian_info WHERE member_id = ?').get(member.id);
-    const beltHistory = db.prepare('SELECT * FROM belt_grade_history WHERE member_id = ? ORDER BY grade_date DESC').all(member.id);
-    res.json({ ...member, guardian_info: guardian || null, belt_grade_history: beltHistory });
+    const beltHistory = db.prepare('SELECT * FROM belt_grades WHERE member_id = ? ORDER BY grade_date DESC').all(member.id);
+    const payments = db.prepare('SELECT * FROM payments WHERE member_id = ? ORDER BY payment_date DESC').all(member.id);
+    const school = member.school_id ? db.prepare('SELECT id, name, school_type, commune FROM schools WHERE id = ?').get(member.school_id) : null;
+    const paymentStatus = calculatePaymentStatus(member.id);
+
+    res.json({
+      ...member,
+      guardian_info: guardian || null,
+      school_info: school || null,
+      belt_grades: beltHistory,
+      payments: payments,
+      payment_status: paymentStatus
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
+  }
+});
+
+// Set payment status override (admin only)
+router.post('/:id/payment-status', requireAdmin, (req, res) => {
+  const { year, status, reason } = req.body;
+  
+  if (!year || !status) {
+    return res.status(400).json({ error: 'Año y estado son requeridos' });
+  }
+  
+  const result = setPaymentStatusOverride(req.params.id, year, status, reason);
+  if (result.success) {
+    res.json({ message: 'Estado actualizado' });
+  } else {
+    res.status(500).json({ error: result.error });
+  }
+});
+
+// Remove payment status override (admin only)
+router.delete('/:id/payment-status/:year', requireAdmin, (req, res) => {
+  const result = removePaymentStatusOverride(req.params.id, parseInt(req.params.year));
+  if (result.success) {
+    res.json({ message: 'Estado manual eliminado' });
+  } else {
+    res.status(500).json({ error: result.error });
   }
 });
 
@@ -68,7 +113,8 @@ router.post('/', requireAdmin, (req, res) => {
     address, emergency_contact, emergency_phone, medical_info,
     rut, member_type, is_board_member, board_position,
     profession, weight, medical_conditions, is_guardian,
-    guardian_info, create_user, user_role
+    guardian_info, create_user, user_role,
+    condition, school_id, education_level, grade_course
   } = req.body;
 
   if (!first_name || !last_name) {
@@ -84,8 +130,8 @@ router.post('/', requireAdmin, (req, res) => {
 
   try {
     const stmt = db.prepare(`
-      INSERT INTO members (first_name, last_name, email, phone, date_of_birth, address, emergency_contact, emergency_phone, medical_info, rut, member_type, is_board_member, board_position, profession, weight, medical_conditions, is_guardian)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO members (first_name, last_name, email, phone, date_of_birth, address, emergency_contact, emergency_phone, medical_info, rut, member_type, is_board_member, board_position, profession, weight, medical_conditions, is_guardian, condition, school_id, education_level, grade_course)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     const result = stmt.run(
@@ -95,7 +141,11 @@ router.post('/', requireAdmin, (req, res) => {
       medical_info || null, rut || null, member_type || 'judoca',
       is_board_member || 0, board_position || null,
       profession || null, weight || null, medical_conditions || null,
-      is_guardian || 0
+      is_guardian || 0,
+      condition || 'profession',
+      school_id || null,
+      education_level || null,
+      grade_course || null
     );
 
     const memberId = result.lastInsertRowid;
@@ -143,13 +193,13 @@ router.put('/:id', requireAdmin, (req, res) => {
     address, emergency_contact, emergency_phone, medical_info, status,
     rut, member_type, is_board_member, board_position,
     profession, weight, medical_conditions, is_guardian,
-    guardian_info
+    guardian_info, condition, school_id, education_level, grade_course
   } = req.body;
 
   // Validar RUT si se proporciona
   if (rut) {
     if (!validarRut(rut)) {
-      return res.status(400).json({ error: 'RUT inválido. Verifique el formato y dígito verificador.' });
+      return res.status(400).json({ error: 'RUT inv��lido. Verifique el formato y dígito verificador.' });
     }
   }
 
@@ -174,6 +224,10 @@ router.put('/:id', requireAdmin, (req, res) => {
         weight = COALESCE(?, weight),
         medical_conditions = COALESCE(?, medical_conditions),
         is_guardian = COALESCE(?, is_guardian),
+        condition = COALESCE(?, condition),
+        school_id = COALESCE(?, school_id),
+        education_level = COALESCE(?, education_level),
+        grade_course = COALESCE(?, grade_course),
         updated_at = CURRENT_TIMESTAMP
       WHERE id = ?
     `);
@@ -184,7 +238,7 @@ router.put('/:id', requireAdmin, (req, res) => {
       medical_info, status, rut, member_type,
       is_board_member, board_position,
       profession, weight, medical_conditions,
-      is_guardian, id
+      is_guardian, condition, school_id, education_level, grade_course, id
     );
 
     // Update guardian info
@@ -231,76 +285,6 @@ router.delete('/:id', requireAdmin, (req, res) => {
       return res.status(404).json({ error: 'Member not found' });
     }
     res.json({ message: 'Member deleted successfully' });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Get belt grade history for a member
-router.get('/:id/grade-history', requireAdmin, (req, res) => {
-  try {
-    const history = db.prepare(`
-      SELECT * FROM belt_grade_history 
-      WHERE member_id = ? 
-      ORDER BY grade_date DESC
-    `).all(req.params.id);
-    res.json(history);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Add belt grade to history
-router.post('/:id/grade-history', requireAdmin, (req, res) => {
-  const { belt_color, grade_date, instructor, notes } = req.body;
-
-  if (!belt_color || !grade_date) {
-    return res.status(400).json({ error: 'Color de cinturón y fecha son requeridos' });
-  }
-
-  try {
-    const stmt = db.prepare(`
-      INSERT INTO belt_grade_history (member_id, belt_color, grade_date, instructor, notes)
-      VALUES (?, ?, ?, ?, ?)
-    `);
-    stmt.run(req.params.id, belt_color, grade_date, instructor || null, notes || null);
-    res.status(201).json({ message: 'Grado agregado exitosamente' });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Update belt grade
-router.put('/:id/grade-history/:gradeId', requireAdmin, (req, res) => {
-  const { belt_color, grade_date, instructor, notes } = req.body;
-
-  try {
-    const stmt = db.prepare(`
-      UPDATE belt_grade_history SET
-        belt_color = COALESCE(?, belt_color),
-        grade_date = COALESCE(?, grade_date),
-        instructor = COALESCE(?, instructor),
-        notes = COALESCE(?, notes)
-      WHERE id = ? AND member_id = ?
-    `);
-    stmt.run(belt_color, grade_date, instructor, notes, req.params.gradeId, req.params.id);
-    res.json({ message: 'Grado actualizado exitosamente' });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Delete belt grade
-router.delete('/:id/grade-history/:gradeId', requireAdmin, (req, res) => {
-  try {
-    const result = db.prepare(`
-      DELETE FROM belt_grade_history 
-      WHERE id = ? AND member_id = ?
-    `).run(req.params.gradeId, req.params.id);
-    if (result.changes === 0) {
-      return res.status(404).json({ error: 'Grado no encontrado' });
-    }
-    res.json({ message: 'Grado eliminado exitosamente' });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

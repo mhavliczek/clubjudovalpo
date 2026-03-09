@@ -13,6 +13,8 @@ function showSection(sectionName) {
   if (sectionName === 'dashboard') loadStats();
   if (sectionName === 'members') loadMembers();
   if (sectionName === 'instructors') loadInstructorsSection();
+  if (sectionName === 'schools') loadSchools();
+  if (sectionName === 'fees') loadFees();
   if (sectionName === 'attendance') loadAttendance();
   if (sectionName === 'news') loadNews();
 }

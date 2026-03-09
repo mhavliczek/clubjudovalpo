@@ -105,15 +105,6 @@ router.post('/', (req, res) => {
 
     const result = stmt.run(member_id, belt_color, grade_date || null, otorgadoPor, notes || null);
 
-    // Also add to belt_grade_history
-    try {
-      const historyStmt = db.prepare(`
-        INSERT INTO belt_grade_history (member_id, belt_color, grade_date, instructor, notes)
-        VALUES (?, ?, COALESCE(?, date('now')), ?, ?)
-      `);
-      historyStmt.run(member_id, belt_color, grade_date || null, otorgadoPor, notes || null);
-    } catch (e) { /* History table may not exist yet */ }
-
     res.status(201).json({
       id: result.lastInsertRowid,
       message: 'Grade recorded successfully'

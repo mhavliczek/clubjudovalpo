@@ -48,27 +48,84 @@ async function loadMembers() {
 // Show member detail
 async function showMemberDetail(memberId) {
   try {
-    const res = await fetch(`${API}/api/members/${memberId}`, {
-      headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+    // Force reload from server with cache busting and no-cache headers
+    const res = await fetch(`${API}/api/members/${memberId}?t=${Date.now()}`, {
+      headers: { 
+        'Authorization': 'Bearer ' + localStorage.getItem('token'),
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache'
+      },
+      cache: 'no-store'
     });
+    
+    if (!res.ok) {
+      throw new Error('Error al cargar datos del miembro');
+    }
+    
     const m = await res.json();
+    const currentYear = new Date().getFullYear();
+    const currentMonth = new Date().getMonth() + 1;
+
+    // Calculate which months are paid
+    const paidMonths = {};
+    const payments = m.payments || [];
+    const hasEnrollment = payments.some(p => p.payment_type === 'enrollment' && new Date(p.payment_date).getFullYear() === currentYear);
+    const hasLicense = payments.some(p => p.payment_type === 'license' && new Date(p.payment_date).getFullYear() === currentYear);
+    
+    const monthNamesFull = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+    
+    payments.filter(p => p.payment_type === 'monthly' && new Date(p.payment_date).getFullYear() === currentYear)
+      .forEach(p => {
+        // Try to get month from description first
+        const descLower = (p.description || '').toLowerCase();
+        let month = -1;
+        
+        // Find month in description
+        for (let i = 0; i < monthNamesFull.length; i++) {
+          if (descLower.includes(monthNamesFull[i])) {
+            month = i + 1; // 1-12
+            break;
+          }
+        }
+        
+        // If no month in description, use payment date
+        if (month === -1) {
+          month = new Date(p.payment_date).getMonth() + 1;
+        }
+        
+        paidMonths[month] = true;
+      });
+
+    const monthNames = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
     document.getElementById('memberDetail').innerHTML = `
       <div>
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #0066cc;">
-          <h2 style="margin: 0; color: #0066cc;">🥋 ${m.first_name} ${m.last_name}</h2>
-          <div style="display: flex; gap: 10px;">
-            <span class="status-badge" style="background: ${m.status === 'active' ? '#d4edda' : '#f8d7da'};">${m.status === 'active' ? 'Activo' : 'Inactivo'}</span>
-            <span class="status-badge" style="background: #0066cc; color: white;">${m.member_type === 'judoca' ? '🥋 Judoca' : '👤 Miembro'}</span>
+          <div>
+            <h2 style="margin: 0; color: #0066cc;">🥋 ${m.first_name} ${m.last_name}</h2>
+            <p style="margin: 5px 0 0 0; font-size: 13px; color: #666;">RUT: ${m.rut || 'Sin RUT'}</p>
           </div>
+          <div style="display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end;">
+            <span class="status-badge" style="background: ${m.status === 'active' ? '#d4edda' : '#f8d7da'};">${m.status === 'active' ? '✅ Activo' : '❌ Inactivo'}</span>
+            <span class="status-badge" style="background: #0066cc; color: white;">${m.member_type === 'judoca' ? '🥋 Judoca' : '👤 Miembro'}</span>
+            ${m.condition === 'student' && m.school_info ? `<span class="status-badge" style="background: #17a2b8; color: white;">🎓 ${m.school_info.name}</span>` : ''}
+          </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;">
+          <button class="btn" onclick="editMember(${m.id})">✏️ Editar</button>
+          <button class="btn btn-warning" onclick="toggleMemberStatus(${m.id}, '${m.status}')">${m.status === 'active' ? '🔒 Desactivar' : '🔓 Activar'}</button>
+          <button class="btn btn-warning" onclick="resetMemberPassword(${m.id}, '${m.email || ''}')">🔑 Resetear Password</button>
+          <button class="btn btn-danger" onclick="deleteMember(${m.id})">🗑️ Eliminar</button>
         </div>
 
         <details open style="background: #fff3cd; border-color: #ffc107;">
           <summary style="color: #856404;">🎗️ Historial de Cinturón</summary>
           <div style="margin-top: 15px;">
-            ${m.belt_grade_history && m.belt_grade_history.length > 0 ? `
+            ${m.belt_grades && m.belt_grades.length > 0 ? `
               <table style="width: 100%; font-size: 13px;">
-                ${m.belt_grade_history.map(g => `
+                ${m.belt_grades.map(g => `
                   <tr style="border-bottom: 1px solid #ddd;">
                     <td style="padding: 8px;">${getBeltName(g.belt_color)}</td>
                     <td style="padding: 8px;">${formatDateChile(g.grade_date)}</td>
@@ -85,31 +142,116 @@ async function showMemberDetail(memberId) {
         </details>
 
         <details open style="background: #d4edda; border-color: #28a745;">
-          <summary style="color: #155724;">💰 Pagos</summary>
+          <summary style="color: #155724;">💰 Pagos (${currentYear})</summary>
           <div style="margin-top: 15px;">
-            ${m.payments && m.payments.length > 0 ? `
-              <table style="width: 100%; font-size: 13px;">
-                ${m.payments.map(p => `
-                  <tr style="border-bottom: 1px solid #ddd;">
-                    <td style="padding: 8px;">${formatDateChile(p.payment_date)}</td>
-                    <td style="padding: 8px;">${getPaymentTypeName(p.payment_type)}</td>
-                    <td style="padding: 8px;">${p.description || '-'}</td>
-                    <td style="padding: 8px; text-align: right; font-weight: bold;">$${p.amount}</td>
-                    <td style="padding: 8px;">
-                      <button class="btn btn-danger" onclick="deletePaymentFromMember(${p.id}, ${m.id})" style="font-size: 11px;">Eliminar</button>
-                    </td>
-                  </tr>
+            <!-- Annual Payments Status -->
+            <div style="margin-bottom: 15px; padding: 10px; background: #fff; border-radius: 5px;">
+              <h4 style="margin: 0 0 10px 0; font-size: 14px; color: #155724;">📊 Estado Anual</h4>
+              <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                <div style="text-align: center;">
+                  <p style="margin: 0; font-size: 12px; color: #666;">Matrícula</p>
+                  <p style="margin: 5px 0 0 0; font-size: 18px; font-weight: bold; color: ${hasEnrollment ? '#28a745' : '#dc3545'};">
+                    ${hasEnrollment ? '✅ Pagada' : '❌ No Pagada'}
+                  </p>
+                </div>
+                <div style="text-align: center;">
+                  <p style="margin: 0; font-size: 12px; color: #666;">Licencia</p>
+                  <p style="margin: 5px 0 0 0; font-size: 18px; font-weight: bold; color: ${hasLicense ? '#28a745' : '#dc3545'};">
+                    ${hasLicense ? '✅ Pagada' : '❌ No Pagada'}
+                  </p>
+                </div>
+                <div style="text-align: center;">
+                  <p style="margin: 0; font-size: 12px; color: #666;">Mensualidades</p>
+                  <p style="margin: 5px 0 0 0; font-size: 18px; font-weight: bold; color: ${Object.keys(paidMonths).length >= currentMonth ? '#28a745' : '#dc3545'};">
+                    ${Object.keys(paidMonths).length}/12
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Monthly Payment Grid -->
+            <div style="margin-bottom: 15px; padding: 10px; background: #fff; border-radius: 5px;">
+              <h4 style="margin: 0 0 10px 0; font-size: 14px; color: #155724;">📅 Mensualidades</h4>
+              <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px;">
+                ${monthNames.map((name, i) => `
+                  <div style="text-align: center; padding: 8px; border-radius: 5px; background: ${paidMonths[i + 1] ? '#d4edda' : '#f8d7da'}; border: 1px solid ${paidMonths[i + 1] ? '#28a745' : '#dc3545'};">
+                    <p style="margin: 0; font-size: 11px; color: #666;">${name}</p>
+                    <p style="margin: 3px 0 0 0; font-size: 16px; font-weight: bold; color: ${paidMonths[i + 1] ? '#28a745' : '#dc3545'};">
+                      ${paidMonths[i + 1] ? '✅' : '❌'}
+                    </p>
+                  </div>
                 `).join('')}
-              </table>
-            ` : '<p style="color: #999;">Sin pagos registrados</p>'}
-            <button class="btn btn-success" onclick="showPaymentForm(${m.id})" style="margin-top: 10px; font-size: 12px;">+ Registrar Pago</button>
+              </div>
+            </div>
+
+            <!-- Payment History List -->
+            <div style="margin-bottom: 15px;">
+              <h4 style="margin: 0 0 10px 0; font-size: 14px; color: #155724;">📋 Historial de Pagos</h4>
+              ${m.payments && m.payments.length > 0 ? `
+                <table style="width: 100%; font-size: 13px;">
+                  <thead>
+                    <tr style="background: #28a745; color: white;">
+                      <th style="padding: 8px; text-align: left;">Fecha</th>
+                      <th style="padding: 8px;">Tipo</th>
+                      <th style="padding: 8px;">Descripción</th>
+                      <th style="padding: 8px; text-align: right;">Monto</th>
+                      <th style="padding: 8px;">Acción</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${m.payments.map(p => `
+                      <tr style="border-bottom: 1px solid #ddd;">
+                        <td style="padding: 8px;">${formatDateChile(p.payment_date)}</td>
+                        <td style="padding: 8px;">${getPaymentTypeName(p.payment_type)}</td>
+                        <td style="padding: 8px;">${p.description || '-'}</td>
+                        <td style="padding: 8px; text-align: right; font-weight: bold;">$${p.amount.toLocaleString('es-CL')}</td>
+                        <td style="padding: 8px; text-align: center;">
+                          <button class="btn btn-danger" onclick="deletePaymentFromMember(${p.id}, ${m.id})" style="font-size: 11px; padding: 3px 6px;">Eliminar</button>
+                        </td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+              ` : '<p style="color: #999; text-align: center;">Sin pagos registrados</p>'}
+            </div>
+
+            <!-- Payment Status Alert -->
+            ${m.payment_status ? `
+              <div style="padding: 12px; border-radius: 8px; border-left: 4px solid; ${
+                m.payment_status.status === 'al_dia' ? 'background: #d4edda; border-color: #28a745;' :
+                m.payment_status.status === 'al_dia_con_obs' ? 'background: #fff3cd; border-color: #ffc107;' :
+                'background: #f8d7da; border-color: #dc3545;'
+              }">
+                <p style="margin: 0; font-weight: bold; ${
+                  m.payment_status.status === 'al_dia' ? 'color: #155724;' :
+                  m.payment_status.status === 'al_dia_con_obs' ? 'color: #856404;' :
+                  'color: #721c24;'
+                }">
+                  ${m.payment_status.status === 'al_dia' ? '✅ Al día' :
+                    m.payment_status.status === 'al_dia_con_obs' ? '⚠️ Al día con Obs' :
+                    '❌ En mora'}
+                </p>
+                <p style="margin: 5px 0 0 0; font-size: 13px;">${m.payment_status.reason || ''}</p>
+                ${m.payment_status.isOverride ? '<p style="font-size: 11px; color: #666;">(Estado manual)</p>' : ''}
+              </div>
+            ` : ''}
+
+            <button class="btn btn-success" onclick="showPaymentForm(${m.id})" style="margin-top: 15px; font-size: 12px;">+ Registrar Pago</button>
           </div>
         </details>
 
-        <div style="display: flex; gap: 10px; margin-top: 20px;">
-          <button class="btn" onclick="editMember(${m.id})">✏️ Editar</button>
-          <button class="btn btn-danger" onclick="deleteMember(${m.id})">🗑️ Eliminar</button>
-        </div>
+        ${m.condition === 'student' && m.school_info ? `
+        <details style="background: #e9ecef; border-color: #6c757d;">
+          <summary style="color: #495057;">🎓 Información Escolar</summary>
+          <div style="margin-top: 15px;">
+            <p style="margin: 5px 0;"><strong>Colegio:</strong> ${m.school_info.name}</p>
+            <p style="margin: 5px 0;"><strong>Tipo:</strong> ${m.school_info.school_type === 'municipal' ? 'Municipal' : m.school_info.school_type === 'subvencionado' ? 'Subvencionado' : 'Particular'}</p>
+            ${m.school_info.commune ? `<p style="margin: 5px 0;"><strong>Comuna:</strong> ${m.school_info.commune}</p>` : ''}
+            ${m.education_level ? `<p style="margin: 5px 0;"><strong>Nivel:</strong> ${m.education_level === 'basica' ? 'Básica' : 'Media'}</p>` : ''}
+            ${m.grade_course ? `<p style="margin: 5px 0;"><strong>Curso:</strong> ${m.grade_course.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}</p>` : ''}
+          </div>
+        </details>
+        ` : ''}
       </div>
     `;
   } catch (e) {
@@ -135,6 +277,7 @@ async function saveMember() {
   const id = document.getElementById('memberId').value;
   const createUser = document.getElementById('createUser').checked;
   
+  const condition = document.getElementById('memberCondition').value;
   const data = {
     rut, first_name: document.getElementById('firstName').value,
     last_name: document.getElementById('lastName').value,
@@ -142,7 +285,7 @@ async function saveMember() {
     phone: document.getElementById('phone').value,
     date_of_birth: convertDateToISO(document.getElementById('dob').value),
     address: document.getElementById('address').value,
-    profession: document.getElementById('profession').value,
+    profession: condition === 'profession' ? document.getElementById('profession').value : null,
     weight: document.getElementById('weight').value || null,
     emergency_contact: document.getElementById('emergencyContact').value,
     medical_info: document.getElementById('medicalInfo').value,
@@ -151,6 +294,10 @@ async function saveMember() {
     is_board_member: document.getElementById('isBoardMember').checked ? 1 : 0,
     board_position: document.getElementById('boardPosition').value,
     is_guardian: isGuardian ? 1 : 0,
+    condition: condition,
+    school_id: condition === 'student' ? (document.getElementById('memberSchoolId').value || null) : null,
+    education_level: condition === 'student' ? (document.getElementById('educationLevel').value || null) : null,
+    grade_course: condition === 'student' ? (document.getElementById('gradeCourse').value || null) : null,
     guardian_info: isGuardian ? {
       full_name: document.getElementById('guardianName').value,
       rut: guardianRut,
@@ -232,6 +379,80 @@ async function editMember(id) {
   showForm('memberForm');
 }
 
+// Toggle member status (active/inactive)
+async function toggleMemberStatus(id, currentStatus) {
+  const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+  const action = newStatus === 'active' ? 'activar' : 'desactivar';
+  
+  if (!confirm(`¿Estás seguro de ${action} a este miembro?`)) return;
+  
+  try {
+    const res = await fetch(`${API}/api/members/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + localStorage.getItem('token')
+      },
+      body: JSON.stringify({ status: newStatus })
+    });
+    const result = await res.json();
+    if (!res.ok) throw new Error(result.error);
+    alert(`Miembro ${newStatus === 'active' ? 'activado' : 'desactivado'} exitosamente`);
+    loadMembers();
+  } catch (e) {
+    alert('Error: ' + e.message);
+  }
+}
+
+// Reset member password
+async function resetMemberPassword(memberId, email) {
+  if (!email) {
+    alert('El miembro no tiene email registrado. No se puede resetear la contraseña.');
+    return;
+  }
+  
+  if (!confirm(`¿Resetear contraseña para ${email}?\n\nLa nueva contraseña será los últimos 4 dígitos del RUT.`)) return;
+  
+  try {
+    // First, get the member's RUT
+    const memberRes = await fetch(`${API}/api/members/${memberId}`, {
+      headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+    });
+    const member = await memberRes.json();
+    
+    // Calculate password from RUT
+    let password = '1234';
+    if (member.rut) {
+      const cuerpoRut = member.rut.replace(/[.\-]/g, '').toUpperCase().slice(0, -1);
+      password = cuerpoRut.slice(-4);
+    }
+    
+    // Check if user exists
+    const userRes = await fetch(`${API}/api/auth/users`, {
+      headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+    });
+    const users = await userRes.json();
+    const user = users.find(u => u.member_id === memberId);
+    
+    if (!user) {
+      alert('El miembro no tiene usuario creado. Crea un usuario primero.');
+      return;
+    }
+    
+    // Reset password
+    const res = await fetch(`${API}/api/auth/reset-password/${user.id}`, {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+    });
+    const result = await res.json();
+    if (!res.ok) throw new Error(result.error);
+    
+    alert(`Contraseña reseteada exitosamente.\n\nNueva contraseña: ${password}\n\nIndícale al miembro que la cambie al ingresar.`);
+  } catch (e) {
+    alert('Error: ' + e.message);
+  }
+}
+
 // Delete member
 async function deleteMember(id) {
   if (!confirm('¿Eliminar miembro?')) return;
@@ -263,6 +484,22 @@ async function loadMembersSelect() {
       if (el) el.innerHTML = id === 'userMemberSelect' ? options.replace('Seleccionar miembro', 'Seleccionar miembro (el email y contraseña se completarán automáticamente)') : options;
     });
   } catch (e) { console.error('Error loading members:', e); }
+}
+
+// Toggle condition fields (profession/student)
+function toggleConditionFields() {
+  const condition = document.getElementById('memberCondition').value;
+  const professionFields = document.getElementById('professionFields');
+  const studentFields = document.getElementById('studentFields');
+  
+  if (condition === 'student') {
+    professionFields.classList.add('hidden');
+    studentFields.classList.remove('hidden');
+    loadSchoolsForSelect();
+  } else {
+    professionFields.classList.remove('hidden');
+    studentFields.classList.add('hidden');
+  }
 }
 
 // Auto-fill user email from member select

@@ -55,6 +55,8 @@
             <button class="btn" onclick="showSection('dashboard')">📊 Dashboard</button>
             <button class="btn" onclick="showSection('members')">👥 Miembros</button>
             <button class="btn" onclick="showSection('instructors')">🥋 Instructores</button>
+            <button class="btn" onclick="showSection('schools')">🏫 Colegios</button>
+            <button class="btn" onclick="showSection('fees')">💵 Montos</button>
             <button class="btn" onclick="showSection('attendance')">📅 Asistencia</button>
             <button class="btn" onclick="showSection('news')">📰 Noticias</button>
           </nav>
@@ -115,6 +117,56 @@
                 <input type="hidden" id="editInstructorIdSection">
               </div>
               <div id="instructorsListSection" class="result" style="margin-top: 15px;"></div>
+            </div>
+          </div>
+
+          <!-- Schools -->
+          <div id="schoolsSection" class="content-section hidden">
+            <div class="section">
+              <h2>🏫 Colegios</h2>
+              <button class="btn" onclick="loadSchools()">Cargar Colegios</button>
+              <button class="btn btn-success" onclick="showSchoolForm()">Nuevo Colegio</button>
+              <div id="schoolForm" class="hidden" style="margin-top: 15px; padding: 15px; background: #f8f9fa; border-radius: 5px;">
+                <h3>Crear/Editar Colegio</h3>
+                <div class="form-row" style="flex-direction: column;">
+                  <input type="text" id="schoolName" placeholder="Nombre del colegio" style="width: 100%;">
+                  <select id="schoolType" style="width: 100%;">
+                    <option value="particular">Particular</option>
+                    <option value="subvencionado">Subvencionado</option>
+                    <option value="municipal">Municipal</option>
+                  </select>
+                  <input type="text" id="schoolCommune" placeholder="Comuna" style="width: 100%;">
+                </div>
+                <div style="margin-top: 15px; display: flex; gap: 10px;">
+                  <button class="btn btn-success" onclick="saveSchool()">Guardar</button>
+                  <button class="btn" onclick="hideForm('schoolForm')">Cancelar</button>
+                </div>
+                <input type="hidden" id="editSchoolId">
+              </div>
+              <div id="schoolsList" class="result" style="margin-top: 15px;"></div>
+            </div>
+          </div>
+
+          <!-- Fees -->
+          <div id="feesSection" class="content-section hidden">
+            <div class="section">
+              <h2>💵 Montos Anuales</h2>
+              <button class="btn" onclick="loadFees()">Cargar Montos</button>
+              <button class="btn btn-success" onclick="showFeesForm()">Definir Montos</button>
+              <div id="feesForm" class="hidden" style="margin-top: 15px; padding: 15px; background: #f8f9fa; border-radius: 5px;">
+                <h3>Definir Montos del Año</h3>
+                <div class="form-row" style="flex-direction: column;">
+                  <input type="number" id="feesYear" placeholder="Año" min="2020" max="2100" style="width: 100%;">
+                  <input type="number" id="enrollmentAmount" placeholder="Monto Matrícula ($)" step="1000" style="width: 100%;">
+                  <input type="number" id="monthlyAmount" placeholder="Monto Mensualidad ($)" step="1000" style="width: 100%;">
+                  <input type="number" id="licenseAmount" placeholder="Monto Licencia ($)" step="1000" style="width: 100%;">
+                </div>
+                <div style="margin-top: 15px; display: flex; gap: 10px;">
+                  <button class="btn btn-success" onclick="saveFees()">Guardar</button>
+                  <button class="btn" onclick="hideForm('feesForm')">Cancelar</button>
+                </div>
+              </div>
+              <div id="feesList" class="result" style="margin-top: 15px;"></div>
             </div>
           </div>
 
@@ -183,8 +235,52 @@
           <input type="tel" id="phone" placeholder="Teléfono" style="width: 100%;">
           <input type="date" id="dob" placeholder="Fecha nacimiento" style="width: 100%;">
           <input type="text" id="address" placeholder="Dirección" style="width: 100%;">
-          <input type="text" id="profession" placeholder="Profesión" style="width: 100%;">
         </div>
+        
+        <h4>🎓 Condición</h4>
+        <div class="form-row">
+          <select id="memberCondition" style="width: 100%;" onchange="toggleConditionFields()">
+            <option value="profession">Profesión</option>
+            <option value="student">Estudiante</option>
+          </select>
+        </div>
+        
+        <div id="professionFields">
+          <input type="text" id="profession" placeholder="Profesión/Ocupación" style="width: 100%;">
+        </div>
+        
+        <div id="studentFields" class="hidden" style="margin-top: 10px;">
+          <div class="form-row" style="flex-direction: column;">
+            <select id="memberSchoolId" style="width: 100%;">
+              <option value="">Seleccionar colegio</option>
+            </select>
+            <select id="educationLevel" style="width: 100%;">
+              <option value="">Nivel educativo</option>
+              <option value="basica">Básica (1ero a 8vo)</option>
+              <option value="media">Media (1ero a 4to)</option>
+            </select>
+            <select id="gradeCourse" style="width: 100%;">
+              <option value="">Curso</option>
+              <optgroup label="Básica">
+                <option value="1-basica">1ero Básico</option>
+                <option value="2-basica">2do Básico</option>
+                <option value="3-basica">3ero Básico</option>
+                <option value="4-basica">4to Básico</option>
+                <option value="5-basica">5to Básico</option>
+                <option value="6-basica">6to Básico</option>
+                <option value="7-basica">7mo Básico</option>
+                <option value="8-basica">8vo Básico</option>
+              </optgroup>
+              <optgroup label="Media">
+                <option value="1-media">1ero Medio</option>
+                <option value="2-media">2do Medio</option>
+                <option value="3-media">3ero Medio</option>
+                <option value="4-media">4to Medio</option>
+              </optgroup>
+            </select>
+          </div>
+        </div>
+        
         <h4>🥋 Datos de Judo</h4>
         <div class="form-row">
           <select id="memberType" style="width: 100%;">
@@ -274,14 +370,49 @@
       <!-- Payment Form Modal -->
       <div id="paymentFormModal" class="modal hidden">
         <h3>💰 Registrar Pago</h3>
-        <select id="payMemberId" style="width: 100%;"><option value="">Seleccionar miembro</option></select>
-        <input type="number" id="amount" placeholder="Monto ($)" step="1" style="width: 100%;">
-        <select id="paymentType" style="width: 100%;">
-          <option value="monthly">Mensualidad</option><option value="quarterly">Trimestral</option>
-          <option value="annual">Anual</option><option value="grading">Examen</option>
-          <option value="competition">Competición</option><option value="other">Otro</option>
+        
+        <label style="display: block; margin: 10px 0 5px; font-weight: bold;">Miembro:</label>
+        <select id="payMemberId" style="width: 100%;" onchange="loadFeesForPayment()"><option value="">Seleccionar miembro</option></select>
+        
+        <label style="display: block; margin: 10px 0 5px; font-weight: bold;">Tipo de Pago:</label>
+        <select id="paymentType" style="width: 100%;" onchange="togglePaymentFields()">
+          <option value="">Seleccionar tipo</option>
+          <option value="enrollment">📚 Matrícula (1 vez/año)</option>
+          <option value="license">🎫 Licencia (1 vez/año)</option>
+          <option value="monthly">📅 Mensualidad</option>
+          <option value="grading">🥋 Examen</option>
+          <option value="competition">🏆 Competición</option>
+          <option value="other">Otro</option>
         </select>
+        
+        <div id="monthlyFields" class="hidden">
+          <label style="display: block; margin: 10px 0 5px; font-weight: bold;">Mes:</label>
+          <select id="paymentMonth" style="width: 100%;">
+            <option value="">Seleccionar mes</option>
+            <option value="0">Enero</option>
+            <option value="1">Febrero</option>
+            <option value="2">Marzo</option>
+            <option value="3">Abril</option>
+            <option value="4">Mayo</option>
+            <option value="5">Junio</option>
+            <option value="6">Julio</option>
+            <option value="7">Agosto</option>
+            <option value="8">Septiembre</option>
+            <option value="9">Octubre</option>
+            <option value="10">Noviembre</option>
+            <option value="11">Diciembre</option>
+          </select>
+        </div>
+        
+        <label style="display: block; margin: 10px 0 5px; font-weight: bold;">Año:</label>
+        <input type="number" id="paymentYear" placeholder="Año" min="2020" max="2100" style="width: 100%;">
+        
+        <label style="display: block; margin: 10px 0 5px; font-weight: bold;">Monto ($):</label>
+        <input type="number" id="amount" placeholder="Monto" step="1000" style="width: 100%;">
+        
+        <label style="display: block; margin: 10px 0 5px; font-weight: bold;">Descripción (opcional):</label>
         <input type="text" id="payDescription" placeholder="Descripción" style="width: 100%;">
+        
         <div style="margin-top: 20px; display: flex; gap: 10px;">
           <button class="btn btn-success" onclick="savePaymentFromModal()">Guardar</button>
           <button class="btn" onclick="hideForm('paymentFormModal')">Cancelar</button>
@@ -310,6 +441,8 @@
   <script src="js/navigation.js"></script>
   <script src="js/members.js"></script>
   <script src="js/instructors.js"></script>
+  <script src="js/schools.js"></script>
+  <script src="js/fees.js"></script>
   <script src="js/grades-payments.js"></script>
   <script src="js/attendance-news-stats.js"></script>
 

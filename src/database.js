@@ -137,6 +137,52 @@ db.exec(`
   );
 `);
 
+// Create schools table (for students)
+db.exec(`
+  CREATE TABLE IF NOT EXISTS schools (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    school_type TEXT DEFAULT 'particular',
+    commune TEXT,
+    is_active INTEGER DEFAULT 1,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+`);
+
+// Create annual fees table
+db.exec(`
+  CREATE TABLE IF NOT EXISTS annual_fees (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    year INTEGER NOT NULL UNIQUE,
+    enrollment_amount REAL DEFAULT 0,
+    monthly_amount REAL DEFAULT 0,
+    license_amount REAL DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+`);
+
+// Add student fields to members table
+try { db.exec(`ALTER TABLE members ADD COLUMN condition TEXT DEFAULT 'profession'`); } catch (e) { }
+try { db.exec(`ALTER TABLE members ADD COLUMN school_id INTEGER`); } catch (e) { }
+try { db.exec(`ALTER TABLE members ADD COLUMN education_level TEXT`); } catch (e) { }
+try { db.exec(`ALTER TABLE members ADD COLUMN grade_course TEXT`); } catch (e) { }
+
+// Create member payment status overrides table
+db.exec(`
+  CREATE TABLE IF NOT EXISTS payment_status_overrides (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    member_id INTEGER NOT NULL,
+    year INTEGER NOT NULL,
+    status TEXT NOT NULL,
+    reason TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (member_id) REFERENCES members(id) ON DELETE CASCADE,
+    UNIQUE(member_id, year)
+  );
+`);
+
 // Create instructors table
 db.exec(`
   CREATE TABLE IF NOT EXISTS instructors (

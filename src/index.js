@@ -10,6 +10,8 @@ const paymentsRouter = require('./routes/payments');
 const authRouter = require('./routes/auth');
 const newsRouter = require('./routes/news');
 const instructorsRouter = require('./routes/instructors');
+const schoolsRouter = require('./routes/schools');
+const feesRouter = require('./routes/fees');
 const { authenticate, requireAdmin } = require('./middleware/auth');
 
 const app = express();
@@ -36,6 +38,8 @@ app.use('/api/attendance', authenticate, attendanceRouter);
 app.use('/api/payments', authenticate, paymentsRouter);
 app.use('/api/news', authenticate, newsRouter);
 app.use('/api/instructors', authenticate, instructorsRouter);
+app.use('/api/schools', authenticate, schoolsRouter);
+app.use('/api/fees', authenticate, feesRouter);
 
 // Config endpoint (public)
 app.get('/api/config', (req, res) => {

@@ -2,6 +2,56 @@
    CLUB DE JUDO - GRADES & PAYMENTS MODULE
    =================================== */
 
+// Toggle payment fields based on type
+function togglePaymentFields() {
+  const paymentType = document.getElementById('paymentType').value;
+  const monthlyFields = document.getElementById('monthlyFields');
+  const amountInput = document.getElementById('amount');
+  
+  // Show month selector only for monthly payments
+  if (paymentType === 'monthly') {
+    monthlyFields.classList.remove('hidden');
+    // Reload paid months when switching to monthly
+    const memberId = document.getElementById('payMemberId').value;
+    if (memberId) {
+      const currentYear = new Date().getFullYear();
+      loadPaidMonths(memberId, currentYear);
+    }
+  } else {
+    monthlyFields.classList.add('hidden');
+  }
+  
+  // Auto-fill amount based on fees
+  loadFeesForPayment();
+}
+
+// Load fees for auto-fill amount
+async function loadFeesForPayment() {
+  const memberId = document.getElementById('payMemberId').value;
+  const paymentType = document.getElementById('paymentType').value;
+  
+  if (!memberId || !paymentType) return;
+  
+  try {
+    const currentYear = new Date().getFullYear();
+    const res = await fetch(`${API}/api/fees/current`, {
+      headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+    });
+    const fees = await res.json();
+    
+    const amountInput = document.getElementById('amount');
+    if (paymentType === 'enrollment') {
+      amountInput.value = fees.enrollment_amount || '';
+    } else if (paymentType === 'license') {
+      amountInput.value = fees.license_amount || '';
+    } else if (paymentType === 'monthly') {
+      amountInput.value = fees.monthly_amount || '';
+    }
+  } catch (e) {
+    console.error('Error loading fees:', e);
+  }
+}
+
 // Show grade form for member
 function showGradeForm(memberId) {
   document.getElementById('gradeMemberId').value = memberId;
@@ -87,27 +137,122 @@ async function deleteGradeFromMember(gradeId, memberId) {
 }
 
 // Show payment form for member
-function showPaymentForm(memberId) {
+async function showPaymentForm(memberId) {
+  const currentYear = new Date().getFullYear();
   document.getElementById('payMemberId').value = memberId;
+  document.getElementById('paymentType').value = '';
+  document.getElementById('paymentYear').value = currentYear;
+  document.getElementById('paymentMonth').value = '';
   document.getElementById('amount').value = '';
-  document.getElementById('paymentType').value = 'monthly';
   document.getElementById('payDescription').value = '';
+  document.getElementById('monthlyFields').classList.add('hidden');
+  
+  // Load paid months to disable them
+  await loadPaidMonths(memberId, currentYear);
+  
   showForm('paymentFormModal');
+}
+
+// Load paid months for a member
+async function loadPaidMonths(memberId, year) {
+  try {
+    const res = await fetch(`${API}/api/members/${memberId}`, {
+      headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+    });
+    const member = await res.json();
+    
+    const paidMonths = [];
+    if (member.payments) {
+      member.payments
+        .filter(p => p.payment_type === 'monthly' && new Date(p.payment_date).getFullYear() === year)
+        .forEach(p => {
+          paidMonths.push(new Date(p.payment_date).getMonth());
+        });
+    }
+    
+    // Store paid months for later use
+    document.getElementById('paymentMonth').setAttribute('data-paid-months', JSON.stringify(paidMonths));
+    
+    // Update month select to disable paid months
+    updateMonthSelect(paidMonths);
+  } catch (e) {
+    console.error('Error loading paid months:', e);
+  }
+}
+
+// Update month select to disable paid months
+function updateMonthSelect(paidMonths) {
+  const monthSelect = document.getElementById('paymentMonth');
+  const options = monthSelect.querySelectorAll('option');
+  
+  options.forEach(opt => {
+    const value = parseInt(opt.value);
+    if (opt.value === '') {
+      opt.disabled = false;
+    } else if (paidMonths.includes(value)) {
+      opt.disabled = true;
+      opt.textContent = opt.textContent + ' (Pagado)';
+    } else {
+      opt.disabled = false;
+    }
+  });
 }
 
 // Save payment from modal
 async function savePaymentFromModal() {
-  const data = {
-    member_id: parseInt(document.getElementById('payMemberId').value),
-    amount: parseFloat(document.getElementById('amount').value),
-    payment_type: document.getElementById('paymentType').value,
-    description: document.getElementById('payDescription').value
-  };
+  const memberId = parseInt(document.getElementById('payMemberId').value);
+  const paymentType = document.getElementById('paymentType').value;
+  const amount = parseFloat(document.getElementById('amount').value);
+  const year = parseInt(document.getElementById('paymentYear').value) || new Date().getFullYear();
+  const month = parseInt(document.getElementById('paymentMonth').value);
+  const description = document.getElementById('payDescription').value;
 
-  if (!data.member_id || !data.amount) {
-    alert('Debe seleccionar un miembro y un monto');
+  if (!memberId) {
+    alert('Debe seleccionar un miembro');
     return;
   }
+  
+  if (!paymentType) {
+    alert('Debe seleccionar un tipo de pago');
+    return;
+  }
+  
+  if (!amount) {
+    alert('Debe ingresar un monto');
+    return;
+  }
+  
+  // For monthly payments, month is required
+  if (paymentType === 'monthly' && (month === undefined || month === null)) {
+    alert('Debe seleccionar un mes para la mensualidad');
+    return;
+  }
+  
+  // Calculate payment date based on type
+  let paymentDate;
+  let finalDescription = description;
+  
+  if (paymentType === 'monthly') {
+    // Monthly: use selected month and year
+    paymentDate = `${year}-${String(month + 1).padStart(2, '0')}-01`;
+    const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+    finalDescription = description || monthNames[month];
+  } else if (paymentType === 'enrollment' || paymentType === 'license') {
+    // Annual payments: January 1st of selected year
+    paymentDate = `${year}-01-01`;
+    finalDescription = description || (paymentType === 'enrollment' ? 'Matrícula' : 'Licencia') + ` ${year}`;
+  } else {
+    // Other payments: today
+    paymentDate = new Date().toISOString().split('T')[0];
+  }
+
+  const data = {
+    member_id: memberId,
+    amount: amount,
+    payment_type: paymentType,
+    payment_date: paymentDate,
+    description: finalDescription
+  };
 
   try {
     const res = await fetch(`${API}/api/payments`, {
@@ -120,10 +265,26 @@ async function savePaymentFromModal() {
     });
     const result = await res.json();
     if (!res.ok) throw new Error(result.error);
-    alert('Pago registrado');
+    
+    // SUCCESS - Now reload and refresh the member detail
     hideForm('paymentFormModal');
-    loadMembers();
-  } catch (e) { alert('Error: ' + e.message); }
+    
+    // Reload members list and refresh the member detail with fresh data
+    loadMembers().then(() => {
+      // After members are loaded, refresh the member detail
+      console.log('Members reloaded, now showing detail for member:', memberId);
+      showMemberDetail(memberId);
+    }).catch(err => {
+      console.error('Error reloading members:', err);
+      // Even if loadMembers fails, try to show member detail
+      showMemberDetail(memberId);
+    });
+    
+    alert('Pago registrado exitosamente');
+    
+  } catch (e) { 
+    alert('Error: ' + e.message); 
+  }
 }
 
 // Delete payment from member
