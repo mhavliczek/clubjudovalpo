@@ -3,6 +3,29 @@ const router = express.Router();
 const db = require('../database');
 const { requireAdmin } = require('../middleware/auth');
 
+// Delete grade (admin only) - MUST BE BEFORE /:memberId route
+router.delete('/:id', requireAdmin, (req, res) => {
+  try {
+    let deleted = false;
+    
+    // Try to delete from belt_grades first
+    const result1 = db.prepare('DELETE FROM belt_grades WHERE id = ?').run(req.params.id);
+    if (result1.changes > 0) deleted = true;
+    
+    // Also try to delete from belt_grade_history (for grades created via history table)
+    const result2 = db.prepare('DELETE FROM belt_grade_history WHERE id = ?').run(req.params.id);
+    if (result2.changes > 0) deleted = true;
+    
+    if (!deleted) {
+      return res.status(404).json({ error: 'Grade not found' });
+    }
+    
+    res.json({ message: 'Grade deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Get all grades (admin only)
 router.get('/', requireAdmin, (req, res) => {
   try {
@@ -26,7 +49,7 @@ router.get('/member/:memberId', (req, res) => {
     if (req.user.role !== 'admin' && req.user.member_id?.toString() !== req.params.memberId) {
       return res.status(403).json({ error: 'Access denied' });
     }
-    
+
     const grades = db.prepare(`
       SELECT g.*, m.first_name, m.last_name
       FROM belt_grades g
@@ -65,36 +88,36 @@ router.get('/current', (req, res) => {
 
 // Add new grade
 router.post('/', (req, res) => {
-  const { member_id, belt_color, instructor, notes } = req.body;
+  const { member_id, belt_color, grade_date, otorgado_por, instructor, notes } = req.body;
 
   if (!member_id || !belt_color) {
     return res.status(400).json({ error: 'Member ID and belt color are required' });
   }
 
+  // Use otorgado_por if provided, otherwise fallback to instructor (for backwards compatibility)
+  const otorgadoPor = otorgado_por || instructor || null;
+
   try {
     const stmt = db.prepare(`
-      INSERT INTO belt_grades (member_id, belt_color, instructor, notes)
-      VALUES (?, ?, ?, ?)
+      INSERT INTO belt_grades (member_id, belt_color, grade_date, instructor, notes)
+      VALUES (?, ?, COALESCE(?, date('now')), ?, ?)
     `);
-    
-    const result = stmt.run(member_id, belt_color, instructor || null, notes || null);
+
+    const result = stmt.run(member_id, belt_color, grade_date || null, otorgadoPor, notes || null);
+
+    // Also add to belt_grade_history
+    try {
+      const historyStmt = db.prepare(`
+        INSERT INTO belt_grade_history (member_id, belt_color, grade_date, instructor, notes)
+        VALUES (?, ?, COALESCE(?, date('now')), ?, ?)
+      `);
+      historyStmt.run(member_id, belt_color, grade_date || null, otorgadoPor, notes || null);
+    } catch (e) { /* History table may not exist yet */ }
+
     res.status(201).json({
       id: result.lastInsertRowid,
       message: 'Grade recorded successfully'
     });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Delete grade
-router.delete('/:id', (req, res) => {
-  try {
-    const result = db.prepare('DELETE FROM belt_grades WHERE id = ?').run(req.params.id);
-    if (result.changes === 0) {
-      return res.status(404).json({ error: 'Grade not found' });
-    }
-    res.json({ message: 'Grade deleted successfully' });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

@@ -1,0 +1,1884 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>Club de Judo</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; padding: 20px; }
+    .container { max-width: 1200px; margin: 0 auto; }
+    h1 { color: #333; margin-bottom: 20px; text-align: center; }
+    h2 { color: #555; margin: 20px 0 10px; border-bottom: 2px solid #0066cc; padding-bottom: 5px; }
+    .section { background: white; border-radius: 8px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    .btn { background: #0066cc; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin: 5px; }
+    .btn:hover { background: #0055aa; }
+    .btn-success { background: #28a745; }
+    .btn-success:hover { background: #218838; }
+    .btn-danger { background: #dc3545; }
+    .btn-danger:hover { background: #c82333; }
+    .btn-warning { background: #ffc107; color: #333; }
+    .btn-warning:hover { background: #e0a800; }
+    input, select, textarea { padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin: 5px; width: 200px; }
+    textarea { width: 300px; height: 80px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+    th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+    th { background: #0066cc; color: white; }
+    tr:hover { background: #f9f9f9; }
+    .status-badge { padding: 4px 8px; border-radius: 12px; font-size: 12px; }
+    .status-active { background: #d4edda; color: #155724; }
+    .status-inactive { background: #f8d7da; color: #721c24; }
+    .form-row { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 10px; }
+    .result { background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 5px; padding: 15px; margin-top: 15px; max-height: 300px; overflow: auto; }
+    .result pre { white-space: pre-wrap; word-wrap: break-word; }
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
+    .stat-card { background: linear-gradient(135deg, #0066cc, #0099ff); color: white; padding: 20px; border-radius: 8px; text-align: center; }
+    .stat-card h3 { font-size: 32px; margin-bottom: 5px; }
+    .stat-card p { opacity: 0.9; }
+    .hidden { display: none; }
+    
+    /* Login styles */
+    .login-container { max-width: 400px; margin: 100px auto; padding: 40px; background: white; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); }
+    .login-container h1 { text-align: center; color: #0066cc; margin-bottom: 30px; }
+    .login-container input { width: 100%; margin: 10px 0; }
+    .login-container .btn { width: 100%; margin: 10px 0; }
+    .login-error { background: #f8d7da; color: #721c24; padding: 10px; border-radius: 5px; margin-bottom: 15px; }
+    
+    /* Header */
+    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 15px 20px; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    .header h1 { margin: 0; text-align: left; }
+    .user-info { display: flex; align-items: center; gap: 15px; }
+    .user-info span { color: #666; }
+    .role-badge { padding: 4px 12px; border-radius: 12px; font-size: 12px; background: #0066cc; color: white; }
+    
+    /* Member portal */
+    .member-portal { background: linear-gradient(135deg, #28a745, #20c997); }
+    
+    /* News styles */
+    .news-card { background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px; padding: 15px; margin-bottom: 15px; }
+    .news-card h3 { color: #0066cc; margin-bottom: 10px; }
+    .news-card .meta { color: #666; font-size: 12px; margin-bottom: 10px; }
+    .news-card .content { line-height: 1.6; }
+    .news-card .attachment { margin-top: 10px; padding: 8px; background: #e9ecef; border-radius: 5px; }
+    .news-card .attachment a { color: #0066cc; text-decoration: none; }
+    .news-card .attachment img { max-width: 100%; max-height: 300px; border-radius: 5px; margin-top: 10px; }
+    .news-form textarea { width: 100%; height: 120px; }
+  </style>
+</head>
+<body>
+  <!-- Login View -->
+  <div id="loginView" class="login-container">
+    <h1 id="loginTitle">🥋 Judo Club</h1>
+    <div id="loginError" class="login-error hidden"></div>
+    <input type="email" id="loginEmail" placeholder="Email">
+    <input type="password" id="loginPassword" placeholder="Contraseña">
+    <button class="btn" onclick="login()">Ingresar</button>
+  </div>
+
+  <!-- Main App View -->
+  <div id="appView" class="container hidden">
+    <div class="header">
+      <h1 id="clubTitle">🥋 Judo Club</h1>
+      <div class="user-info">
+        <span id="userEmail"></span>
+        <span id="userRole" class="role-badge"></span>
+        <button class="btn" onclick="showForm('changePasswordForm')">Cambiar Clave</button>
+        <button class="btn btn-warning" onclick="logout()">Salir</button>
+      </div>
+    </div>
+
+    <!-- Change Password Modal -->
+    <div id="changePasswordForm" class="hidden" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); z-index: 1000; min-width: 350px;">
+      <h3 style="margin-bottom: 15px;">🔑 Cambiar Contraseña</h3>
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <input type="password" id="currentPassword" placeholder="Contraseña actual" style="width: 100%;">
+        <input type="password" id="newPassword" placeholder="Nueva contraseña" style="width: 100%;">
+        <input type="password" id="confirmPassword" placeholder="Confirmar nueva contraseña" style="width: 100%;">
+      </div>
+      <div style="margin-top: 20px; display: flex; gap: 10px;">
+        <button class="btn btn-success" onclick="changePassword()">Guardar</button>
+        <button class="btn" onclick="hideForm('changePasswordForm')">Cancelar</button>
+      </div>
+    </div>
+
+    <!-- Stats Section -->
+    <div class="section">
+      <h2>📊 Dashboard</h2>
+      <button class="btn" onclick="loadStats()">Actualizar Estadísticas</button>
+      <div id="stats" class="stats-grid" style="margin-top: 15px;"></div>
+    </div>
+
+    <!-- News Section -->
+    <div class="section">
+      <h2>📰 Noticias</h2>
+      <div id="adminNewsPanel" class="hidden">
+        <button class="btn btn-success" onclick="showForm('newsForm')">Nueva Noticia</button>
+        
+        <div id="newsForm" class="hidden news-form" style="margin-top: 15px; padding: 15px; background: #f8f9fa; border-radius: 5px;">
+          <h3>Crear Noticia</h3>
+          <div class="form-row" style="flex-direction: column;">
+            <input type="text" id="newsTitle" placeholder="Título" style="width: 100%;">
+            <textarea id="newsContent" placeholder="Contenido de la noticia..." style="width: 100%; height: 120px;"></textarea>
+            <input type="file" id="newsFile" accept="image/*,.pdf,.doc,.docx,.txt" style="width: 100%;">
+          </div>
+          <button class="btn btn-success" onclick="saveNews()">Publicar</button>
+          <button class="btn" onclick="hideForm('newsForm')">Cancelar</button>
+        </div>
+      </div>
+      <button class="btn" onclick="loadNews()">Actualizar Noticias</button>
+      <div id="newsList" style="margin-top: 15px;"></div>
+    </div>
+
+    <!-- Admin Panel -->
+    <div id="adminPanel" class="hidden">
+      <!-- Main Layout: Left Sidebar + Right Content -->
+      <div style="display: grid; grid-template-columns: 250px 1fr; gap: 20px; min-height: 650px;">
+        
+        <!-- Left Sidebar - Navigation -->
+        <div style="background: #0066cc; padding: 20px; border-radius: 10px; color: white;">
+          <h3 style="margin: 0 0 20px 0; font-size: 18px; border-bottom: 1px solid rgba(255,255,255,0.3); padding-bottom: 15px;">🥋 Menú</h3>
+          <nav style="display: flex; flex-direction: column; gap: 10px;">
+            <button class="btn" onclick="showSection('dashboard')" style="background: rgba(255,255,255,0.2); text-align: left; padding: 12px 15px; border-radius: 5px;">📊 Dashboard</button>
+            <button class="btn" onclick="showSection('members')" style="background: rgba(255,255,255,0.2); text-align: left; padding: 12px 15px; border-radius: 5px;">👥 Miembros</button>
+            <button class="btn" onclick="showSection('instructors')" style="background: rgba(255,255,255,0.2); text-align: left; padding: 12px 15px; border-radius: 5px;">🥋 Instructores</button>
+            <button class="btn" onclick="showSection('attendance')" style="background: rgba(255,255,255,0.2); text-align: left; padding: 12px 15px; border-radius: 5px;">📅 Asistencia</button>
+            <button class="btn" onclick="showSection('news')" style="background: rgba(255,255,255,0.2); text-align: left; padding: 12px 15px; border-radius: 5px;">📰 Noticias</button>
+          </nav>
+        </div>
+
+        <!-- Right Content Area -->
+        <div style="overflow-y: auto; max-height: 700px;">
+          
+          <!-- Dashboard Section -->
+          <div id="dashboardSection" class="content-section">
+            <div class="section">
+              <h2>📊 Dashboard</h2>
+              <button class="btn" onclick="loadStats()">Actualizar Estadísticas</button>
+              <div id="stats" class="stats-grid" style="margin-top: 15px;"></div>
+            </div>
+          </div>
+
+          <!-- Members Section -->
+          <div id="membersSection" class="content-section hidden" style="padding: 0;">
+            <div class="section" style="padding: 0;">
+              <div style="display: grid; grid-template-columns: 350px 1fr; gap: 0; min-height: 600px;">
+                <!-- Left: Members List -->
+                <div style="border-right: 1px solid #ddd; padding: 20px; background: #fafafa; overflow-y: auto; max-height: 650px;">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <h2 style="margin: 0; font-size: 18px;">👥 Miembros</h2>
+                    <button class="btn btn-success" onclick="showForm('memberForm')" style="font-size: 12px; padding: 5px 10px;">+ Nuevo</button>
+                  </div>
+                  <input type="text" id="memberSearch" placeholder="🔍 Buscar miembro..." style="width: 100%; margin-bottom: 10px;" onkeyup="filterMembers()">
+                  <div id="membersList" style="max-height: 550px; overflow-y: auto;">
+                    <p style="color: #999; text-align: center;">Click en "Cargar Miembros" para ver la lista</p>
+                  </div>
+                </div>
+                <!-- Right: Member Detail -->
+                <div style="padding: 20px; overflow-y: auto; max-height: 650px;">
+                  <div id="memberDetail">
+                    <div style="text-align: center; color: #999; padding: 50px;">
+                      <p style="font-size: 48px; margin-bottom: 10px;">👈</p>
+                      <p>Selecciona un miembro para ver su información</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Instructors Section -->
+          <div id="instructorsSection" class="content-section hidden">
+            <div class="section">
+              <h2>🥋 Instructores</h2>
+              <button class="btn" onclick="loadInstructorsSection()">Cargar Instructores</button>
+              <button class="btn btn-success" onclick="showInstructorForm()">Nuevo Instructor</button>
+
+              <div id="instructorForm" class="hidden" style="margin-top: 15px; padding: 15px; background: #f8f9fa; border-radius: 5px;">
+                <h3>Crear/Editar Instructor</h3>
+                <div class="form-row" style="flex-direction: column; gap: 10px;">
+                  <input type="text" id="instructorName" placeholder="Nombre completo (ej: Sensei Juan Pérez)" style="width: 100%;">
+                  <input type="text" id="instructorRank" placeholder="Grado/Rank (ej: 5to Dan)" style="width: 100%;">
+                  <input type="text" id="instructorOrganization" placeholder="Organización (ej: FIJ, IJF)" style="width: 100%;">
+                </div>
+                <div style="margin-top: 15px; display: flex; gap: 10px;">
+                  <button class="btn btn-success" onclick="saveInstructorFromSection()">Guardar Instructor</button>
+                  <button class="btn" onclick="hideForm('instructorForm')">Cancelar</button>
+                </div>
+                <input type="hidden" id="editInstructorIdSection">
+              </div>
+
+              <div id="instructorsListSection" class="result" style="margin-top: 15px;"></div>
+            </div>
+          </div>
+
+          <!-- Attendance Section -->
+          <div id="attendanceSection" class="content-section hidden">
+            <div class="section">
+              <h2>📅 Asistencia</h2>
+              <button class="btn" onclick="loadAttendance()">Cargar Asistencia</button>
+              <button class="btn btn-success" onclick="showForm('attendanceForm')">Registrar Asistencia</button>
+
+              <div id="attendanceForm" class="hidden" style="margin-top: 15px; padding: 15px; background: #f8f9fa; border-radius: 5px;">
+                <h3>Registrar Asistencia</h3>
+                <div class="form-row">
+                  <select id="attMemberId" style="width: 250px;">
+                    <option value="">Seleccionar miembro</option>
+                  </select>
+                  <input type="date" id="classDate" placeholder="Fecha clase">
+                  <select id="classType">
+                    <option value="regular">Regular</option>
+                    <option value="competition">Competición</option>
+                    <option value="grading">Examen</option>
+                    <option value="special">Especial</option>
+                  </select>
+                  <input type="text" id="attNotes" placeholder="Notas">
+                </div>
+                <button class="btn btn-success" onclick="saveAttendance()">Guardar</button>
+                <button class="btn" onclick="hideForm('attendanceForm')">Cancelar</button>
+              </div>
+
+              <div id="attendanceList" class="result"></div>
+            </div>
+          </div>
+
+          <!-- News Section -->
+          <div id="newsSection" class="content-section hidden">
+            <div class="section">
+              <h2>📰 Noticias</h2>
+              <div id="adminNewsPanel">
+                <button class="btn btn-success" onclick="showForm('newsForm')">Nueva Noticia</button>
+                
+                <div id="newsForm" class="hidden news-form" style="margin-top: 15px; padding: 15px; background: #f8f9fa; border-radius: 5px;">
+                  <h3>Crear Noticia</h3>
+                  <div class="form-row" style="flex-direction: column;">
+                    <input type="text" id="newsTitle" placeholder="Título" style="width: 100%;">
+                    <textarea id="newsContent" placeholder="Contenido de la noticia..." style="width: 100%; height: 120px;"></textarea>
+                    <input type="file" id="newsFile" accept="image/*,.pdf,.doc,.docx,.txt" style="width: 100%;">
+                  </div>
+                  <button class="btn btn-success" onclick="saveNews()">Publicar</button>
+                  <button class="btn" onclick="hideForm('newsForm')">Cancelar</button>
+                </div>
+              </div>
+              <button class="btn" onclick="loadNews()">Actualizar Noticias</button>
+              <div id="newsList" style="margin-top: 15px;"></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Member Form Modal -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Member Form Modal -->
+      <div id="memberForm" class="hidden" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); z-index: 1000; min-width: 600px; max-height: 80vh; overflow-y: auto;">
+        <h3 style="margin-bottom: 15px;">Crear/Editar Miembro</h3>
+        <h4 style="color: #0066cc; margin: 15px 0 10px; border-bottom: 1px solid #ddd; padding-bottom: 5px;">📋 Datos Personales</h4>
+        <div class="form-row">
+          <div style="width: 100%; display: flex; gap: 10px; align-items: center;">
+            <input type="text" id="rut" placeholder="RUT (ej: 16664930-7)" style="width: 100%;" oninput="formatRut(this)" onchange="checkRutValidity(this)">
+            <span id="rutStatus" style="font-size: 20px;"></span>
+          </div>
+          <input type="text" id="firstName" placeholder="Nombre" style="width: 100%;">
+          <input type="text" id="lastName" placeholder="Apellido" style="width: 100%;">
+          <input type="email" id="email" placeholder="Email" style="width: 100%;">
+          <input type="tel" id="phone" placeholder="Teléfono/Celular" style="width: 100%;">
+          <input type="date" id="dob" placeholder="Fecha nacimiento" style="width: 100%;">
+          <input type="text" id="address" placeholder="Dirección" style="width: 100%;">
+          <input type="text" id="profession" placeholder="Profesión/Ocupación" style="width: 100%;">
+        </div>
+
+        <h4 style="color: #0066cc; margin: 15px 0 10px; border-bottom: 1px solid #ddd; padding-bottom: 5px;">🥋 Datos de Judo</h4>
+        <div class="form-row">
+          <select id="memberType" style="width: 100%;">
+            <option value="judoca">Judoca (practica judo)</option>
+            <option value="member">Miembro (solo directiva/familia)</option>
+          </select>
+          <input type="number" id="weight" placeholder="Peso (kg)" step="0.1" style="width: 100%;">
+          <div style="width: 100%; display: flex; align-items: center; gap: 10px; margin-top: 10px;">
+            <input type="checkbox" id="isBoardMember" style="width: auto;">
+            <label for="isBoardMember">Pertenece a la Directiva</label>
+          </div>
+          <input type="text" id="boardPosition" placeholder="Cargo en la directiva (ej: Presidente, Secretario)" style="width: 100%;">
+        </div>
+
+        <h4 style="color: #0066cc; margin: 15px 0 10px; border-bottom: 1px solid #ddd; padding-bottom: 5px;">⚠️ Información Médica</h4>
+        <div class="form-row">
+          <input type="text" id="emergencyContact" placeholder="Contacto emergencia" style="width: 100%;">
+          <input type="text" id="medicalInfo" placeholder="Información médica general" style="width: 100%;">
+          <input type="text" id="medicalConditions" placeholder="Enfermedad base / condiciones médicas" style="width: 100%;">
+        </div>
+
+        <h4 style="color: #0066cc; margin: 15px 0 10px; border-bottom: 1px solid #ddd; padding-bottom: 5px;">👤 Apoderado</h4>
+        <div class="form-row">
+          <div style="width: 100%; display: flex; align-items: center; gap: 10px;">
+            <input type="checkbox" id="isGuardian" style="width: auto;" onchange="toggleGuardianForm()">
+            <label for="isGuardian">¿Es apoderado?</label>
+          </div>
+        </div>
+
+        <div id="guardianForm" class="hidden" style="margin-top: 10px; padding: 15px; background: #e9ecef; border-radius: 5px;">
+          <h5 style="margin-bottom: 10px;">Datos del Apoderado</h5>
+          <div class="form-row">
+            <input type="text" id="guardianName" placeholder="Nombre completo" style="width: 100%;">
+            <input type="text" id="guardianRut" placeholder="RUT" style="width: 100%;" oninput="formatRut(this)">
+            <input type="date" id="guardianDob" placeholder="Fecha nacimiento" style="width: 100%;">
+            <input type="text" id="guardianAddress" placeholder="Dirección" style="width: 100%;">
+            <input type="email" id="guardianEmail" placeholder="Email" style="width: 100%;">
+            <input type="tel" id="guardianPhone" placeholder="Teléfono/Celular" style="width: 100%;">
+          </div>
+        </div>
+
+        <h4 style="color: #0066cc; margin: 15px 0 10px; border-bottom: 1px solid #ddd; padding-bottom: 5px;">🔐 Cuenta de Usuario</h4>
+        <div class="form-row">
+          <div style="width: 100%; display: flex; align-items: center; gap: 10px;">
+            <input type="checkbox" id="createUser" style="width: auto;" onchange="toggleUserForm()">
+            <label for="createUser">Crear usuario para este miembro (puede ingresar al sistema)</label>
+          </div>
+        </div>
+
+        <div id="createUserForm" class="hidden" style="margin-top: 10px; padding: 15px; background: #e9ecef; border-radius: 5px;">
+          <div class="form-row">
+            <select id="userRole" style="width: 100%;">
+              <option value="member">Miembro (solo ve su información)</option>
+              <option value="admin">Administrador (acceso completo)</option>
+            </select>
+            <small style="width: 100%; color: #666;">💡 La contraseña inicial son los últimos 4 dígitos del RUT. El usuario puede cambiarla al ingresar.</small>
+          </div>
+        </div>
+
+        <div style="margin-top: 20px; display: flex; gap: 10px;">
+          <button class="btn btn-success" onclick="saveMember()">Guardar</button>
+          <button class="btn" onclick="hideForm('memberForm')">Cancelar</button>
+        </div>
+        <input type="hidden" id="memberId">
+      </div>
+
+    <!-- Member Portal (solo para miembros) -->
+    <div id="memberPortal" class="section member-portal hidden">
+      <h2>📰 Noticias del Club</h2>
+      <div id="memberNewsList" style="margin-top: 15px;"></div>
+      <h2 style="margin-top: 30px;">📋 Mi Información</h2>
+      <div id="myInfo"></div>
+      <h3 style="margin-top: 20px;">🎗️ Mi Cinturón</h3>
+      <div id="myGrade"></div>
+      <h3 style="margin-top: 20px;">📅 Mi Asistencia</h3>
+      <div id="myAttendance"></div>
+      <h3 style="margin-top: 20px;">💰 Mis Pagos</h3>
+      <div id="myPayments"></div>
+    </div>
+  </div>
+
+  <script>
+    const API = '';
+    let currentUser = null;
+    let clubName = 'Judo Club';
+
+    // Load club config
+    async function loadConfig() {
+      try {
+        const res = await fetch(`${API}/api/config`);
+        const config = await res.json();
+        clubName = config.clubName;
+        document.getElementById('loginTitle').textContent = '🥋 ' + clubName;
+        document.getElementById('clubTitle').textContent = '🥋 ' + clubName;
+        document.title = clubName;
+      } catch (e) { console.error('Error loading config:', e); }
+    }
+
+    function showForm(id) { document.getElementById(id).classList.remove('hidden'); }
+    function hideForm(id) { document.getElementById(id).classList.add('hidden'); }
+
+    // Show section in right panel
+    function showSection(sectionName) {
+      // Hide all sections
+      document.querySelectorAll('.content-section').forEach(s => s.classList.add('hidden'));
+      // Show selected section
+      document.getElementById(sectionName + 'Section').classList.remove('hidden');
+      
+      // Load data based on section
+      if (sectionName === 'dashboard') loadStats();
+      if (sectionName === 'members') loadMembers();
+      if (sectionName === 'instructors') loadInstructorsSection();
+      if (sectionName === 'attendance') loadAttendance();
+      if (sectionName === 'news') loadNews();
+    }
+
+    // Toggle guardian form visibility
+    function toggleGuardianForm() {
+      const isGuardian = document.getElementById('isGuardian').checked;
+      const guardianForm = document.getElementById('guardianForm');
+      if (isGuardian) {
+        guardianForm.classList.remove('hidden');
+      } else {
+        guardianForm.classList.add('hidden');
+      }
+    }
+
+    // Toggle user creation form visibility
+    function toggleUserForm() {
+      const createUser = document.getElementById('createUser').checked;
+      const createUserForm = document.getElementById('createUserForm');
+      if (createUser) {
+        createUserForm.classList.remove('hidden');
+      } else {
+        createUserForm.classList.add('hidden');
+      }
+    }
+
+    // Formatear RUT sin puntos, solo con guión
+    function formatRut(input) {
+      let valor = input.value.replace(/[.\-]/g, '').toUpperCase();
+      
+      // Solo permitir números y K
+      valor = valor.replace(/[^0-9K]/g, '');
+      
+      // Agregar guión antes del último carácter si hay más de 1 dígito
+      if (valor.length > 1) {
+        valor = valor.slice(0, -1) + '-' + valor.slice(-1);
+      }
+      
+      input.value = valor;
+    }
+
+    // Mostrar estado de validación del RUT
+    function checkRutValidity(input) {
+      const statusSpan = document.getElementById('rutStatus');
+      const rut = input.value;
+      
+      if (!rut) {
+        statusSpan.textContent = '';
+        return;
+      }
+      
+      if (validarRut(rut)) {
+        statusSpan.textContent = '✅';
+      } else {
+        statusSpan.textContent = '❌ RUT inválido';
+      }
+    }
+
+    // Validar RUT chileno
+    function validarRut(rut) {
+      if (!rut) return true; // RUT opcional
+      
+      // Limpiar RUT
+      const rutLimpio = rut.replace(/[.\-]/g, '').toUpperCase();
+      
+      // Verificar formato básico
+      if (!/^\d{7,8}[0-9K]$/.test(rutLimpio)) {
+        return false;
+      }
+      
+      // Separar cuerpo y dígito verificador
+      const cuerpo = rutLimpio.slice(0, -1);
+      const dv = rutLimpio.slice(-1);
+      
+      // Calcular dígito verificador
+      let suma = 0;
+      let multiplo = 2;
+      
+      for (let i = cuerpo.length - 1; i >= 0; i--) {
+        suma += parseInt(cuerpo[i]) * multiplo;
+        multiplo = multiplo === 7 ? 2 : multiplo + 1;
+      }
+      
+      const dvEsperado = 11 - (suma % 11);
+      const dvCalculado = dvEsperado === 11 ? '0' : dvEsperado === 10 ? 'K' : dvEsperado.toString();
+      
+      return dv === dvCalculado;
+    }
+
+    async function login() {
+      const email = document.getElementById('loginEmail').value;
+      const password = document.getElementById('loginPassword').value;
+      
+      if (!email || !password) {
+        document.getElementById('loginError').textContent = 'Ingresa email y contraseña';
+        document.getElementById('loginError').classList.remove('hidden');
+        return;
+      }
+
+      try {
+        const res = await fetch(`${API}/api/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+        const data = await res.json();
+        
+        if (!res.ok) {
+          throw new Error(data.error);
+        }
+
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+        currentUser = data.user;
+        document.getElementById('loginView').classList.add('hidden');
+        document.getElementById('appView').classList.remove('hidden');
+        initApp();
+      } catch (e) {
+        document.getElementById('loginError').textContent = e.message;
+        document.getElementById('loginError').classList.remove('hidden');
+      }
+    }
+
+    function logout() {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      currentUser = null;
+      document.getElementById('loginView').classList.remove('hidden');
+      document.getElementById('appView').classList.add('hidden');
+    }
+
+    function initApp() {
+      const stored = localStorage.getItem('user');
+      if (stored) {
+        currentUser = JSON.parse(stored);
+        document.getElementById('userEmail').textContent = currentUser.email;
+        document.getElementById('userRole').textContent = currentUser.role === 'admin' ? 'Administrador' : 'Miembro';
+
+        if (currentUser.role === 'admin') {
+          document.getElementById('adminPanel').classList.remove('hidden');
+          document.getElementById('adminNewsPanel').classList.remove('hidden');
+          document.getElementById('memberPortal').classList.add('hidden');
+          // Show dashboard by default
+          showSection('dashboard');
+          loadMembersSelect();
+        } else {
+          document.getElementById('adminPanel').classList.add('hidden');
+          document.getElementById('adminNewsPanel').classList.add('hidden');
+          document.getElementById('memberPortal').classList.remove('hidden');
+          loadMyInfo();
+          loadNews();
+        }
+      }
+    }
+
+    async function loadStats() {
+      try {
+        const res = await fetch(`${API}/api/stats`, {
+          headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+        });
+        const stats = await res.json();
+        document.getElementById('stats').innerHTML = `
+          <div class="stat-card"><h3>${stats.totalMembers || 0}</h3><p>Miembros Activos</p></div>
+          <div class="stat-card"><h3>${(stats.totalPayments || 0).toFixed(0)}$</h3><p>Total Pagos</p></div>
+          <div class="stat-card"><h3>${stats.attendanceToday || 0}</h3><p>Asistencia Hoy</p></div>
+        `;
+      } catch (e) { document.getElementById('stats').innerHTML = '<p>Error: ' + e.message + '</p>'; }
+    }
+
+    async function loadMembers() {
+      try {
+        const res = await fetch(`${API}/api/members`, {
+          headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+        });
+        const data = await res.json();
+        
+        // Handle API errors
+        if (!res.ok || data.error) {
+          throw new Error(data.error || 'Error al cargar miembros');
+        }
+        
+        // Ensure data is an array
+        if (!Array.isArray(data)) {
+          throw new Error('Respuesta inválida del servidor');
+        }
+        
+        const members = data;
+        if (members.length === 0) {
+          document.getElementById('membersList').innerHTML = '<p>No hay miembros registrados</p>';
+          return;
+        }
+        document.getElementById('membersList').innerHTML = members.map(m => `
+          <div style="border: 1px solid #ddd; border-radius: 8px; padding: 20px; margin-bottom: 20px; background: #fff;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 2px solid #0066cc; padding-bottom: 10px;">
+              <h3 style="margin: 0; color: #0066cc;">🥋 ${m.first_name} ${m.last_name}</h3>
+              <div>
+                <span class="status-badge status-${m.status}">${m.status}</span>
+                <span class="status-badge" style="background: #0066cc; color: white; margin-left: 5px;">${m.member_type === 'judoca' ? '🥋 Judoca' : '👤 Miembro'}</span>
+                ${m.is_board_member === 1 ? `<span class="status-badge" style="background: #ffc107; color: #333; margin-left: 5px;">🏛️ ${m.board_position || 'Directiva'}</span>` : ''}
+              </div>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin-bottom: 20px;">
+              <div>
+                <strong>📋 Datos Personales</strong>
+                <p style="margin: 5px 0; font-size: 14px;">
+                  <strong>RUT:</strong> ${m.rut || '-'}<br>
+                  <strong>Email:</strong> ${m.email || '-'}<br>
+                  <strong>Teléfono:</strong> ${m.phone || '-'}<br>
+                  <strong>Fecha nacimiento:</strong> ${formatDateChile(m.date_of_birth) || '-'}<br>
+                  <strong>Dirección:</strong> ${m.address || '-'}<br>
+                  <strong>Profesión:</strong> ${m.profession || '-'}
+                </p>
+              </div>
+              <div>
+                <strong>🥋 Datos de Judo</strong>
+                <p style="margin: 5px 0; font-size: 14px;">
+                  <strong>Peso:</strong> ${m.weight ? m.weight + ' kg' : '-'}<br>
+                  <strong>Cinturón actual:</strong> ${getBeltName(m.current_belt) || '-'}<br>
+                  ${m.is_board_member === 1 ? `<strong>Cargo:</strong> ${m.board_position || 'Directiva'}<br>` : ''}
+                </p>
+              </div>
+              <div>
+                <strong>⚠️ Información Médica</strong>
+                <p style="margin: 5px 0; font-size: 14px;">
+                  <strong>Contacto emergencia:</strong> ${m.emergency_contact || '-'}<br>
+                  <strong>Info médica:</strong> ${m.medical_info || '-'}<br>
+                  <strong>Enfermedad base:</strong> ${m.medical_conditions || '-'}
+                </p>
+              </div>
+              ${m.guardian_info ? `
+              <div>
+                <strong>👤 Apoderado</strong>
+                <p style="margin: 5px 0; font-size: 14px;">
+                  <strong>Nombre:</strong> ${m.guardian_info.full_name || '-'}<br>
+                  <strong>RUT:</strong> ${m.guardian_info.rut || '-'}<br>
+                  <strong>Teléfono:</strong> ${m.guardian_info.phone || '-'}<br>
+                  <strong>Email:</strong> ${m.guardian_info.email || '-'}
+                </p>
+              </div>
+              ` : ''}
+              ${m.user_info ? `
+              <div>
+                <strong>🔐 Usuario</strong>
+                <p style="margin: 5px 0; font-size: 14px;">
+                  <strong>Email:</strong> ${m.user_info.email || '-'}<br>
+                  <strong>Rol:</strong> ${m.user_info.role === 'admin' ? 'Administrador' : 'Miembro'}<br>
+                  <button class="btn btn-warning" onclick="showResetPasswordModal(${m.id}, '${m.user_info.email}')" style="font-size: 12px; padding: 5px 10px; margin-top: 5px;">🔑 Resetear Contraseña</button>
+                </p>
+              </div>
+              ` : '<div><strong>🔐 Usuario</strong><p style="margin: 5px 0; font-size: 14px; color: #999;">Sin usuario creado</p></div>'}
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+              <div style="background: #f8f9fa; padding: 15px; border-radius: 5px;">
+                <h4 style="margin: 0 0 10px 0; color: #0066cc;">🎗️ Historial de Grados</h4>
+                ${m.belt_grade_history && m.belt_grade_history.length > 0 ? `
+                  <table style="font-size: 13px;">
+                    <tr><th>Grado</th><th>Fecha</th><th>Otorgado Por</th><th>Acciones</th></tr>
+                    ${m.belt_grade_history.map(g => `
+                      <tr>
+                        <td>${getBeltName(g.belt_color)}</td>
+                        <td>${formatDateChile(g.grade_date) || '-'}</td>
+                        <td>${g.otorgado_por || g.instructor || '-'}</td>
+                        <td>
+                          <button class="btn btn-danger" onclick="deleteGradeFromMember(${g.id}, ${m.id})" style="font-size: 11px; padding: 3px 6px;">Eliminar</button>
+                        </td>
+                      </tr>
+                    `).join('')}
+                  </table>
+                ` : '<p style="color: #999; font-size: 13px;">Sin grados registrados</p>'}
+                <button class="btn btn-success" onclick="showGradeForm(${m.id})" style="font-size: 12px; margin-top: 10px;">+ Agregar Grado</button>
+              </div>
+              <div style="background: #f8f9fa; padding: 15px; border-radius: 5px;">
+                <h4 style="margin: 0 0 10px 0; color: #0066cc;">💰 Pagos</h4>
+                ${m.payments && m.payments.length > 0 ? `
+                  <table style="font-size: 13px;">
+                    <tr><th>Monto</th><th>Tipo</th><th>Descripción</th><th>Fecha</th><th>Acciones</th></tr>
+                    ${m.payments.map(p => `
+                      <tr>
+                        <td>$${p.amount}</td>
+                        <td>${getPaymentTypeName(p.payment_type)}</td>
+                        <td>${p.description || '-'}</td>
+                        <td>${formatDateChile(p.payment_date) || '-'}</td>
+                        <td>
+                          <button class="btn btn-danger" onclick="deletePaymentFromMember(${p.id}, ${m.id})" style="font-size: 11px; padding: 3px 6px;">Eliminar</button>
+                        </td>
+                      </tr>
+                    `).join('')}
+                  </table>
+                ` : '<p style="color: #999; font-size: 13px;">Sin pagos registrados</p>'}
+                <button class="btn btn-success" onclick="showPaymentForm(${m.id})" style="font-size: 12px; margin-top: 10px;">+ Registrar Pago</button>
+              </div>
+            </div>
+
+            <div style="display: flex; gap: 10px; margin-top: 15px;">
+              <button class="btn" onclick="editMember(${m.id})">✏️ Editar</button>
+              <button class="btn btn-danger" onclick="deleteMember(${m.id})">🗑️ Eliminar</button>
+            </div>
+          </div>
+        `).join('');
+      } catch (e) { document.getElementById('membersList').innerHTML = '<p>Error: ' + e.message + '</p>'; }
+    }
+
+    // Show member detail in right column
+    async function showMemberDetail(memberId) {
+      try {
+        const res = await fetch(`${API}/api/members/${memberId}`, {
+          headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+        });
+        const m = await res.json();
+
+        document.getElementById('memberDetail').innerHTML = `
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #0066cc;">
+              <h2 style="margin: 0; color: #0066cc;">🥋 ${m.first_name} ${m.last_name}</h2>
+              <div style="display: flex; gap: 10px;">
+                <span class="status-badge" style="background: ${m.status === 'active' ? '#d4edda' : '#f8d7da'};">${m.status === 'active' ? 'Activo' : 'Inactivo'}</span>
+                <span class="status-badge" style="background: #0066cc; color: white;">${m.member_type === 'judoca' ? '🥋 Judoca' : '👤 Miembro'}</span>
+              </div>
+            </div>
+
+            <details open style="margin-bottom: 15px; background: #fff3cd; padding: 15px; border-radius: 8px;">
+              <summary style="cursor: pointer; font-weight: bold; color: #856404;">🎗️ Historial de Cinturón</summary>
+              <div style="margin-top: 15px;">
+                ${m.belt_grade_history && m.belt_grade_history.length > 0 ? `
+                  <table style="width: 100%; font-size: 13px;">
+                    ${m.belt_grade_history.map(g => `
+                      <tr style="border-bottom: 1px solid #ddd;">
+                        <td style="padding: 8px;">${getBeltName(g.belt_color)}</td>
+                        <td style="padding: 8px;">${formatDateChile(g.grade_date)}</td>
+                        <td style="padding: 8px;">${g.otorgado_por || g.instructor || '-'}</td>
+                        <td style="padding: 8px;">
+                          <button class="btn btn-danger" onclick="deleteGradeFromMember(${g.id}, ${m.id})" style="font-size: 11px;">Eliminar</button>
+                        </td>
+                      </tr>
+                    `).join('')}
+                  </table>
+                ` : '<p style="color: #999;">Sin grados registrados</p>'}
+                <button class="btn btn-success" onclick="showGradeForm(${m.id})" style="margin-top: 10px; font-size: 12px;">+ Agregar Grado</button>
+              </div>
+            </details>
+
+            <details open style="margin-bottom: 15px; background: #d4edda; padding: 15px; border-radius: 8px;">
+              <summary style="cursor: pointer; font-weight: bold; color: #155724;">💰 Pagos</summary>
+              <div style="margin-top: 15px;">
+                ${m.payments && m.payments.length > 0 ? `
+                  <table style="width: 100%; font-size: 13px;">
+                    ${m.payments.map(p => `
+                      <tr style="border-bottom: 1px solid #ddd;">
+                        <td style="padding: 8px;">${formatDateChile(p.payment_date)}</td>
+                        <td style="padding: 8px;">${getPaymentTypeName(p.payment_type)}</td>
+                        <td style="padding: 8px;">${p.description || '-'}</td>
+                        <td style="padding: 8px; text-align: right; font-weight: bold;">$${p.amount}</td>
+                        <td style="padding: 8px;">
+                          <button class="btn btn-danger" onclick="deletePaymentFromMember(${p.id}, ${m.id})" style="font-size: 11px;">Eliminar</button>
+                        </td>
+                      </tr>
+                    `).join('')}
+                  </table>
+                ` : '<p style="color: #999;">Sin pagos registrados</p>'}
+                <button class="btn btn-success" onclick="showPaymentForm(${m.id})" style="margin-top: 10px; font-size: 12px;">+ Registrar Pago</button>
+              </div>
+            </details>
+
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+              <button class="btn" onclick="editMember(${m.id})">✏️ Editar</button>
+              <button class="btn btn-danger" onclick="deleteMember(${m.id})">🗑️ Eliminar</button>
+            </div>
+          </div>
+        `;
+      } catch (e) {
+        document.getElementById('memberDetail').innerHTML = '<p style="color: red;">Error: ' + e.message + '</p>';
+      }
+    }
+
+    // Filter members by search
+    function filterMembers() {
+      const search = document.getElementById('memberSearch').value.toLowerCase();
+      const memberItems = document.querySelectorAll('#membersList > div');
+      memberItems.forEach(item => {
+        const text = item.textContent.toLowerCase();
+        item.style.display = text.includes(search) ? 'block' : 'none';
+      });
+    }
+
+    // Helper function to get belt/grade name in Spanish with proper formatting
+    function getBeltName(grade) {
+      if (!grade) return '-';
+
+      // Mapping for old English belt colors to Spanish Kyu/Dan system
+      const beltMap = {
+        'white': '9no Kyu',
+        'yellow': '8vo Kyu',
+        'orange': '7mo Kyu',
+        'green': '6to Kyu',
+        'blue': '5to Kyu',
+        'brown': '4to-1er Kyu',
+        'black': 'Dan'
+      };
+
+      // Check if it's an old English value
+      if (beltMap[grade.toLowerCase()]) {
+        return beltMap[grade.toLowerCase()];
+      }
+
+      // Otherwise, capitalize and return (for new Kyu/Dan values)
+      return grade.split(' ')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+    }
+
+    // Format date to Chilean format (DD-MM-AAAA)
+    function formatDateChile(dateString) {
+      if (!dateString) return '-';
+      const [year, month, day] = dateString.split('-');
+      return `${day}-${month}-${year}`;
+    }
+
+    async function saveMember() {
+      const rut = document.getElementById('rut').value;
+
+      // Validar RUT si se proporciona
+      if (rut && !validarRut(rut)) {
+        alert('RUT inválido. Verifique el formato y dígito verificador.\n\nEjemplo válido: 16664930-7');
+        return;
+      }
+
+      // Validar RUT del apoderado si existe
+      const isGuardian = document.getElementById('isGuardian').checked;
+      const guardianRut = document.getElementById('guardianRut').value;
+      if (isGuardian && guardianRut && !validarRut(guardianRut)) {
+        alert('RUT del apoderado inválido. Verifique el formato y dígito verificador.');
+        return;
+      }
+
+      const id = document.getElementById('memberId').value;
+      const createUser = document.getElementById('createUser').checked;
+      
+      // Helper function to convert date from DD-MM-YYYY to YYYY-MM-DD
+      const convertDateToISO = (dateStr) => {
+        if (!dateStr) return null;
+        // If already in YYYY-MM-DD format, return as is
+        if (dateStr.includes('-') && dateStr.length === 10 && dateStr.indexOf('-') === 4) {
+          return dateStr;
+        }
+        // Convert from DD-MM-YYYY to YYYY-MM-DD
+        const parts = dateStr.split('-');
+        if (parts.length === 3) {
+          return `${parts[2]}-${parts[1]}-${parts[0]}`;
+        }
+        return dateStr;
+      };
+      
+      const data = {
+        rut: rut,
+        first_name: document.getElementById('firstName').value,
+        last_name: document.getElementById('lastName').value,
+        email: document.getElementById('email').value,
+        phone: document.getElementById('phone').value,
+        date_of_birth: convertDateToISO(document.getElementById('dob').value),
+        address: document.getElementById('address').value,
+        profession: document.getElementById('profession').value,
+        weight: document.getElementById('weight').value || null,
+        emergency_contact: document.getElementById('emergencyContact').value,
+        medical_info: document.getElementById('medicalInfo').value,
+        medical_conditions: document.getElementById('medicalConditions').value,
+        member_type: document.getElementById('memberType').value,
+        is_board_member: document.getElementById('isBoardMember').checked ? 1 : 0,
+        board_position: document.getElementById('boardPosition').value,
+        is_guardian: isGuardian ? 1 : 0,
+        guardian_info: isGuardian ? {
+          full_name: document.getElementById('guardianName').value,
+          rut: guardianRut,
+          date_of_birth: convertDateToISO(document.getElementById('guardianDob').value),
+          address: document.getElementById('guardianAddress').value,
+          email: document.getElementById('guardianEmail').value,
+          phone: document.getElementById('guardianPhone').value
+        } : null,
+        create_user: createUser,
+        user_role: createUser ? document.getElementById('userRole').value : null
+      };
+      try {
+        const res = await fetch(`${API}/api/members${id ? '/' + id : ''}`, {
+          method: id ? 'PUT' : 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + localStorage.getItem('token')
+          },
+          body: JSON.stringify(data)
+        });
+        const result = await res.json();
+        alert(id ? 'Miembro actualizado' : 'Miembro creado');
+        hideForm('memberForm');
+        loadMembers();
+        loadStats();
+        loadMembersSelect();
+      } catch (e) { alert('Error: ' + e.message); }
+    }
+
+    async function editMember(id) {
+      const res = await fetch(`${API}/api/members/${id}`, {
+        headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+      });
+      const m = await res.json();
+      document.getElementById('memberId').value = m.id;
+      document.getElementById('rut').value = m.rut || '';
+      document.getElementById('firstName').value = m.first_name;
+      document.getElementById('lastName').value = m.last_name;
+      document.getElementById('email').value = m.email;
+      document.getElementById('phone').value = m.phone;
+      // Convert date from YYYY-MM-DD to input date format
+      document.getElementById('dob').value = m.date_of_birth ? m.date_of_birth.split('-').reverse().join('-') : '';
+      document.getElementById('address').value = m.address;
+      document.getElementById('profession').value = m.profession || '';
+      document.getElementById('weight').value = m.weight || '';
+      document.getElementById('emergencyContact').value = m.emergency_contact;
+      document.getElementById('medicalInfo').value = m.medical_info;
+      document.getElementById('medicalConditions').value = m.medical_conditions || '';
+      document.getElementById('memberType').value = m.member_type || 'judoca';
+      document.getElementById('isBoardMember').checked = m.is_board_member === 1;
+      document.getElementById('boardPosition').value = m.board_position || '';
+      document.getElementById('isGuardian').checked = m.is_guardian === 1;
+
+      // Load guardian info if exists
+      if (m.guardian_info) {
+        document.getElementById('guardianName').value = m.guardian_info.full_name || '';
+        document.getElementById('guardianRut').value = m.guardian_info.rut || '';
+        // Convert date from YYYY-MM-DD to input date format
+        document.getElementById('guardianDob').value = m.guardian_info.date_of_birth ? m.guardian_info.date_of_birth.split('-').reverse().join('-') : '';
+        document.getElementById('guardianAddress').value = m.guardian_info.address || '';
+        document.getElementById('guardianEmail').value = m.guardian_info.email || '';
+        document.getElementById('guardianPhone').value = m.guardian_info.phone || '';
+        toggleGuardianForm();
+      }
+
+      // Handle user creation checkbox - disable if user already exists
+      const createUserCheckbox = document.getElementById('createUser');
+      const createUserForm = document.getElementById('createUserForm');
+      if (m.user_info) {
+        createUserCheckbox.checked = true;
+        createUserCheckbox.disabled = true;
+        document.getElementById('userRole').value = m.user_info.role;
+        createUserForm.classList.remove('hidden');
+      } else {
+        createUserCheckbox.checked = false;
+        createUserCheckbox.disabled = false;
+        createUserForm.classList.add('hidden');
+      }
+
+      showForm('memberForm');
+    }
+
+    async function deleteMember(id) {
+      if (!confirm('¿Eliminar miembro?')) return;
+      await fetch(`${API}/api/members/${id}`, { 
+        method: 'DELETE',
+        headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+      });
+      loadMembers();
+      loadStats();
+      loadMembersSelect();
+    }
+
+    async function saveUser() {
+      const memberSelect = document.getElementById('userMemberSelect').value;
+      const email = document.getElementById('userEmail').value;
+      const password = document.getElementById('userPassword').value;
+      const role = document.getElementById('userRole').value;
+      
+      if (!memberSelect) {
+        alert('Debe seleccionar un miembro');
+        return;
+      }
+      
+      if (!email) {
+        alert('El miembro seleccionado no tiene email registrado');
+        return;
+      }
+      
+      const data = {
+        email: email,
+        password: password || '1234',
+        role: role,
+        member_id: memberSelect
+      };
+      try {
+        const res = await fetch(`${API}/api/auth/register`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + localStorage.getItem('token')
+          },
+          body: JSON.stringify(data)
+        });
+        const result = await res.json();
+        if (!res.ok) throw new Error(result.error);
+        alert('Usuario creado\n\nContraseña: ' + password + '\n\nEl usuario puede cambiarla al ingresar.');
+        hideForm('userForm');
+        loadUsers();
+      } catch (e) { alert('Error: ' + e.message); }
+    }
+
+    function autoFillUserEmail() {
+      const memberSelect = document.getElementById('userMemberSelect');
+      const emailInput = document.getElementById('userEmail');
+      const passwordInput = document.getElementById('userPassword');
+      const selectedOption = memberSelect.options[memberSelect.selectedIndex];
+      
+      if (selectedOption.value && selectedOption.dataset.email) {
+        emailInput.value = selectedOption.dataset.email;
+        
+        // Obtener los últimos 4 dígitos del RUT para la contraseña
+        const rut = selectedOption.dataset.rut || '';
+        if (rut) {
+          const cuerpoRut = rut.replace(/[.\-]/g, '').toUpperCase().slice(0, -1);
+          passwordInput.value = cuerpoRut.slice(-4);
+        } else {
+          passwordInput.value = '1234'; // Default si no hay RUT
+        }
+      } else {
+        emailInput.value = '';
+        passwordInput.value = '';
+      }
+    }
+
+    async function loadUsers() {
+      try {
+        const res = await fetch(`${API}/api/auth/users`, {
+          headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+        });
+        const data = await res.json();
+        
+        if (!res.ok) {
+          throw new Error(data.error || 'Error al cargar usuarios');
+        }
+        
+        if (!Array.isArray(data)) {
+          throw new Error('Respuesta inválida del servidor');
+        }
+        
+        if (data.length === 0) {
+          document.getElementById('usersList').innerHTML = '<p>No hay usuarios registrados</p>';
+          return;
+        }
+        
+        document.getElementById('usersList').innerHTML = `
+          <table>
+            <tr><th>ID</th><th>Email</th><th>Nombre</th><th>Rol</th><th>Acciones</th></tr>
+            ${data.map(u => `
+              <tr>
+                <td>${u.id}</td>
+                <td>${u.email}</td>
+                <td>${u.first_name ? u.first_name + ' ' + u.last_name : '-'}</td>
+                <td><span class="status-badge ${u.role === 'admin' ? 'status-active' : 'status-inactive'}">${u.role}</span></td>
+                <td>
+                  <button class="btn btn-warning" onclick="resetUserPassword(${u.id}, '${u.email}')">Resetear Clave</button>
+                </td>
+              </tr>
+            `).join('')}
+          </table>
+        `;
+      } catch (e) { document.getElementById('usersList').innerHTML = '<p>Error: ' + e.message + '</p>'; }
+    }
+
+    async function resetUserPassword(userId, email) {
+      if (!confirm(`¿Resetear contraseña para ${email}?\n\nSe usará una contraseña por defecto que podrás cambiar después.`)) return;
+      
+      try {
+        const res = await fetch(`${API}/api/auth/reset-password/${userId}`, {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+        });
+        const result = await res.json();
+        if (!res.ok) throw new Error(result.error);
+        alert(`Contraseña reseteada exitosamente.\n\nNueva contraseña: ${result.new_password}\n\nIndícale al usuario que la cambie al ingresar.`);
+        loadUsers();
+      } catch (e) { alert('Error: ' + e.message); }
+    }
+
+    async function changePassword() {
+      const currentPassword = document.getElementById('currentPassword').value;
+      const newPassword = document.getElementById('newPassword').value;
+      const confirmPassword = document.getElementById('confirmPassword').value;
+
+      if (!currentPassword || !newPassword) {
+        alert('Completa todos los campos');
+        return;
+      }
+
+      if (newPassword !== confirmPassword) {
+        alert('Las nuevas contraseñas no coinciden');
+        return;
+      }
+
+      if (newPassword.length < 4) {
+        alert('La contraseña debe tener al menos 4 caracteres');
+        return;
+      }
+
+      try {
+        const res = await fetch(`${API}/api/auth/change-password`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + localStorage.getItem('token')
+          },
+          body: JSON.stringify({
+            current_password: currentPassword,
+            new_password: newPassword
+          })
+        });
+        const result = await res.json();
+        if (!res.ok) throw new Error(result.error);
+        alert('Contraseña cambiada exitosamente');
+        hideForm('changePasswordForm');
+        document.getElementById('currentPassword').value = '';
+        document.getElementById('newPassword').value = '';
+        document.getElementById('confirmPassword').value = '';
+      } catch (e) { alert('Error: ' + e.message); }
+    }
+
+    async function loadMembersSelect() {
+      try {
+        const res = await fetch(`${API}/api/members`, {
+          headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+        });
+        const data = await res.json();
+        
+        // Handle API errors
+        if (!res.ok || data.error) {
+          throw new Error(data.error || 'Error al cargar miembros');
+        }
+        
+        // Ensure data is an array
+        if (!Array.isArray(data)) {
+          throw new Error('Respuesta inválida del servidor');
+        }
+        
+        const members = data;
+        const options = '<option value="">Seleccionar miembro (el email y contraseña se completarán automáticamente)</option>' +
+          members.map(m => `<option value="${m.id}" data-email="${m.email || ''}" data-rut="${m.rut || ''}">${m.first_name} ${m.last_name}${m.email ? ' (' + m.email + ')' : ''}</option>`).join('');
+        
+        // Update select options only if elements exist
+        const userMemberSelect = document.getElementById('userMemberSelect');
+        if (userMemberSelect) userMemberSelect.innerHTML = options;
+        
+        const gradeMemberId = document.getElementById('gradeMemberId');
+        if (gradeMemberId) gradeMemberId.innerHTML = '<option value="">Seleccionar miembro</option>' +
+          members.map(m => `<option value="${m.id}">${m.first_name} ${m.last_name}</option>`).join('');
+        
+        const attMemberId = document.getElementById('attMemberId');
+        if (attMemberId) attMemberId.innerHTML = '<option value="">Seleccionar miembro</option>' +
+          members.map(m => `<option value="${m.id}">${m.first_name} ${m.last_name}</option>`).join('');
+        
+        const payMemberId = document.getElementById('payMemberId');
+        if (payMemberId) payMemberId.innerHTML = '<option value="">Seleccionar miembro</option>' +
+          members.map(m => `<option value="${m.id}">${m.first_name} ${m.last_name}</option>`).join('');
+      } catch (e) { console.error('Error loading members:', e); }
+    }
+
+    async function loadGrades() {
+      try {
+        const res = await fetch(`${API}/api/grades`, {
+          headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+        });
+        const grades = await res.json();
+        if (grades.length === 0) {
+          document.getElementById('gradesList').innerHTML = '<p>No hay grados registrados</p>';
+          return;
+        }
+        document.getElementById('gradesList').innerHTML = `
+          <table>
+            <tr><th>ID</th><th>Miembro</th><th>Grado</th><th>Otorgado Por</th><th>Fecha</th><th>Acciones</th></tr>
+            ${grades.map(g => `
+              <tr>
+                <td>${g.id}</td>
+                <td>${g.first_name} ${g.last_name}</td>
+                <td>${getBeltName(g.belt_color)}</td>
+                <td>${g.otorgado_por || g.instructor || '-'}</td>
+                <td>${formatDateChile(g.grade_date) || '-'}</td>
+                <td><button class="btn btn-danger" onclick="deleteGrade(${g.id})">Eliminar</button></td>
+              </tr>
+            `).join('')}
+          </table>
+        `;
+      } catch (e) { document.getElementById('gradesList').innerHTML = '<p>Error: ' + e.message + '</p>'; }
+    }
+
+    async function saveGrade() {
+      const data = {
+        member_id: parseInt(document.getElementById('gradeMemberId').value),
+        belt_color: document.getElementById('beltColor').value,
+        grade_date: document.getElementById('gradeDate').value,
+        instructor: document.getElementById('instructor').value,
+        notes: document.getElementById('gradeNotes').value
+      };
+      if (!data.member_id || !data.belt_color) {
+        alert('Debe seleccionar un miembro y un cinturón');
+        return;
+      }
+      try {
+        const res = await fetch(`${API}/api/grades`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + localStorage.getItem('token')
+          },
+          body: JSON.stringify(data)
+        });
+        const result = await res.json();
+        if (!res.ok) throw new Error(result.error);
+        alert('Grado registrado');
+        hideForm('gradeForm');
+        loadGrades();
+      } catch (e) { alert('Error: ' + e.message); }
+    }
+
+    async function deleteGrade(id) {
+      if (!confirm('¿Eliminar grado?')) return;
+      await fetch(`${API}/api/grades/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+      });
+      loadMembers();
+    }
+
+    // Show grade form for a specific member
+    function showGradeForm(memberId) {
+      document.getElementById('gradeMemberId').value = memberId;
+      document.getElementById('gradeDate').value = new Date().toISOString().split('T')[0];
+      document.getElementById('instructorSelect').innerHTML = '<option value="">Cargando instructores...</option>';
+      document.getElementById('gradeNotes').value = '';
+      loadInstructorsForSelect();
+      showForm('gradeFormModal');
+    }
+
+    // Load instructors for select dropdown
+    async function loadInstructorsForSelect() {
+      try {
+        const res = await fetch(`${API}/api/instructors?active=true`, {
+          headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+        });
+        const instructors = await res.json();
+        const select = document.getElementById('instructorSelect');
+        
+        if (!Array.isArray(instructors) || instructors.length === 0) {
+          select.innerHTML = '<option value="">No hay instructores registrados</option>';
+          return;
+        }
+        
+        select.innerHTML = instructors.map(i => 
+          `<option value="${i.name}">${i.name}${i.rank ? ' (' + i.rank + ')' : ''}</option>`
+        ).join('');
+      } catch (e) {
+        console.error('Error loading instructors:', e);
+        document.getElementById('instructorSelect').innerHTML = '<option value="">Error al cargar</option>';
+      }
+    }
+
+    // Show payment form for a specific member
+    function showPaymentForm(memberId) {
+      document.getElementById('payMemberId').value = memberId;
+      document.getElementById('amount').value = '';
+      document.getElementById('paymentType').value = 'monthly';
+      document.getElementById('payDescription').value = '';
+      showForm('paymentFormModal');
+    }
+
+    // Save grade from modal
+    async function saveGradeFromModal() {
+      // Get selected instructors from multi-select
+      const instructorSelect = document.getElementById('instructorSelect');
+      const selectedOptions = Array.from(instructorSelect.selectedOptions)
+        .map(opt => opt.value)
+        .filter(name => name !== '');
+      
+      const otorgadoPor = selectedOptions.join(', ');
+
+      const data = {
+        member_id: parseInt(document.getElementById('gradeMemberId').value),
+        belt_color: document.getElementById('beltColor').value,
+        grade_date: document.getElementById('gradeDate').value,
+        otorgado_por: otorgadoPor,
+        notes: document.getElementById('gradeNotes').value
+      };
+      if (!data.member_id || !data.belt_color) {
+        alert('Debe seleccionar un miembro y un grado');
+        return;
+      }
+      try {
+        const res = await fetch(`${API}/api/grades`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + localStorage.getItem('token')
+          },
+          body: JSON.stringify(data)
+        });
+        const result = await res.json();
+        if (!res.ok) throw new Error(result.error);
+        alert('Grado registrado');
+        hideForm('gradeFormModal');
+        // Clear form
+        instructorSelect.value = '';
+        document.getElementById('gradeNotes').value = '';
+        loadMembers();
+      } catch (e) { alert('Error: ' + e.message); }
+    }
+
+    // Save payment from modal
+    async function savePaymentFromModal() {
+      const data = {
+        member_id: parseInt(document.getElementById('payMemberId').value),
+        amount: parseFloat(document.getElementById('amount').value),
+        payment_type: document.getElementById('paymentType').value,
+        description: document.getElementById('payDescription').value
+      };
+      if (!data.member_id || !data.amount) {
+        alert('Debe seleccionar un miembro y un monto');
+        return;
+      }
+      try {
+        const res = await fetch(`${API}/api/payments`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + localStorage.getItem('token')
+          },
+          body: JSON.stringify(data)
+        });
+        const result = await res.json();
+        if (!res.ok) throw new Error(result.error);
+        alert('Pago registrado');
+        hideForm('paymentFormModal');
+        loadMembers();
+      } catch (e) { alert('Error: ' + e.message); }
+    }
+
+    // Delete grade and reload members
+    async function deleteGradeFromMember(gradeId, memberId) {
+      if (!confirm('¿Eliminar grado?')) return;
+      
+      const token = localStorage.getItem('token');
+      if (!token) {
+        alert('Tu sesión ha expirado. Por favor inicia sesión nuevamente.');
+        window.location.reload();
+        return;
+      }
+      
+      try {
+        const res = await fetch(`${API}/api/grades/${gradeId}`, {
+          method: 'DELETE',
+          headers: { 
+            'Authorization': 'Bearer ' + token,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        const data = await res.json();
+        
+        if (!res.ok) {
+          throw new Error(data.error || 'Error al eliminar grado');
+        }
+        
+        alert('Grado eliminado exitosamente');
+        loadMembers();
+      } catch (e) {
+        alert('Error: ' + e.message);
+      }
+    }
+
+    // Delete payment and reload members
+    async function deletePaymentFromMember(paymentId, memberId) {
+      if (!confirm('¿Eliminar pago?')) return;
+      
+      const token = localStorage.getItem('token');
+      if (!token) {
+        alert('Tu sesión ha expirado. Por favor inicia sesión nuevamente.');
+        window.location.reload();
+        return;
+      }
+      
+      try {
+        const res = await fetch(`${API}/api/payments/${paymentId}`, {
+          method: 'DELETE',
+          headers: { 
+            'Authorization': 'Bearer ' + token,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        const data = await res.json();
+        
+        if (!res.ok) {
+          throw new Error(data.error || 'Error al eliminar pago');
+        }
+        
+        alert('Pago eliminado exitosamente');
+        loadMembers();
+      } catch (e) {
+        alert('Error: ' + e.message);
+      }
+    }
+
+    // Show reset password modal
+    function showResetPasswordModal(memberId, email) {
+      if (!confirm(`¿Resetear contraseña para ${email}? La nueva contraseña será los últimos 4 dígitos del RUT.`)) return;
+      resetPassword(memberId, email);
+    }
+
+    async function resetPassword(memberId, email) {
+      try {
+        const res = await fetch(`${API}/api/auth/reset-password`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + localStorage.getItem('token')
+          },
+          body: JSON.stringify({ member_id: memberId, email })
+        });
+        const result = await res.json();
+        if (!res.ok) throw new Error(result.error);
+        alert('Contraseña reseteada exitosamente. La nueva contraseña son los últimos 4 dígitos del RUT.');
+        loadMembers();
+      } catch (e) { alert('Error: ' + e.message); }
+    }
+
+    // ==================== INSTRUCTOR MANAGEMENT (SECTION) ====================
+
+    // Show instructor form for creating new instructor
+    function showInstructorForm() {
+      document.getElementById('editInstructorIdSection').value = '';
+      document.getElementById('instructorName').value = '';
+      document.getElementById('instructorRank').value = '';
+      document.getElementById('instructorOrganization').value = '';
+      showForm('instructorForm');
+    }
+
+    // Load instructors for the section
+    async function loadInstructorsSection() {
+      try {
+        const res = await fetch(`${API}/api/instructors`, {
+          headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+        });
+        const instructors = await res.json();
+        const container = document.getElementById('instructorsListSection');
+
+        if (!Array.isArray(instructors) || instructors.length === 0) {
+          container.innerHTML = '<p style="color: #999; text-align: center;">No hay instructores registrados</p>';
+          return;
+        }
+
+        container.innerHTML = `
+          <table>
+            <tr><th>Nombre</th><th>Grado</th><th>Organización</th><th>Estado</th><th>Acciones</th></tr>
+            ${instructors.map(i => `
+              <tr>
+                <td>${i.name}</td>
+                <td>${i.rank || '-'}</td>
+                <td>${i.organization || '-'}</td>
+                <td><span class="status-badge ${i.is_active === 1 ? 'status-active' : 'status-inactive'}">${i.is_active === 1 ? 'Activo' : 'Inactivo'}</span></td>
+                <td>
+                  <button class="btn" onclick="editInstructorSection(${i.id}, '${i.name.replace(/'/g, "\\'")}', '${i.rank || ''}', '${i.organization || ''}')" style="font-size: 12px; padding: 5px 10px;">✏️</button>
+                  <button class="btn ${i.is_active === 1 ? 'btn-warning' : 'btn-success'}" onclick="toggleInstructorStatusSection(${i.id})" style="font-size: 12px; padding: 5px 10px;">${i.is_active === 1 ? '🔓' : '🔒'}</button>
+                  <button class="btn btn-danger" onclick="deleteInstructorSection(${i.id})" style="font-size: 12px; padding: 5px 10px;">🗑️</button>
+                </td>
+              </tr>
+            `).join('')}
+          </table>
+        `;
+      } catch (e) {
+        document.getElementById('instructorsListSection').innerHTML = '<p style="color: red; text-align: center;">Error: ' + e.message + '</p>';
+      }
+    }
+
+    // Save instructor from section
+    async function saveInstructorFromSection() {
+      const id = document.getElementById('editInstructorIdSection').value;
+      const name = document.getElementById('instructorName').value.trim();
+      const rank = document.getElementById('instructorRank').value.trim();
+      const organization = document.getElementById('instructorOrganization').value.trim();
+
+      if (!name) {
+        alert('El nombre es requerido');
+        return;
+      }
+
+      try {
+        const res = await fetch(`${API}/api/instructors${id ? '/' + id : ''}`, {
+          method: id ? 'PUT' : 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + localStorage.getItem('token')
+          },
+          body: JSON.stringify({ name, rank, organization })
+        });
+        const result = await res.json();
+        if (!res.ok) throw new Error(result.error);
+        alert(id ? 'Instructor actualizado' : 'Instructor creado');
+        hideForm('instructorForm');
+        loadInstructorsSection();
+      } catch (e) { alert('Error: ' + e.message); }
+    }
+
+    // Edit instructor from section
+    function editInstructorSection(id, name, rank, organization) {
+      document.getElementById('editInstructorIdSection').value = id;
+      document.getElementById('instructorName').value = name;
+      document.getElementById('instructorRank').value = rank;
+      document.getElementById('instructorOrganization').value = organization;
+      showForm('instructorForm');
+    }
+
+    // Toggle instructor status from section
+    async function toggleInstructorStatusSection(id) {
+      try {
+        const res = await fetch(`${API}/api/instructors/${id}/toggle-status`, {
+          method: 'PATCH',
+          headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+        });
+        const result = await res.json();
+        if (!res.ok) throw new Error(result.error);
+        loadInstructorsSection();
+      } catch (e) { alert('Error: ' + e.message); }
+    }
+
+    // Delete instructor from section
+    async function deleteInstructorSection(id) {
+      if (!confirm('¿Eliminar instructor? Esta acción no se puede deshacer.')) return;
+      try {
+        const res = await fetch(`${API}/api/instructors/${id}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+        });
+        const result = await res.json();
+        if (!res.ok) throw new Error(result.error);
+        alert('Instructor eliminado');
+        loadInstructorsSection();
+      } catch (e) { alert('Error: ' + e.message); }
+    }
+
+    // ==================== END INSTRUCTOR MANAGEMENT ====================
+
+    async function loadAttendance() {
+      try {
+        const res = await fetch(`${API}/api/attendance`, {
+          headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+        });
+        const records = await res.json();
+        if (records.length === 0) {
+          document.getElementById('attendanceList').innerHTML = '<p>No hay registros de asistencia</p>';
+          return;
+        }
+        document.getElementById('attendanceList').innerHTML = `
+          <table>
+            <tr><th>ID</th><th>Miembro</th><th>Fecha</th><th>Tipo</th><th>Notas</th><th>Acciones</th></tr>
+            ${records.map(r => `
+              <tr>
+                <td>${r.id}</td>
+                <td>${r.member_name}</td>
+                <td>${r.class_date}</td>
+                <td>${r.class_type}</td>
+                <td>${r.notes || '-'}</td>
+                <td><button class="btn btn-danger" onclick="deleteAttendance(${r.id})">Eliminar</button></td>
+              </tr>
+            `).join('')}
+          </table>
+        `;
+      } catch (e) { document.getElementById('attendanceList').innerHTML = '<p>Error: ' + e.message + '</p>'; }
+    }
+
+    async function saveAttendance() {
+      const data = {
+        member_id: parseInt(document.getElementById('attMemberId').value),
+        class_date: document.getElementById('classDate').value,
+        class_type: document.getElementById('classType').value,
+        notes: document.getElementById('attNotes').value
+      };
+      try {
+        const res = await fetch(`${API}/api/attendance`, {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + localStorage.getItem('token')
+          },
+          body: JSON.stringify(data)
+        });
+        const result = await res.json();
+        if (!res.ok) throw new Error(result.error);
+        alert('Asistencia registrada');
+        hideForm('attendanceForm');
+        loadAttendance();
+      } catch (e) { alert('Error: ' + e.message); }
+    }
+
+    async function deleteAttendance(id) {
+      if (!confirm('¿Eliminar registro?')) return;
+      await fetch(`${API}/api/attendance/${id}`, { 
+        method: 'DELETE',
+        headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+      });
+      loadAttendance();
+    }
+
+    // Helper function to translate payment types to Spanish
+    function getPaymentTypeName(type) {
+      const types = {
+        'monthly': 'Mensualidad',
+        'quarterly': 'Trimestral',
+        'annual': 'Anual',
+        'grading': 'Examen',
+        'competition': 'Competición',
+        'other': 'Otro'
+      };
+      return types[type] || type;
+    }
+
+    async function loadPayments() {
+      try {
+        const res = await fetch(`${API}/api/payments`, {
+          headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+        });
+        const payments = await res.json();
+        if (payments.length === 0) {
+          document.getElementById('paymentsList').innerHTML = '<p>No hay pagos registrados</p>';
+          return;
+        }
+        document.getElementById('paymentsList').innerHTML = `
+          <table>
+            <tr><th>ID</th><th>Miembro</th><th>Monto</th><th>Tipo</th><th>Descripción</th><th>Fecha</th><th>Acciones</th></tr>
+            ${payments.map(p => `
+              <tr>
+                <td>${p.id}</td>
+                <td>${p.member_name}</td>
+                <td>$${p.amount.toFixed(0)}</td>
+                <td>${getPaymentTypeName(p.payment_type)}</td>
+                <td>${p.description || '-'}</td>
+                <td>${formatDateChile(p.payment_date)}</td>
+                <td><button class="btn btn-danger" onclick="deletePayment(${p.id})">Eliminar</button></td>
+              </tr>
+            `).join('')}
+          </table>
+        `;
+      } catch (e) { document.getElementById('paymentsList').innerHTML = '<p>Error: ' + e.message + '</p>'; }
+    }
+
+    async function savePayment() {
+      const data = {
+        member_id: parseInt(document.getElementById('payMemberId').value),
+        amount: parseFloat(document.getElementById('amount').value),
+        payment_type: document.getElementById('paymentType').value,
+        description: document.getElementById('payDescription').value
+      };
+      try {
+        const res = await fetch(`${API}/api/payments`, {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + localStorage.getItem('token')
+          },
+          body: JSON.stringify(data)
+        });
+        const result = await res.json();
+        if (!res.ok) throw new Error(result.error);
+        alert('Pago registrado');
+        hideForm('paymentForm');
+        loadPayments();
+        loadStats();
+      } catch (e) { alert('Error: ' + e.message); }
+    }
+
+    async function deletePayment(id) {
+      if (!confirm('¿Eliminar pago?')) return;
+      await fetch(`${API}/api/payments/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+      });
+      loadPayments();
+      loadStats();
+    }
+
+    // News functions
+    async function loadNews() {
+      try {
+        const res = await fetch(`${API}/api/news`, {
+          headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+        });
+        const news = await res.json();
+        const newsHTML = news.length === 0 ? '<p>No hay noticias publicadas</p>' : news.map(n => `
+          <div class="news-card">
+            <h3>${n.title}</h3>
+            <div class="meta">
+              <span>���� ${n.created_at}</span> • 
+              <span>✍�� ${n.author_email || 'Admin'}</span>
+              ${currentUser?.role === 'admin' ? `<button class="btn btn-danger" style="float: right; padding: 2px 10px; font-size: 12px;" onclick="deleteNews(${n.id})">Eliminar</button>` : ''}
+            </div>
+            <div class="content">${n.content}</div>
+            ${n.file_path ? `
+              <div class="attachment">
+                ${n.file_type?.startsWith('image/') ? `
+                  <a href="${n.file_path}" target="_blank">
+                    <img src="${n.file_path}" alt="${n.file_name}">
+                  </a>
+                ` : `
+                  <a href="${n.file_path}" target="_blank">📎 ${n.file_name}</a>
+                `}
+              </div>
+            ` : ''}
+          </div>
+        `).join('');
+        
+        document.getElementById('newsList').innerHTML = newsHTML;
+        document.getElementById('memberNewsList').innerHTML = newsHTML;
+      } catch (e) { 
+        document.getElementById('newsList').innerHTML = '<p>Error: ' + e.message + '</p>';
+        document.getElementById('memberNewsList').innerHTML = '<p>Error: ' + e.message + '</p>';
+      }
+    }
+
+    async function saveNews() {
+      const title = document.getElementById('newsTitle').value;
+      const content = document.getElementById('newsContent').value;
+      const fileInput = document.getElementById('newsFile');
+      
+      if (!title || !content) {
+        alert('Título y contenido son requeridos');
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('title', title);
+      formData.append('content', content);
+      if (fileInput.files[0]) {
+        formData.append('file', fileInput.files[0]);
+      }
+
+      try {
+        const res = await fetch(`${API}/api/news`, {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') },
+          body: formData
+        });
+        const result = await res.json();
+        if (!res.ok) throw new Error(result.error);
+        alert('Noticia publicada');
+        hideForm('newsForm');
+        document.getElementById('newsTitle').value = '';
+        document.getElementById('newsContent').value = '';
+        document.getElementById('newsFile').value = '';
+        loadNews();
+      } catch (e) { alert('Error: ' + e.message); }
+    }
+
+    async function deleteNews(id) {
+      if (!confirm('¿Eliminar noticia?')) return;
+      await fetch(`${API}/api/news/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+      });
+      loadNews();
+    }
+
+    // Member portal functions
+    async function loadMyInfo() {
+      if (!currentUser?.member_id) {
+        document.getElementById('myInfo').innerHTML = '<p>No tienes información de miembro asociada</p>';
+        return;
+      }
+      try {
+        const res = await fetch(`${API}/api/members/${currentUser.member_id}`, {
+          headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+        });
+        const member = await res.json();
+        document.getElementById('myInfo').innerHTML = `
+          <p><strong>Nombre:</strong> ${member.first_name} ${member.last_name}</p>
+          <p><strong>Email:</strong> ${member.email || '-'}</p>
+          <p><strong>Teléfono:</strong> ${member.phone || '-'}</p>
+          <p><strong>Estado:</strong> <span class="status-badge status-${member.status}">${member.status}</span></p>
+        `;
+      } catch (e) { document.getElementById('myInfo').innerHTML = '<p>Error: ' + e.message + '</p>'; }
+    }
+
+    async function loadMyGrade() {
+      if (!currentUser?.member_id) return;
+      try {
+        const res = await fetch(`${API}/api/grades/member/${currentUser.member_id}`, {
+          headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+        });
+        const grades = await res.json();
+        if (grades.length === 0) {
+          document.getElementById('myGrade').innerHTML = '<p>Sin grados registrados</p>';
+          return;
+        }
+        const currentGrade = grades[0];
+        document.getElementById('myGrade').innerHTML = `
+          <p><strong>Grado:</strong> ${getBeltName(currentGrade.belt_color)}</p>
+          <p><strong>Fecha:</strong> ${formatDateChile(currentGrade.grade_date)}</p>
+          <p><strong>Instructor:</strong> ${currentGrade.instructor || '-'}</p>
+        `;
+      } catch (e) { document.getElementById('myGrade').innerHTML = '<p>Error: ' + e.message + '</p>'; }
+    }
+
+    async function loadMyAttendance() {
+      if (!currentUser?.member_id) return;
+      try {
+        const res = await fetch(`${API}/api/attendance?member_id=${currentUser.member_id}`, {
+          headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+        });
+        const records = await res.json();
+        if (records.length === 0) {
+          document.getElementById('myAttendance').innerHTML = '<p>Sin registros de asistencia</p>';
+          return;
+        }
+        document.getElementById('myAttendance').innerHTML = `
+          <table>
+            <tr><th>Fecha</th><th>Tipo</th><th>Notas</th></tr>
+            ${records.map(r => `<tr><td>${r.class_date}</td><td>${r.class_type}</td><td>${r.notes || '-'}</td></tr>`).join('')}
+          </table>
+        `;
+      } catch (e) { document.getElementById('myAttendance').innerHTML = '<p>Error: ' + e.message + '</p>'; }
+    }
+
+    async function loadMyPayments() {
+      if (!currentUser?.member_id) return;
+      try {
+        const res = await fetch(`${API}/api/payments?member_id=${currentUser.member_id}`, {
+          headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+        });
+        const payments = await res.json();
+        if (payments.length === 0) {
+          document.getElementById('myPayments').innerHTML = '<p>Sin pagos registrados</p>';
+          return;
+        }
+        document.getElementById('myPayments').innerHTML = `
+          <table>
+            <tr><th>Fecha</th><th>Tipo</th><th>Monto</th><th>Descripci��n</th></tr>
+            ${payments.map(p => `<tr><td>${p.payment_date}</td><td>${p.payment_type}</td><td>${p.amount.toFixed(0)}$</td><td>${p.description || '-'}</td></tr>`).join('')}
+          </table>
+        `;
+      } catch (e) { document.getElementById('myPayments').innerHTML = '<p>Error: ' + e.message + '</p>'; }
+    }
+
+    async function loadMyInfo() {
+      if (!currentUser?.member_id) {
+        document.getElementById('myInfo').innerHTML = '<p>No tienes información de miembro asociada</p>';
+        return;
+      }
+      try {
+        const res = await fetch(`${API}/api/members/${currentUser.member_id}`, {
+          headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+        });
+        const member = await res.json();
+        document.getElementById('myInfo').innerHTML = `
+          <p><strong>Nombre:</strong> ${member.first_name} ${member.last_name}</p>
+          <p><strong>Email:</strong> ${member.email || '-'}</p>
+          <p><strong>Teléfono:</strong> ${member.phone || '-'}</p>
+          <p><strong>Estado:</strong> <span class="status-badge status-${member.status}">${member.status}</span></p>
+        `;
+        loadMyGrade();
+        loadMyAttendance();
+        loadMyPayments();
+      } catch (e) { document.getElementById('myInfo').innerHTML = '<p>Error: ' + e.message + '</p>'; }
+    }
+
+    // Initialize
+    loadConfig();
+    const token = localStorage.getItem('token');
+    if (token) {
+      document.getElementById('loginView').classList.add('hidden');
+      document.getElementById('appView').classList.remove('hidden');
+      initApp();
+    }
+  </script>
+</body>
+</html>

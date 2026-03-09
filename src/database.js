@@ -106,4 +106,76 @@ try {
   db.exec(`ALTER TABLE members ADD COLUMN rut TEXT UNIQUE`);
 } catch (e) { /* Column may already exist */ }
 
+// Add new fields for judoka profile
+try {
+  db.exec(`ALTER TABLE members ADD COLUMN profession TEXT`);
+} catch (e) { /* Column may already exist */ }
+try {
+  db.exec(`ALTER TABLE members ADD COLUMN weight REAL`);
+} catch (e) { /* Column may already exist */ }
+try {
+  db.exec(`ALTER TABLE members ADD COLUMN medical_conditions TEXT`);
+} catch (e) { /* Column may already exist */ }
+try {
+  db.exec(`ALTER TABLE members ADD COLUMN is_guardian INTEGER DEFAULT 0`);
+} catch (e) { /* Column may already exist */ }
+
+// Create guardian info table
+db.exec(`
+  CREATE TABLE IF NOT EXISTS guardian_info (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    member_id INTEGER NOT NULL,
+    full_name TEXT NOT NULL,
+    rut TEXT NOT NULL,
+    date_of_birth TEXT,
+    address TEXT,
+    email TEXT,
+    phone TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (member_id) REFERENCES members(id) ON DELETE CASCADE
+  );
+`);
+
+// Create instructors table
+db.exec(`
+  CREATE TABLE IF NOT EXISTS instructors (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    rank TEXT,
+    organization TEXT,
+    is_active INTEGER DEFAULT 1,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+`);
+
+// Create belt grade history table (for tracking grade dates)
+db.exec(`
+  CREATE TABLE IF NOT EXISTS belt_grade_history (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    member_id INTEGER NOT NULL,
+    belt_color TEXT NOT NULL,
+    grade_date TEXT NOT NULL,
+    instructor TEXT,
+    notes TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (member_id) REFERENCES members(id) ON DELETE CASCADE
+  );
+`);
+
+// Migrate existing belt_grades to belt_grade_history
+try {
+  const existingGrades = db.prepare('SELECT * FROM belt_grades').all();
+  if (existingGrades.length > 0) {
+    const insert = db.prepare(`
+      INSERT OR IGNORE INTO belt_grade_history (member_id, belt_color, grade_date, instructor, notes)
+      VALUES (?, ?, ?, ?, ?)
+    `);
+    for (const grade of existingGrades) {
+      insert.run(grade.member_id, grade.belt_color, grade.grade_date, grade.instructor, grade.notes);
+    }
+  }
+} catch (e) { /* Migration may have already occurred */ }
+
 module.exports = db;

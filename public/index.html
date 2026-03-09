@@ -3,67 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <title>Club de Judo</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; padding: 20px; }
-    .container { max-width: 1200px; margin: 0 auto; }
-    h1 { color: #333; margin-bottom: 20px; text-align: center; }
-    h2 { color: #555; margin: 20px 0 10px; border-bottom: 2px solid #0066cc; padding-bottom: 5px; }
-    .section { background: white; border-radius: 8px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-    .btn { background: #0066cc; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin: 5px; }
-    .btn:hover { background: #0055aa; }
-    .btn-success { background: #28a745; }
-    .btn-success:hover { background: #218838; }
-    .btn-danger { background: #dc3545; }
-    .btn-danger:hover { background: #c82333; }
-    .btn-warning { background: #ffc107; color: #333; }
-    .btn-warning:hover { background: #e0a800; }
-    input, select, textarea { padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin: 5px; width: 200px; }
-    textarea { width: 300px; height: 80px; }
-    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-    th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
-    th { background: #0066cc; color: white; }
-    tr:hover { background: #f9f9f9; }
-    .status-badge { padding: 4px 8px; border-radius: 12px; font-size: 12px; }
-    .status-active { background: #d4edda; color: #155724; }
-    .status-inactive { background: #f8d7da; color: #721c24; }
-    .form-row { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 10px; }
-    .result { background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 5px; padding: 15px; margin-top: 15px; max-height: 300px; overflow: auto; }
-    .result pre { white-space: pre-wrap; word-wrap: break-word; }
-    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
-    .stat-card { background: linear-gradient(135deg, #0066cc, #0099ff); color: white; padding: 20px; border-radius: 8px; text-align: center; }
-    .stat-card h3 { font-size: 32px; margin-bottom: 5px; }
-    .stat-card p { opacity: 0.9; }
-    .hidden { display: none; }
-    
-    /* Login styles */
-    .login-container { max-width: 400px; margin: 100px auto; padding: 40px; background: white; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); }
-    .login-container h1 { text-align: center; color: #0066cc; margin-bottom: 30px; }
-    .login-container input { width: 100%; margin: 10px 0; }
-    .login-container .btn { width: 100%; margin: 10px 0; }
-    .login-error { background: #f8d7da; color: #721c24; padding: 10px; border-radius: 5px; margin-bottom: 15px; }
-    
-    /* Header */
-    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 15px 20px; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-    .header h1 { margin: 0; text-align: left; }
-    .user-info { display: flex; align-items: center; gap: 15px; }
-    .user-info span { color: #666; }
-    .role-badge { padding: 4px 12px; border-radius: 12px; font-size: 12px; background: #0066cc; color: white; }
-    
-    /* Member portal */
-    .member-portal { background: linear-gradient(135deg, #28a745, #20c997); }
-    
-    /* News styles */
-    .news-card { background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px; padding: 15px; margin-bottom: 15px; }
-    .news-card h3 { color: #0066cc; margin-bottom: 10px; }
-    .news-card .meta { color: #666; font-size: 12px; margin-bottom: 10px; }
-    .news-card .content { line-height: 1.6; }
-    .news-card .attachment { margin-top: 10px; padding: 8px; background: #e9ecef; border-radius: 5px; }
-    .news-card .attachment a { color: #0066cc; text-decoration: none; }
-    .news-card .attachment img { max-width: 100%; max-height: 300px; border-radius: 5px; margin-top: 10px; }
-    .news-form textarea { width: 100%; height: 120px; }
-  </style>
+  <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
   <!-- Login View -->
@@ -88,8 +32,8 @@
     </div>
 
     <!-- Change Password Modal -->
-    <div id="changePasswordForm" class="hidden" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); z-index: 1000; min-width: 350px;">
-      <h3 style="margin-bottom: 15px;">🔑 Cambiar Contraseña</h3>
+    <div id="changePasswordForm" class="modal hidden">
+      <h3>🔑 Cambiar Contraseña</h3>
       <div style="display: flex; flex-direction: column; gap: 10px;">
         <input type="password" id="currentPassword" placeholder="Contraseña actual" style="width: 100%;">
         <input type="password" id="newPassword" placeholder="Nueva contraseña" style="width: 100%;">
@@ -101,1032 +45,276 @@
       </div>
     </div>
 
-    <!-- Stats Section -->
-    <div class="section">
-      <h2>📊 Dashboard</h2>
-      <button class="btn" onclick="loadStats()">Actualizar Estadísticas</button>
-      <div id="stats" class="stats-grid" style="margin-top: 15px;"></div>
-    </div>
-
-    <!-- News Section -->
-    <div class="section">
-      <h2>📰 Noticias</h2>
-      <div id="adminNewsPanel" class="hidden">
-        <button class="btn btn-success" onclick="showForm('newsForm')">Nueva Noticia</button>
-        
-        <div id="newsForm" class="hidden news-form" style="margin-top: 15px; padding: 15px; background: #f8f9fa; border-radius: 5px;">
-          <h3>Crear Noticia</h3>
-          <div class="form-row" style="flex-direction: column;">
-            <input type="text" id="newsTitle" placeholder="Título" style="width: 100%;">
-            <textarea id="newsContent" placeholder="Contenido de la noticia..." style="width: 100%; height: 120px;"></textarea>
-            <input type="file" id="newsFile" accept="image/*,.pdf,.doc,.docx,.txt" style="width: 100%;">
-          </div>
-          <button class="btn btn-success" onclick="saveNews()">Publicar</button>
-          <button class="btn" onclick="hideForm('newsForm')">Cancelar</button>
-        </div>
-      </div>
-      <button class="btn" onclick="loadNews()">Actualizar Noticias</button>
-      <div id="newsList" style="margin-top: 15px;"></div>
-    </div>
-
     <!-- Admin Panel -->
     <div id="adminPanel" class="hidden">
-      <!-- Members Section -->
-      <div class="section">
-        <h2>👥 Miembros</h2>
-        <button class="btn" onclick="loadMembers()">Cargar Miembros</button>
-        <button class="btn btn-success" onclick="showForm('memberForm')">Nuevo Miembro</button>
-        <button class="btn btn-success" onclick="showForm('userForm')">Crear Usuario</button>
-        
-        <div id="memberForm" class="hidden" style="margin-top: 15px; padding: 15px; background: #f8f9fa; border-radius: 5px;">
-          <h3>Crear/Editar Miembro</h3>
-          <div class="form-row">
-            <div style="width: 100%; display: flex; gap: 10px; align-items: center;">
-              <input type="text" id="rut" placeholder="RUT (ej: 16664930-7)" style="width: 100%;" oninput="formatRut(this)" onchange="checkRutValidity(this)">
-              <span id="rutStatus" style="font-size: 20px;"></span>
+      <div class="main-layout">
+        <!-- Left Sidebar -->
+        <div class="sidebar">
+          <h3>🥋 Menú</h3>
+          <nav>
+            <button class="btn" onclick="showSection('dashboard')">📊 Dashboard</button>
+            <button class="btn" onclick="showSection('members')">👥 Miembros</button>
+            <button class="btn" onclick="showSection('instructors')">🥋 Instructores</button>
+            <button class="btn" onclick="showSection('attendance')">📅 Asistencia</button>
+            <button class="btn" onclick="showSection('news')">📰 Noticias</button>
+          </nav>
+        </div>
+
+        <!-- Right Content -->
+        <div class="content-area">
+          <!-- Dashboard -->
+          <div id="dashboardSection" class="content-section">
+            <div class="section">
+              <h2>📊 Dashboard</h2>
+              <button class="btn" onclick="loadStats()">Actualizar Estadísticas</button>
+              <div id="stats" class="stats-grid" style="margin-top: 15px;"></div>
             </div>
-            <input type="text" id="firstName" placeholder="Nombre" style="width: 100%;">
-            <input type="text" id="lastName" placeholder="Apellido" style="width: 100%;">
-            <input type="email" id="email" placeholder="Email" style="width: 100%;">
-            <input type="tel" id="phone" placeholder="Teléfono" style="width: 100%;">
-            <input type="date" id="dob" placeholder="Fecha nacimiento" style="width: 100%;">
-            <input type="text" id="address" placeholder="Dirección" style="width: 100%;">
-            <input type="text" id="emergencyContact" placeholder="Contacto emergencia" style="width: 100%;">
-            <input type="text" id="medicalInfo" placeholder="Info médica" style="width: 100%;">
-            <select id="memberType" style="width: 100%;">
-              <option value="judoca">Judoca (practica judo)</option>
-              <option value="member">Miembro (solo directiva/familia)</option>
-            </select>
-            <div style="width: 100%; display: flex; align-items: center; gap: 10px; margin-top: 10px;">
-              <input type="checkbox" id="isBoardMember" style="width: auto;">
-              <label for="isBoardMember">Pertenece a la Directiva</label>
-            </div>
-            <input type="text" id="boardPosition" placeholder="Cargo en la directiva (ej: Presidente, Secretario)" style="width: 100%;">
           </div>
+
+          <!-- Members -->
+          <div id="membersSection" class="content-section hidden">
+            <div class="section" style="padding: 0;">
+              <div class="members-layout">
+                <div class="members-list-container">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <h2 style="margin: 0; font-size: 18px;">👥 Miembros</h2>
+                    <button class="btn btn-success" onclick="showForm('memberForm')" style="font-size: 12px; padding: 5px 10px;">+ Nuevo</button>
+                  </div>
+                  <input type="text" id="memberSearch" class="search-input" placeholder="🔍 Buscar miembro..." onkeyup="filterMembers()">
+                  <div id="membersList" style="max-height: 500px; overflow-y: auto;"></div>
+                </div>
+                <div class="member-detail">
+                  <div id="memberDetail">
+                    <div style="text-align: center; color: #999; padding: 50px;">
+                      <p style="font-size: 48px;">👈</p>
+                      <p>Selecciona un miembro para ver su información</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Instructors -->
+          <div id="instructorsSection" class="content-section hidden">
+            <div class="section">
+              <h2>🥋 Instructores</h2>
+              <button class="btn" onclick="loadInstructorsSection()">Cargar Instructores</button>
+              <button class="btn btn-success" onclick="showInstructorForm()">Nuevo Instructor</button>
+              <div id="instructorForm" class="hidden" style="margin-top: 15px; padding: 15px; background: #f8f9fa; border-radius: 5px;">
+                <h3>Crear/Editar Instructor</h3>
+                <div class="form-row" style="flex-direction: column;">
+                  <input type="text" id="instructorName" placeholder="Nombre completo" style="width: 100%;">
+                  <input type="text" id="instructorRank" placeholder="Grado/Rank" style="width: 100%;">
+                  <input type="text" id="instructorOrganization" placeholder="Organización" style="width: 100%;">
+                </div>
+                <div style="margin-top: 15px; display: flex; gap: 10px;">
+                  <button class="btn btn-success" onclick="saveInstructorFromSection()">Guardar</button>
+                  <button class="btn" onclick="hideForm('instructorForm')">Cancelar</button>
+                </div>
+                <input type="hidden" id="editInstructorIdSection">
+              </div>
+              <div id="instructorsListSection" class="result" style="margin-top: 15px;"></div>
+            </div>
+          </div>
+
+          <!-- Attendance -->
+          <div id="attendanceSection" class="content-section hidden">
+            <div class="section">
+              <h2>📅 Asistencia</h2>
+              <button class="btn" onclick="loadAttendance()">Cargar Asistencia</button>
+              <button class="btn btn-success" onclick="showForm('attendanceForm')">Registrar Asistencia</button>
+              <div id="attendanceForm" class="hidden" style="margin-top: 15px; padding: 15px; background: #f8f9fa; border-radius: 5px;">
+                <h3>Registrar Asistencia</h3>
+                <div class="form-row">
+                  <select id="attMemberId" style="width: 250px;"><option value="">Seleccionar miembro</option></select>
+                  <input type="date" id="classDate" placeholder="Fecha clase">
+                  <select id="classType">
+                    <option value="regular">Regular</option>
+                    <option value="competition">Competición</option>
+                    <option value="grading">Examen</option>
+                    <option value="special">Especial</option>
+                  </select>
+                  <input type="text" id="attNotes" placeholder="Notas">
+                </div>
+                <button class="btn btn-success" onclick="saveAttendance()">Guardar</button>
+                <button class="btn" onclick="hideForm('attendanceForm')">Cancelar</button>
+              </div>
+              <div id="attendanceList" class="result"></div>
+            </div>
+          </div>
+
+          <!-- News -->
+          <div id="newsSection" class="content-section hidden">
+            <div class="section">
+              <h2>📰 Noticias</h2>
+              <div id="adminNewsPanel">
+                <button class="btn btn-success" onclick="showForm('newsForm')">Nueva Noticia</button>
+                <div id="newsForm" class="hidden" style="margin-top: 15px; padding: 15px; background: #f8f9fa; border-radius: 5px;">
+                  <h3>Crear Noticia</h3>
+                  <div class="form-row" style="flex-direction: column;">
+                    <input type="text" id="newsTitle" placeholder="Título" style="width: 100%;">
+                    <textarea id="newsContent" placeholder="Contenido..." style="width: 100%; height: 120px;"></textarea>
+                    <input type="file" id="newsFile" accept="image/*,.pdf,.doc,.docx,.txt" style="width: 100%;">
+                  </div>
+                  <button class="btn btn-success" onclick="saveNews()">Publicar</button>
+                  <button class="btn" onclick="hideForm('newsForm')">Cancelar</button>
+                </div>
+              </div>
+              <button class="btn" onclick="loadNews()">Actualizar Noticias</button>
+              <div id="newsList" style="margin-top: 15px;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Member Form Modal -->
+      <div id="memberForm" class="modal hidden">
+        <h3>Crear/Editar Miembro</h3>
+        <h4>📋 Datos Personales</h4>
+        <div class="form-row">
+          <div style="width: 100%; display: flex; gap: 10px; align-items: center;">
+            <input type="text" id="rut" placeholder="RUT" style="width: 100%;" oninput="formatRut(this)" onchange="checkRutValidity(this)">
+            <span id="rutStatus" style="font-size: 20px;"></span>
+          </div>
+          <input type="text" id="firstName" placeholder="Nombre" style="width: 100%;">
+          <input type="text" id="lastName" placeholder="Apellido" style="width: 100%;">
+          <input type="email" id="email" placeholder="Email" style="width: 100%;">
+          <input type="tel" id="phone" placeholder="Teléfono" style="width: 100%;">
+          <input type="date" id="dob" placeholder="Fecha nacimiento" style="width: 100%;">
+          <input type="text" id="address" placeholder="Dirección" style="width: 100%;">
+          <input type="text" id="profession" placeholder="Profesión" style="width: 100%;">
+        </div>
+        <h4>🥋 Datos de Judo</h4>
+        <div class="form-row">
+          <select id="memberType" style="width: 100%;">
+            <option value="judoca">Judoca</option>
+            <option value="member">Miembro</option>
+          </select>
+          <input type="number" id="weight" placeholder="Peso (kg)" step="0.1" style="width: 100%;">
+          <div style="width: 100%; display: flex; align-items: center; gap: 10px; margin-top: 10px;">
+            <input type="checkbox" id="isBoardMember" style="width: auto;">
+            <label for="isBoardMember">Directiva</label>
+          </div>
+          <input type="text" id="boardPosition" placeholder="Cargo" style="width: 100%;">
+        </div>
+        <h4>⚠️ Información Médica</h4>
+        <div class="form-row">
+          <input type="text" id="emergencyContact" placeholder="Contacto emergencia" style="width: 100%;">
+          <input type="text" id="medicalInfo" placeholder="Info médica" style="width: 100%;">
+          <input type="text" id="medicalConditions" placeholder="Enfermedad base" style="width: 100%;">
+        </div>
+        <h4>👤 Apoderado</h4>
+        <div class="form-row">
+          <div style="width: 100%; display: flex; align-items: center; gap: 10px;">
+            <input type="checkbox" id="isGuardian" style="width: auto;" onchange="toggleGuardianForm()">
+            <label for="isGuardian">¿Es apoderado?</label>
+          </div>
+        </div>
+        <div id="guardianForm" class="hidden" style="margin-top: 10px; padding: 15px; background: #e9ecef; border-radius: 5px;">
+          <div class="form-row" style="flex-direction: column;">
+            <input type="text" id="guardianName" placeholder="Nombre" style="width: 100%;">
+            <input type="text" id="guardianRut" placeholder="RUT" style="width: 100%;" oninput="formatRut(this)">
+            <input type="date" id="guardianDob" placeholder="Fecha nacimiento" style="width: 100%;">
+            <input type="text" id="guardianAddress" placeholder="Dirección" style="width: 100%;">
+            <input type="email" id="guardianEmail" placeholder="Email" style="width: 100%;">
+            <input type="tel" id="guardianPhone" placeholder="Teléfono" style="width: 100%;">
+          </div>
+        </div>
+        <h4>🔐 Usuario</h4>
+        <div class="form-row">
+          <div style="width: 100%; display: flex; align-items: center; gap: 10px;">
+            <input type="checkbox" id="createUser" style="width: auto;" onchange="toggleUserForm()">
+            <label for="createUser">Crear usuario</label>
+          </div>
+        </div>
+        <div id="createUserForm" class="hidden" style="margin-top: 10px; padding: 15px; background: #e9ecef; border-radius: 5px;">
+          <select id="userRole" style="width: 100%;"><option value="member">Miembro</option><option value="admin">Admin</option></select>
+          <small>Contraseña: últimos 4 dígitos del RUT</small>
+        </div>
+        <div style="margin-top: 20px; display: flex; gap: 10px;">
           <button class="btn btn-success" onclick="saveMember()">Guardar</button>
           <button class="btn" onclick="hideForm('memberForm')">Cancelar</button>
-          <input type="hidden" id="memberId">
         </div>
-
-        <div id="userForm" class="hidden" style="margin-top: 15px; padding: 15px; background: #f8f9fa; border-radius: 5px;">
-          <h3>Crear Usuario</h3>
-          <div class="form-row">
-            <select id="userMemberSelect" style="width: 100%;" onchange="autoFillUserEmail()">
-              <option value="">Seleccionar miembro (el email y contraseña se completarán automáticamente)</option>
-            </select>
-            <input type="email" id="userEmail" placeholder="Email del miembro" style="width: 100%;" readonly>
-            <input type="text" id="userPassword" placeholder="Contraseña temporal" style="width: 100%;" readonly>
-            <small style="width: 100%; color: #666;">💡 La contraseña son los últimos 4 dígitos del RUT. El usuario puede cambiarla al ingresar.</small>
-            <select id="userRole" style="width: 100%;">
-              <option value="member">Miembro (solo ve su información)</option>
-              <option value="admin">Administrador (acceso completo)</option>
-            </select>
-          </div>
-          <button class="btn btn-success" onclick="saveUser()">Guardar</button>
-          <button class="btn" onclick="hideForm('userForm')">Cancelar</button>
-        </div>
-
-        <div id="membersList" class="result"></div>
+        <input type="hidden" id="memberId">
       </div>
 
-      <!-- Users Management Section -->
-      <div class="section">
-        <h2>🔐 Gestión de Usuarios</h2>
-        <button class="btn" onclick="loadUsers()">Cargar Usuarios</button>
-        <button class="btn btn-success" onclick="showForm('userForm')">Crear Usuario</button>
-        
-        <div id="usersList" class="result" style="margin-top: 15px;"></div>
+      <!-- Grade Form Modal -->
+      <div id="gradeFormModal" class="modal hidden">
+        <h3>🎗️ Registrar Grado</h3>
+        <select id="gradeMemberId" style="width: 100%;"><option value="">Seleccionar miembro</option></select>
+        <select id="beltColor" style="width: 100%; margin-top: 10px;">
+          <option value="">Seleccionar grado</option>
+          <optgroup label="Grados Kyu">
+            <option value="9no kyu">9no Kyu</option><option value="8vo kyu">8vo Kyu</option>
+            <option value="7mo kyu">7mo Kyu</option><option value="6to kyu">6to Kyu</option>
+            <option value="5to kyu">5to Kyu</option><option value="4to kyu">4to Kyu</option>
+            <option value="3er kyu">3er Kyu</option><option value="2do kyu">2do Kyu</option>
+            <option value="1er kyu">1er Kyu</option>
+          </optgroup>
+          <optgroup label="Grados Dan">
+            <option value="1er dan">1er Dan</option><option value="2do dan">2do Dan</option>
+            <option value="3er dan">3er Dan</option><option value="4to dan">4to Dan</option>
+            <option value="5to dan">5to Dan</option><option value="6to dan">6to Dan</option>
+            <option value="7mo dan">7mo Dan</option><option value="8vo dan">8vo Dan</option>
+            <option value="9no dan">9no Dan</option><option value="10mo dan">10mo Dan</option>
+          </optgroup>
+        </select>
+        <input type="date" id="gradeDate" placeholder="Fecha" style="width: 100%; margin-top: 10px;">
+        <label style="display: block; margin: 10px 0 5px; font-weight: bold;">📜 Otorgado Por:</label>
+        <select id="instructorSelect" multiple style="width: 100%; height: 100px;"></select>
+        <small>💡 Ctrl/Cmd + Click para múltiples</small>
+        <input type="text" id="gradeNotes" placeholder="Notas" style="width: 100%; margin-top: 10px;">
+        <div style="margin-top: 20px; display: flex; gap: 10px;">
+          <button class="btn btn-success" onclick="saveGradeFromModal()">Guardar</button>
+          <button class="btn" onclick="hideForm('gradeFormModal')">Cancelar</button>
+        </div>
       </div>
 
-      <!-- Grades Section -->
-      <div class="section">
-        <h2>🎗️ Grados (Cinturones)</h2>
-        <button class="btn" onclick="loadGrades()">Cargar Grados</button>
-        <button class="btn btn-success" onclick="showForm('gradeForm')">Registrar Grado</button>
-        
-        <div id="gradeForm" class="hidden" style="margin-top: 15px; padding: 15px; background: #f8f9fa; border-radius: 5px;">
-          <h3>Registrar Nuevo Grado</h3>
-          <div class="form-row">
-            <select id="gradeMemberId" style="width: 250px;">
-              <option value="">Seleccionar miembro</option>
-            </select>
-            <select id="beltColor">
-              <option value="">Seleccionar cinturón</option>
-              <option value="white">Blanco</option>
-              <option value="yellow">Amarillo</option>
-              <option value="orange">Naranja</option>
-              <option value="green">Verde</option>
-              <option value="blue">Azul</option>
-              <option value="brown">Marrón</option>
-              <option value="black">Negro</option>
-            </select>
-            <input type="text" id="instructor" placeholder="Instructor">
-            <input type="text" id="gradeNotes" placeholder="Notas">
-          </div>
-          <button class="btn btn-success" onclick="saveGrade()">Guardar</button>
-          <button class="btn" onclick="hideForm('gradeForm')">Cancelar</button>
+      <!-- Payment Form Modal -->
+      <div id="paymentFormModal" class="modal hidden">
+        <h3>💰 Registrar Pago</h3>
+        <select id="payMemberId" style="width: 100%;"><option value="">Seleccionar miembro</option></select>
+        <input type="number" id="amount" placeholder="Monto ($)" step="1" style="width: 100%;">
+        <select id="paymentType" style="width: 100%;">
+          <option value="monthly">Mensualidad</option><option value="quarterly">Trimestral</option>
+          <option value="annual">Anual</option><option value="grading">Examen</option>
+          <option value="competition">Competición</option><option value="other">Otro</option>
+        </select>
+        <input type="text" id="payDescription" placeholder="Descripción" style="width: 100%;">
+        <div style="margin-top: 20px; display: flex; gap: 10px;">
+          <button class="btn btn-success" onclick="savePaymentFromModal()">Guardar</button>
+          <button class="btn" onclick="hideForm('paymentFormModal')">Cancelar</button>
         </div>
-
-        <div id="gradesList" class="result"></div>
-      </div>
-
-      <!-- Attendance Section -->
-      <div class="section">
-        <h2>📅 Asistencia</h2>
-        <button class="btn" onclick="loadAttendance()">Cargar Asistencia</button>
-        <button class="btn btn-success" onclick="showForm('attendanceForm')">Registrar Asistencia</button>
-        
-        <div id="attendanceForm" class="hidden" style="margin-top: 15px; padding: 15px; background: #f8f9fa; border-radius: 5px;">
-          <h3>Registrar Asistencia</h3>
-          <div class="form-row">
-            <select id="attMemberId" style="width: 250px;">
-              <option value="">Seleccionar miembro</option>
-            </select>
-            <input type="date" id="classDate" placeholder="Fecha clase">
-            <select id="classType">
-              <option value="regular">Regular</option>
-              <option value="competition">Competición</option>
-              <option value="grading">Examen</option>
-              <option value="special">Especial</option>
-            </select>
-            <input type="text" id="attNotes" placeholder="Notas">
-          </div>
-          <button class="btn btn-success" onclick="saveAttendance()">Guardar</button>
-          <button class="btn" onclick="hideForm('attendanceForm')">Cancelar</button>
-        </div>
-
-        <div id="attendanceList" class="result"></div>
-      </div>
-
-      <!-- Payments Section -->
-      <div class="section">
-        <h2>💰 Pagos</h2>
-        <button class="btn" onclick="loadPayments()">Cargar Pagos</button>
-        <button class="btn btn-success" onclick="showForm('paymentForm')">Registrar Pago</button>
-        
-        <div id="paymentForm" class="hidden" style="margin-top: 15px; padding: 15px; background: #f8f9fa; border-radius: 5px;">
-          <h3>Registrar Pago</h3>
-          <div class="form-row">
-            <select id="payMemberId" style="width: 250px;">
-              <option value="">Seleccionar miembro</option>
-            </select>
-            <input type="number" id="amount" placeholder="Cantidad ($)" step="1">
-            <select id="paymentType">
-              <option value="monthly">Mensualidad</option>
-              <option value="quarterly">Trimestral</option>
-              <option value="annual">Anual</option>
-              <option value="grading">Examen</option>
-              <option value="competition">Competición</option>
-              <option value="other">Otro</option>
-            </select>
-            <input type="text" id="payDescription" placeholder="Descripción">
-          </div>
-          <button class="btn btn-success" onclick="savePayment()">Guardar</button>
-          <button class="btn" onclick="hideForm('paymentForm')">Cancelar</button>
-        </div>
-
-        <div id="paymentsList" class="result"></div>
       </div>
     </div>
 
-    <!-- Member Portal (solo para miembros) -->
+    <!-- Member Portal -->
     <div id="memberPortal" class="section member-portal hidden">
       <h2>📰 Noticias del Club</h2>
       <div id="memberNewsList" style="margin-top: 15px;"></div>
-      <h2 style="margin-top: 30px;">📋 Mi Información</h2>
+      <h2>📋 Mi Información</h2>
       <div id="myInfo"></div>
-      <h3 style="margin-top: 20px;">🎗️ Mi Cinturón</h3>
+      <h3>🎗️ Mi Cinturón</h3>
       <div id="myGrade"></div>
-      <h3 style="margin-top: 20px;">📅 Mi Asistencia</h3>
+      <h3>📅 Mi Asistencia</h3>
       <div id="myAttendance"></div>
-      <h3 style="margin-top: 20px;">💰 Mis Pagos</h3>
+      <h3>💰 Mis Pagos</h3>
       <div id="myPayments"></div>
     </div>
   </div>
 
+  <!-- JavaScript Modules -->
+  <script src="js/utils.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/navigation.js"></script>
+  <script src="js/members.js"></script>
+  <script src="js/instructors.js"></script>
+  <script src="js/grades-payments.js"></script>
+  <script src="js/attendance-news-stats.js"></script>
+
+  <!-- Initialize -->
   <script>
-    const API = '';
-    let currentUser = null;
-    let clubName = 'Judo Club';
-
-    // Load club config
-    async function loadConfig() {
-      try {
-        const res = await fetch(`${API}/api/config`);
-        const config = await res.json();
-        clubName = config.clubName;
-        document.getElementById('loginTitle').textContent = '🥋 ' + clubName;
-        document.getElementById('clubTitle').textContent = '🥋 ' + clubName;
-        document.title = clubName;
-      } catch (e) { console.error('Error loading config:', e); }
-    }
-
-    function showForm(id) { document.getElementById(id).classList.remove('hidden'); }
-    function hideForm(id) { document.getElementById(id).classList.add('hidden'); }
-
-    // Formatear RUT sin puntos, solo con guión
-    function formatRut(input) {
-      let valor = input.value.replace(/[.\-]/g, '').toUpperCase();
-      
-      // Solo permitir números y K
-      valor = valor.replace(/[^0-9K]/g, '');
-      
-      // Agregar guión antes del último carácter si hay más de 1 dígito
-      if (valor.length > 1) {
-        valor = valor.slice(0, -1) + '-' + valor.slice(-1);
-      }
-      
-      input.value = valor;
-    }
-
-    // Mostrar estado de validación del RUT
-    function checkRutValidity(input) {
-      const statusSpan = document.getElementById('rutStatus');
-      const rut = input.value;
-      
-      if (!rut) {
-        statusSpan.textContent = '';
-        return;
-      }
-      
-      if (validarRut(rut)) {
-        statusSpan.textContent = '✅';
-      } else {
-        statusSpan.textContent = '❌ RUT inválido';
-      }
-    }
-
-    // Validar RUT chileno
-    function validarRut(rut) {
-      if (!rut) return true; // RUT opcional
-      
-      // Limpiar RUT
-      const rutLimpio = rut.replace(/[.\-]/g, '').toUpperCase();
-      
-      // Verificar formato básico
-      if (!/^\d{7,8}[0-9K]$/.test(rutLimpio)) {
-        return false;
-      }
-      
-      // Separar cuerpo y dígito verificador
-      const cuerpo = rutLimpio.slice(0, -1);
-      const dv = rutLimpio.slice(-1);
-      
-      // Calcular dígito verificador
-      let suma = 0;
-      let multiplo = 2;
-      
-      for (let i = cuerpo.length - 1; i >= 0; i--) {
-        suma += parseInt(cuerpo[i]) * multiplo;
-        multiplo = multiplo === 7 ? 2 : multiplo + 1;
-      }
-      
-      const dvEsperado = 11 - (suma % 11);
-      const dvCalculado = dvEsperado === 11 ? '0' : dvEsperado === 10 ? 'K' : dvEsperado.toString();
-      
-      return dv === dvCalculado;
-    }
-
-    async function login() {
-      const email = document.getElementById('loginEmail').value;
-      const password = document.getElementById('loginPassword').value;
-      
-      if (!email || !password) {
-        document.getElementById('loginError').textContent = 'Ingresa email y contraseña';
-        document.getElementById('loginError').classList.remove('hidden');
-        return;
-      }
-
-      try {
-        const res = await fetch(`${API}/api/auth/login`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password })
-        });
-        const data = await res.json();
-        
-        if (!res.ok) {
-          throw new Error(data.error);
-        }
-
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('user', JSON.stringify(data.user));
-        currentUser = data.user;
-        document.getElementById('loginView').classList.add('hidden');
-        document.getElementById('appView').classList.remove('hidden');
-        initApp();
-      } catch (e) {
-        document.getElementById('loginError').textContent = e.message;
-        document.getElementById('loginError').classList.remove('hidden');
-      }
-    }
-
-    function logout() {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      currentUser = null;
-      document.getElementById('loginView').classList.remove('hidden');
-      document.getElementById('appView').classList.add('hidden');
-    }
-
-    function initApp() {
-      const stored = localStorage.getItem('user');
-      if (stored) {
-        currentUser = JSON.parse(stored);
-        document.getElementById('userEmail').textContent = currentUser.email;
-        document.getElementById('userRole').textContent = currentUser.role === 'admin' ? 'Administrador' : 'Miembro';
-
-        if (currentUser.role === 'admin') {
-          document.getElementById('adminPanel').classList.remove('hidden');
-          document.getElementById('adminNewsPanel').classList.remove('hidden');
-          document.getElementById('memberPortal').classList.add('hidden');
-          loadStats();
-          loadMembersSelect();
-          loadNews();
-        } else {
-          document.getElementById('adminPanel').classList.add('hidden');
-          document.getElementById('adminNewsPanel').classList.add('hidden');
-          document.getElementById('memberPortal').classList.remove('hidden');
-          loadMyInfo();
-          loadNews();
-        }
-      }
-    }
-
-    async function loadStats() {
-      try {
-        const res = await fetch(`${API}/api/stats`, {
-          headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
-        });
-        const stats = await res.json();
-        document.getElementById('stats').innerHTML = `
-          <div class="stat-card"><h3>${stats.totalMembers || 0}</h3><p>Miembros Activos</p></div>
-          <div class="stat-card"><h3>${(stats.totalPayments || 0).toFixed(0)}$</h3><p>Total Pagos</p></div>
-          <div class="stat-card"><h3>${stats.attendanceToday || 0}</h3><p>Asistencia Hoy</p></div>
-        `;
-      } catch (e) { document.getElementById('stats').innerHTML = '<p>Error: ' + e.message + '</p>'; }
-    }
-
-    async function loadMembers() {
-      try {
-        const res = await fetch(`${API}/api/members`, {
-          headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
-        });
-        const members = await res.json();
-        if (members.length === 0) {
-          document.getElementById('membersList').innerHTML = '<p>No hay miembros registrados</p>';
-          return;
-        }
-        document.getElementById('membersList').innerHTML = `
-          <table>
-            <tr><th>ID</th><th>Nombre</th><th>Tipo</th><th>Email</th><th>Teléfono</th><th>Estado</th><th>Acciones</th></tr>
-            ${members.map(m => `
-              <tr>
-                <td>${m.id}</td>
-                <td>
-                  <strong>${m.first_name} ${m.last_name}</strong>
-                  ${m.is_board_member === 1 ? '<br><span class="status-badge status-active">🏛️ Directiva' + (m.board_position ? `: ${m.board_position}` : '') + '</span>' : ''}
-                  ${m.member_type === 'member' && m.is_board_member !== 1 ? '<br><span class="status-badge status-inactive">Miembro</span>' : ''}
-                </td>
-                <td>${m.member_type === 'judoca' ? '🥋 Judoca' : '👤 Miembro'}</td>
-                <td>${m.email || '-'}</td>
-                <td>${m.phone || '-'}</td>
-                <td><span class="status-badge status-${m.status}">${m.status}</span></td>
-                <td>
-                  <button class="btn" onclick="editMember(${m.id})">Editar</button>
-                  <button class="btn btn-danger" onclick="deleteMember(${m.id})">Eliminar</button>
-                </td>
-              </tr>
-            `).join('')}
-          </table>
-        `;
-      } catch (e) { document.getElementById('membersList').innerHTML = '<p>Error: ' + e.message + '</p>'; }
-    }
-
-    async function saveMember() {
-      const rut = document.getElementById('rut').value;
-      
-      // Validar RUT si se proporciona
-      if (rut && !validarRut(rut)) {
-        alert('RUT inválido. Verifique el formato y dígito verificador.\n\nEjemplo válido: 16664930-7');
-        return;
-      }
-      
-      const id = document.getElementById('memberId').value;
-      const data = {
-        rut: rut,
-        first_name: document.getElementById('firstName').value,
-        last_name: document.getElementById('lastName').value,
-        email: document.getElementById('email').value,
-        phone: document.getElementById('phone').value,
-        date_of_birth: document.getElementById('dob').value,
-        address: document.getElementById('address').value,
-        emergency_contact: document.getElementById('emergencyContact').value,
-        medical_info: document.getElementById('medicalInfo').value,
-        member_type: document.getElementById('memberType').value,
-        is_board_member: document.getElementById('isBoardMember').checked ? 1 : 0,
-        board_position: document.getElementById('boardPosition').value
-      };
-      try {
-        const res = await fetch(`${API}/api/members${id ? '/' + id : ''}`, {
-          method: id ? 'PUT' : 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + localStorage.getItem('token')
-          },
-          body: JSON.stringify(data)
-        });
-        const result = await res.json();
-        alert(id ? 'Miembro actualizado' : 'Miembro creado');
-        hideForm('memberForm');
-        loadMembers();
-        loadStats();
-        loadMembersSelect();
-      } catch (e) { alert('Error: ' + e.message); }
-    }
-
-    async function editMember(id) {
-      const res = await fetch(`${API}/api/members/${id}`, {
-        headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
-      });
-      const m = await res.json();
-      document.getElementById('memberId').value = m.id;
-      document.getElementById('rut').value = m.rut || '';
-      document.getElementById('firstName').value = m.first_name;
-      document.getElementById('lastName').value = m.last_name;
-      document.getElementById('email').value = m.email;
-      document.getElementById('phone').value = m.phone;
-      document.getElementById('dob').value = m.date_of_birth;
-      document.getElementById('address').value = m.address;
-      document.getElementById('emergencyContact').value = m.emergency_contact;
-      document.getElementById('medicalInfo').value = m.medical_info;
-      document.getElementById('memberType').value = m.member_type || 'judoca';
-      document.getElementById('isBoardMember').checked = m.is_board_member === 1;
-      document.getElementById('boardPosition').value = m.board_position || '';
-      showForm('memberForm');
-    }
-
-    async function deleteMember(id) {
-      if (!confirm('¿Eliminar miembro?')) return;
-      await fetch(`${API}/api/members/${id}`, { 
-        method: 'DELETE',
-        headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
-      });
-      loadMembers();
-      loadStats();
-      loadMembersSelect();
-    }
-
-    async function saveUser() {
-      const memberSelect = document.getElementById('userMemberSelect').value;
-      const email = document.getElementById('userEmail').value;
-      const password = document.getElementById('userPassword').value;
-      const role = document.getElementById('userRole').value;
-      
-      if (!memberSelect) {
-        alert('Debe seleccionar un miembro');
-        return;
-      }
-      
-      if (!email) {
-        alert('El miembro seleccionado no tiene email registrado');
-        return;
-      }
-      
-      const data = {
-        email: email,
-        password: password || '1234',
-        role: role,
-        member_id: memberSelect
-      };
-      try {
-        const res = await fetch(`${API}/api/auth/register`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + localStorage.getItem('token')
-          },
-          body: JSON.stringify(data)
-        });
-        const result = await res.json();
-        if (!res.ok) throw new Error(result.error);
-        alert('Usuario creado\n\nContraseña: ' + password + '\n\nEl usuario puede cambiarla al ingresar.');
-        hideForm('userForm');
-        loadUsers();
-      } catch (e) { alert('Error: ' + e.message); }
-    }
-
-    function autoFillUserEmail() {
-      const memberSelect = document.getElementById('userMemberSelect');
-      const emailInput = document.getElementById('userEmail');
-      const passwordInput = document.getElementById('userPassword');
-      const selectedOption = memberSelect.options[memberSelect.selectedIndex];
-      
-      if (selectedOption.value && selectedOption.dataset.email) {
-        emailInput.value = selectedOption.dataset.email;
-        
-        // Obtener los últimos 4 dígitos del RUT para la contraseña
-        const rut = selectedOption.dataset.rut || '';
-        if (rut) {
-          const cuerpoRut = rut.replace(/[.\-]/g, '').toUpperCase().slice(0, -1);
-          passwordInput.value = cuerpoRut.slice(-4);
-        } else {
-          passwordInput.value = '1234'; // Default si no hay RUT
-        }
-      } else {
-        emailInput.value = '';
-        passwordInput.value = '';
-      }
-    }
-
-    async function loadUsers() {
-      try {
-        const res = await fetch(`${API}/api/auth/users`, {
-          headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
-        });
-        const data = await res.json();
-        
-        if (!res.ok) {
-          throw new Error(data.error || 'Error al cargar usuarios');
-        }
-        
-        if (!Array.isArray(data)) {
-          throw new Error('Respuesta inválida del servidor');
-        }
-        
-        if (data.length === 0) {
-          document.getElementById('usersList').innerHTML = '<p>No hay usuarios registrados</p>';
-          return;
-        }
-        
-        document.getElementById('usersList').innerHTML = `
-          <table>
-            <tr><th>ID</th><th>Email</th><th>Nombre</th><th>Rol</th><th>Acciones</th></tr>
-            ${data.map(u => `
-              <tr>
-                <td>${u.id}</td>
-                <td>${u.email}</td>
-                <td>${u.first_name ? u.first_name + ' ' + u.last_name : '-'}</td>
-                <td><span class="status-badge ${u.role === 'admin' ? 'status-active' : 'status-inactive'}">${u.role}</span></td>
-                <td>
-                  <button class="btn btn-warning" onclick="resetUserPassword(${u.id}, '${u.email}')">Resetear Clave</button>
-                </td>
-              </tr>
-            `).join('')}
-          </table>
-        `;
-      } catch (e) { document.getElementById('usersList').innerHTML = '<p>Error: ' + e.message + '</p>'; }
-    }
-
-    async function resetUserPassword(userId, email) {
-      if (!confirm(`¿Resetear contraseña para ${email}?\n\nSe usará una contraseña por defecto que podrás cambiar después.`)) return;
-      
-      try {
-        const res = await fetch(`${API}/api/auth/reset-password/${userId}`, {
-          method: 'POST',
-          headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
-        });
-        const result = await res.json();
-        if (!res.ok) throw new Error(result.error);
-        alert(`Contraseña reseteada exitosamente.\n\nNueva contraseña: ${result.new_password}\n\nIndícale al usuario que la cambie al ingresar.`);
-        loadUsers();
-      } catch (e) { alert('Error: ' + e.message); }
-    }
-
-    async function changePassword() {
-      const currentPassword = document.getElementById('currentPassword').value;
-      const newPassword = document.getElementById('newPassword').value;
-      const confirmPassword = document.getElementById('confirmPassword').value;
-
-      if (!currentPassword || !newPassword) {
-        alert('Completa todos los campos');
-        return;
-      }
-
-      if (newPassword !== confirmPassword) {
-        alert('Las nuevas contraseñas no coinciden');
-        return;
-      }
-
-      if (newPassword.length < 4) {
-        alert('La contraseña debe tener al menos 4 caracteres');
-        return;
-      }
-
-      try {
-        const res = await fetch(`${API}/api/auth/change-password`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + localStorage.getItem('token')
-          },
-          body: JSON.stringify({
-            current_password: currentPassword,
-            new_password: newPassword
-          })
-        });
-        const result = await res.json();
-        if (!res.ok) throw new Error(result.error);
-        alert('Contraseña cambiada exitosamente');
-        hideForm('changePasswordForm');
-        document.getElementById('currentPassword').value = '';
-        document.getElementById('newPassword').value = '';
-        document.getElementById('confirmPassword').value = '';
-      } catch (e) { alert('Error: ' + e.message); }
-    }
-
-    async function loadMembersSelect() {
-      try {
-        const res = await fetch(`${API}/api/members`, {
-          headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
-        });
-        const members = await res.json();
-        const options = '<option value="">Seleccionar miembro (el email y contraseña se completarán automáticamente)</option>' +
-          members.map(m => `<option value="${m.id}" data-email="${m.email || ''}" data-rut="${m.rut || ''}">${m.first_name} ${m.last_name}${m.email ? ' (' + m.email + ')' : ''}</option>`).join('');
-        document.getElementById('gradeMemberId').innerHTML = '<option value="">Seleccionar miembro</option>' +
-          members.map(m => `<option value="${m.id}">${m.first_name} ${m.last_name}</option>`).join('');
-        document.getElementById('attMemberId').innerHTML = '<option value="">Seleccionar miembro</option>' +
-          members.map(m => `<option value="${m.id}">${m.first_name} ${m.last_name}</option>`).join('');
-        document.getElementById('payMemberId').innerHTML = '<option value="">Seleccionar miembro</option>' +
-          members.map(m => `<option value="${m.id}">${m.first_name} ${m.last_name}</option>`).join('');
-        document.getElementById('userMemberSelect').innerHTML = options;
-      } catch (e) { console.error('Error loading members:', e); }
-    }
-
-    async function loadGrades() {
-      try {
-        const res = await fetch(`${API}/api/grades`, {
-          headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
-        });
-        const grades = await res.json();
-        if (grades.length === 0) {
-          document.getElementById('gradesList').innerHTML = '<p>No hay grados registrados</p>';
-          return;
-        }
-        document.getElementById('gradesList').innerHTML = `
-          <table>
-            <tr><th>ID</th><th>Miembro</th><th>Cinturón</th><th>Instructor</th><th>Fecha</th><th>Acciones</th></tr>
-            ${grades.map(g => `
-              <tr>
-                <td>${g.id}</td>
-                <td>${g.first_name} ${g.last_name}</td>
-                <td>${g.belt_color}</td>
-                <td>${g.instructor || '-'}</td>
-                <td>${g.grade_date || '-'}</td>
-                <td><button class="btn btn-danger" onclick="deleteGrade(${g.id})">Eliminar</button></td>
-              </tr>
-            `).join('')}
-          </table>
-        `;
-      } catch (e) { document.getElementById('gradesList').innerHTML = '<p>Error: ' + e.message + '</p>'; }
-    }
-
-    async function saveGrade() {
-      const data = {
-        member_id: parseInt(document.getElementById('gradeMemberId').value),
-        belt_color: document.getElementById('beltColor').value,
-        instructor: document.getElementById('instructor').value,
-        notes: document.getElementById('gradeNotes').value
-      };
-      if (!data.member_id || !data.belt_color) {
-        alert('Debe seleccionar un miembro y un cinturón');
-        return;
-      }
-      try {
-        const res = await fetch(`${API}/api/grades`, {
-          method: 'POST',
-          headers: { 
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + localStorage.getItem('token')
-          },
-          body: JSON.stringify(data)
-        });
-        const result = await res.json();
-        if (!res.ok) throw new Error(result.error);
-        alert('Grado registrado');
-        hideForm('gradeForm');
-        loadGrades();
-      } catch (e) { alert('Error: ' + e.message); }
-    }
-
-    async function deleteGrade(id) {
-      if (!confirm('¿Eliminar grado?')) return;
-      await fetch(`${API}/api/grades/${id}`, { 
-        method: 'DELETE',
-        headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
-      });
-      loadGrades();
-    }
-
-    async function loadAttendance() {
-      try {
-        const res = await fetch(`${API}/api/attendance`, {
-          headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
-        });
-        const records = await res.json();
-        if (records.length === 0) {
-          document.getElementById('attendanceList').innerHTML = '<p>No hay registros de asistencia</p>';
-          return;
-        }
-        document.getElementById('attendanceList').innerHTML = `
-          <table>
-            <tr><th>ID</th><th>Miembro</th><th>Fecha</th><th>Tipo</th><th>Notas</th><th>Acciones</th></tr>
-            ${records.map(r => `
-              <tr>
-                <td>${r.id}</td>
-                <td>${r.member_name}</td>
-                <td>${r.class_date}</td>
-                <td>${r.class_type}</td>
-                <td>${r.notes || '-'}</td>
-                <td><button class="btn btn-danger" onclick="deleteAttendance(${r.id})">Eliminar</button></td>
-              </tr>
-            `).join('')}
-          </table>
-        `;
-      } catch (e) { document.getElementById('attendanceList').innerHTML = '<p>Error: ' + e.message + '</p>'; }
-    }
-
-    async function saveAttendance() {
-      const data = {
-        member_id: parseInt(document.getElementById('attMemberId').value),
-        class_date: document.getElementById('classDate').value,
-        class_type: document.getElementById('classType').value,
-        notes: document.getElementById('attNotes').value
-      };
-      try {
-        const res = await fetch(`${API}/api/attendance`, {
-          method: 'POST',
-          headers: { 
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + localStorage.getItem('token')
-          },
-          body: JSON.stringify(data)
-        });
-        const result = await res.json();
-        if (!res.ok) throw new Error(result.error);
-        alert('Asistencia registrada');
-        hideForm('attendanceForm');
-        loadAttendance();
-      } catch (e) { alert('Error: ' + e.message); }
-    }
-
-    async function deleteAttendance(id) {
-      if (!confirm('¿Eliminar registro?')) return;
-      await fetch(`${API}/api/attendance/${id}`, { 
-        method: 'DELETE',
-        headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
-      });
-      loadAttendance();
-    }
-
-    async function loadPayments() {
-      try {
-        const res = await fetch(`${API}/api/payments`, {
-          headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
-        });
-        const payments = await res.json();
-        if (payments.length === 0) {
-          document.getElementById('paymentsList').innerHTML = '<p>No hay pagos registrados</p>';
-          return;
-        }
-        document.getElementById('paymentsList').innerHTML = `
-          <table>
-            <tr><th>ID</th><th>Miembro</th><th>Cantidad</th><th>Tipo</th><th>Descripción</th><th>Fecha</th><th>Acciones</th></tr>
-            ${payments.map(p => `
-              <tr>
-                <td>${p.id}</td>
-                <td>${p.member_name}</td>
-                <td>${p.amount.toFixed(0)}$</td>
-                <td>${p.payment_type}</td>
-                <td>${p.description || '-'}</td>
-                <td>${p.payment_date}</td>
-                <td><button class="btn btn-danger" onclick="deletePayment(${p.id})">Eliminar</button></td>
-              </tr>
-            `).join('')}
-          </table>
-        `;
-      } catch (e) { document.getElementById('paymentsList').innerHTML = '<p>Error: ' + e.message + '</p>'; }
-    }
-
-    async function savePayment() {
-      const data = {
-        member_id: parseInt(document.getElementById('payMemberId').value),
-        amount: parseFloat(document.getElementById('amount').value),
-        payment_type: document.getElementById('paymentType').value,
-        description: document.getElementById('payDescription').value
-      };
-      try {
-        const res = await fetch(`${API}/api/payments`, {
-          method: 'POST',
-          headers: { 
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + localStorage.getItem('token')
-          },
-          body: JSON.stringify(data)
-        });
-        const result = await res.json();
-        if (!res.ok) throw new Error(result.error);
-        alert('Pago registrado');
-        hideForm('paymentForm');
-        loadPayments();
-        loadStats();
-      } catch (e) { alert('Error: ' + e.message); }
-    }
-
-    async function deletePayment(id) {
-      if (!confirm('¿Eliminar pago?')) return;
-      await fetch(`${API}/api/payments/${id}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
-      });
-      loadPayments();
-      loadStats();
-    }
-
-    // News functions
-    async function loadNews() {
-      try {
-        const res = await fetch(`${API}/api/news`, {
-          headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
-        });
-        const news = await res.json();
-        const newsHTML = news.length === 0 ? '<p>No hay noticias publicadas</p>' : news.map(n => `
-          <div class="news-card">
-            <h3>${n.title}</h3>
-            <div class="meta">
-              <span>���� ${n.created_at}</span> • 
-              <span>✍️ ${n.author_email || 'Admin'}</span>
-              ${currentUser?.role === 'admin' ? `<button class="btn btn-danger" style="float: right; padding: 2px 10px; font-size: 12px;" onclick="deleteNews(${n.id})">Eliminar</button>` : ''}
-            </div>
-            <div class="content">${n.content}</div>
-            ${n.file_path ? `
-              <div class="attachment">
-                ${n.file_type?.startsWith('image/') ? `
-                  <a href="${n.file_path}" target="_blank">
-                    <img src="${n.file_path}" alt="${n.file_name}">
-                  </a>
-                ` : `
-                  <a href="${n.file_path}" target="_blank">📎 ${n.file_name}</a>
-                `}
-              </div>
-            ` : ''}
-          </div>
-        `).join('');
-        
-        document.getElementById('newsList').innerHTML = newsHTML;
-        document.getElementById('memberNewsList').innerHTML = newsHTML;
-      } catch (e) { 
-        document.getElementById('newsList').innerHTML = '<p>Error: ' + e.message + '</p>';
-        document.getElementById('memberNewsList').innerHTML = '<p>Error: ' + e.message + '</p>';
-      }
-    }
-
-    async function saveNews() {
-      const title = document.getElementById('newsTitle').value;
-      const content = document.getElementById('newsContent').value;
-      const fileInput = document.getElementById('newsFile');
-      
-      if (!title || !content) {
-        alert('Título y contenido son requeridos');
-        return;
-      }
-
-      const formData = new FormData();
-      formData.append('title', title);
-      formData.append('content', content);
-      if (fileInput.files[0]) {
-        formData.append('file', fileInput.files[0]);
-      }
-
-      try {
-        const res = await fetch(`${API}/api/news`, {
-          method: 'POST',
-          headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') },
-          body: formData
-        });
-        const result = await res.json();
-        if (!res.ok) throw new Error(result.error);
-        alert('Noticia publicada');
-        hideForm('newsForm');
-        document.getElementById('newsTitle').value = '';
-        document.getElementById('newsContent').value = '';
-        document.getElementById('newsFile').value = '';
-        loadNews();
-      } catch (e) { alert('Error: ' + e.message); }
-    }
-
-    async function deleteNews(id) {
-      if (!confirm('¿Eliminar noticia?')) return;
-      await fetch(`${API}/api/news/${id}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
-      });
-      loadNews();
-    }
-
-    // Member portal functions
-    async function loadMyInfo() {
-      if (!currentUser?.member_id) {
-        document.getElementById('myInfo').innerHTML = '<p>No tienes información de miembro asociada</p>';
-        return;
-      }
-      try {
-        const res = await fetch(`${API}/api/members/${currentUser.member_id}`, {
-          headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
-        });
-        const member = await res.json();
-        document.getElementById('myInfo').innerHTML = `
-          <p><strong>Nombre:</strong> ${member.first_name} ${member.last_name}</p>
-          <p><strong>Email:</strong> ${member.email || '-'}</p>
-          <p><strong>Teléfono:</strong> ${member.phone || '-'}</p>
-          <p><strong>Estado:</strong> <span class="status-badge status-${member.status}">${member.status}</span></p>
-        `;
-      } catch (e) { document.getElementById('myInfo').innerHTML = '<p>Error: ' + e.message + '</p>'; }
-    }
-
-    async function loadMyGrade() {
-      if (!currentUser?.member_id) return;
-      try {
-        const res = await fetch(`${API}/api/grades/member/${currentUser.member_id}`, {
-          headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
-        });
-        const grades = await res.json();
-        if (grades.length === 0) {
-          document.getElementById('myGrade').innerHTML = '<p>Sin grados registrados</p>';
-          return;
-        }
-        const currentGrade = grades[0];
-        document.getElementById('myGrade').innerHTML = `
-          <p><strong>Cinturón:</strong> ${currentGrade.belt_color}</p>
-          <p><strong>Fecha:</strong> ${currentGrade.grade_date}</p>
-          <p><strong>Instructor:</strong> ${currentGrade.instructor || '-'}</p>
-        `;
-      } catch (e) { document.getElementById('myGrade').innerHTML = '<p>Error: ' + e.message + '</p>'; }
-    }
-
-    async function loadMyAttendance() {
-      if (!currentUser?.member_id) return;
-      try {
-        const res = await fetch(`${API}/api/attendance?member_id=${currentUser.member_id}`, {
-          headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
-        });
-        const records = await res.json();
-        if (records.length === 0) {
-          document.getElementById('myAttendance').innerHTML = '<p>Sin registros de asistencia</p>';
-          return;
-        }
-        document.getElementById('myAttendance').innerHTML = `
-          <table>
-            <tr><th>Fecha</th><th>Tipo</th><th>Notas</th></tr>
-            ${records.map(r => `<tr><td>${r.class_date}</td><td>${r.class_type}</td><td>${r.notes || '-'}</td></tr>`).join('')}
-          </table>
-        `;
-      } catch (e) { document.getElementById('myAttendance').innerHTML = '<p>Error: ' + e.message + '</p>'; }
-    }
-
-    async function loadMyPayments() {
-      if (!currentUser?.member_id) return;
-      try {
-        const res = await fetch(`${API}/api/payments?member_id=${currentUser.member_id}`, {
-          headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
-        });
-        const payments = await res.json();
-        if (payments.length === 0) {
-          document.getElementById('myPayments').innerHTML = '<p>Sin pagos registrados</p>';
-          return;
-        }
-        document.getElementById('myPayments').innerHTML = `
-          <table>
-            <tr><th>Fecha</th><th>Tipo</th><th>Monto</th><th>Descripci��n</th></tr>
-            ${payments.map(p => `<tr><td>${p.payment_date}</td><td>${p.payment_type}</td><td>${p.amount.toFixed(0)}$</td><td>${p.description || '-'}</td></tr>`).join('')}
-          </table>
-        `;
-      } catch (e) { document.getElementById('myPayments').innerHTML = '<p>Error: ' + e.message + '</p>'; }
-    }
-
-    async function loadMyInfo() {
-      if (!currentUser?.member_id) {
-        document.getElementById('myInfo').innerHTML = '<p>No tienes información de miembro asociada</p>';
-        return;
-      }
-      try {
-        const res = await fetch(`${API}/api/members/${currentUser.member_id}`, {
-          headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
-        });
-        const member = await res.json();
-        document.getElementById('myInfo').innerHTML = `
-          <p><strong>Nombre:</strong> ${member.first_name} ${member.last_name}</p>
-          <p><strong>Email:</strong> ${member.email || '-'}</p>
-          <p><strong>Teléfono:</strong> ${member.phone || '-'}</p>
-          <p><strong>Estado:</strong> <span class="status-badge status-${member.status}">${member.status}</span></p>
-        `;
-        loadMyGrade();
-        loadMyAttendance();
-        loadMyPayments();
-      } catch (e) { document.getElementById('myInfo').innerHTML = '<p>Error: ' + e.message + '</p>'; }
-    }
-
-    // Initialize
     loadConfig();
     const token = localStorage.getItem('token');
     if (token) {

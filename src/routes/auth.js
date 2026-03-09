@@ -133,7 +133,7 @@ router.post('/reset-password/:userId', requireAdmin, (req, res) => {
 
     // Contraseña por defecto: últimos 4 dígitos del RUT (sin dígito verificador)
     let password = '1234'; // Default fallback
-    
+
     if (user.member_id) {
       const member = db.prepare('SELECT rut FROM members WHERE id = ?').get(user.member_id);
       if (member && member.rut) {
@@ -144,8 +144,47 @@ router.post('/reset-password/:userId', requireAdmin, (req, res) => {
     }
 
     const hashedPassword = bcrypt.hashSync(password, 10);
-    
+
     db.prepare('UPDATE users SET password = ? WHERE id = ?').run(hashedPassword, userId);
+
+    res.json({
+      message: 'Contraseña reseteada exitosamente',
+      new_password: password
+    });
+  } catch (error) {
+    console.error('Error resetting password:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Reset password by member_id (admin only) - for resetting from member card
+router.post('/reset-password', requireAdmin, (req, res) => {
+  const { member_id, email } = req.body;
+
+  if (!member_id || !email) {
+    return res.status(400).json({ error: 'Member ID y email son requeridos' });
+  }
+
+  try {
+    const user = db.prepare('SELECT * FROM users WHERE member_id = ? AND email = ?').get(member_id, email);
+
+    if (!user) {
+      return res.status(404).json({ error: 'Usuario no encontrado' });
+    }
+
+    // Contraseña por defecto: últimos 4 dígitos del RUT
+    let password = '1234'; // Default fallback
+
+    const member = db.prepare('SELECT rut FROM members WHERE id = ?').get(member_id);
+    if (member && member.rut) {
+      const cuerpoRut = obtenerCuerpoRut(member.rut);
+      // Obtener últimos 4 dígitos
+      password = cuerpoRut.slice(-4);
+    }
+
+    const hashedPassword = bcrypt.hashSync(password, 10);
+
+    db.prepare('UPDATE users SET password = ? WHERE id = ?').run(hashedPassword, user.id);
 
     res.json({
       message: 'Contraseña reseteada exitosamente',
