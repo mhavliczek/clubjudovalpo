@@ -405,7 +405,7 @@
         </div>
         
         <label style="display: block; margin: 10px 0 5px; font-weight: bold;">Año:</label>
-        <input type="number" id="paymentYear" placeholder="Año" min="2020" max="2100" style="width: 100%;">
+        <input type="number" id="paymentYear" placeholder="Año" min="2020" max="2100" style="width: 100%;" onchange="reloadPaidMonths()" onkeyup="reloadPaidMonths()">
         
         <label style="display: block; margin: 10px 0 5px; font-weight: bold;">Monto ($):</label>
         <input type="number" id="amount" placeholder="Monto" step="1000" style="width: 100%;">

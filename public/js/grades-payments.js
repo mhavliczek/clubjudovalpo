@@ -147,32 +147,50 @@ async function showPaymentForm(memberId) {
   document.getElementById('payDescription').value = '';
   document.getElementById('monthlyFields').classList.add('hidden');
   
-  // Load paid months to disable them
+  // Load paid months for current year
   await loadPaidMonths(memberId, currentYear);
   
   showForm('paymentFormModal');
 }
 
-// Load paid months for a member
+// Load paid months for a member and year
 async function loadPaidMonths(memberId, year) {
   try {
     const res = await fetch(`${API}/api/members/${memberId}`, {
       headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
     });
     const member = await res.json();
-    
+
     const paidMonths = [];
+    const monthNamesFull = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+    
     if (member.payments) {
       member.payments
         .filter(p => p.payment_type === 'monthly' && new Date(p.payment_date).getFullYear() === year)
         .forEach(p => {
-          paidMonths.push(new Date(p.payment_date).getMonth());
+          // Get month from description
+          const descLower = (p.description || '').toLowerCase();
+          let month = -1;
+          
+          for (let i = 0; i < monthNamesFull.length; i++) {
+            if (descLower.includes(monthNamesFull[i])) {
+              month = i; // 0-11
+              break;
+            }
+          }
+          
+          // If no month in description, use payment date
+          if (month === -1) {
+            month = new Date(p.payment_date).getMonth();
+          }
+          
+          paidMonths.push(month);
         });
     }
-    
+
     // Store paid months for later use
     document.getElementById('paymentMonth').setAttribute('data-paid-months', JSON.stringify(paidMonths));
-    
+
     // Update month select to disable paid months
     updateMonthSelect(paidMonths);
   } catch (e) {
@@ -184,9 +202,13 @@ async function loadPaidMonths(memberId, year) {
 function updateMonthSelect(paidMonths) {
   const monthSelect = document.getElementById('paymentMonth');
   const options = monthSelect.querySelectorAll('option');
-  
+
   options.forEach(opt => {
     const value = parseInt(opt.value);
+    
+    // Remove any existing " (Pagado)" text
+    opt.textContent = opt.textContent.replace(' (Pagado)', '');
+    
     if (opt.value === '') {
       opt.disabled = false;
     } else if (paidMonths.includes(value)) {
@@ -196,6 +218,16 @@ function updateMonthSelect(paidMonths) {
       opt.disabled = false;
     }
   });
+}
+
+// Reload paid months when year changes
+async function reloadPaidMonths() {
+  const memberId = document.getElementById('payMemberId').value;
+  const year = parseInt(document.getElementById('paymentYear').value);
+  
+  if (memberId && year) {
+    await loadPaidMonths(memberId, year);
+  }
 }
 
 // Save payment from modal

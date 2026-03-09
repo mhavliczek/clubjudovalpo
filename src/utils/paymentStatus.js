@@ -3,15 +3,19 @@ const db = require('../database');
 /**
  * Calculate payment status for a member
  * Returns: 'al_dia' (green), 'al_dia_con_obs' (yellow), 'en_mora' (red)
+ * 
+ * Reglas:
+ * - Verde (al_dia): Matrícula ✅ + Licencia ✅ + Mensualidad del mes ✅
+ * - Amarillo (al_dia_con_obs): Matrícula ✅ + Mensualidad del mes ✅ + Licencia ❌
+ * - Rojo (en_mora): Matrícula ❌ y/o Mensualidad del mes ❌
+ * 
+ * Fecha de corte: Día 5 de cada mes
  */
 function calculatePaymentStatus(memberId, checkDate = new Date()) {
   const currentYear = checkDate.getFullYear();
   const currentMonth = checkDate.getMonth() + 1; // 1-12
   const currentDay = checkDate.getDate();
-  
-  // Get annual fees for current year
-  const fees = db.prepare('SELECT * FROM annual_fees WHERE year = ?').get(currentYear);
-  
+
   // Get payment status override if exists
   const override = db.prepare('SELECT * FROM payment_status_overrides WHERE member_id = ? AND year = ?')
     .get(memberId, currentYear);
@@ -23,10 +27,20 @@ function calculatePaymentStatus(memberId, checkDate = new Date()) {
       isOverride: true
     };
   }
-  
+
   // Determine cutoff month (if day > 5, current month; otherwise previous month)
-  const cutoffMonth = currentDay > 5 ? currentMonth : (currentMonth === 1 ? 12 : currentMonth - 1);
-  const cutoffYear = currentDay > 5 || currentMonth !== 1 ? currentYear : currentYear - 1;
+  let expectedMonth = currentMonth;
+  let expectedYear = currentYear;
+  
+  if (currentDay <= 5) {
+    // Before or on 5th: previous month is due
+    if (currentMonth === 1) {
+      expectedMonth = 12;
+      expectedYear = currentYear - 1;
+    } else {
+      expectedMonth = currentMonth - 1;
+    }
+  }
   
   // Check enrollment (matrícula) - paid once per year
   const enrollmentPaid = db.prepare(`
@@ -40,34 +54,69 @@ function calculatePaymentStatus(memberId, checkDate = new Date()) {
     WHERE member_id = ? AND payment_type = 'license' AND strftime('%Y', payment_date) = ?
   `).get(memberId, currentYear.toString()).count > 0;
 
-  // Check monthly payments - count how many months are paid this year
-  const monthsPaid = db.prepare(`
-    SELECT COUNT(DISTINCT strftime('%m', payment_date)) as count FROM payments
-    WHERE member_id = ? AND payment_type = 'monthly' AND strftime('%Y', payment_date) = ?
-  `).get(memberId, currentYear.toString()).count;
-
-  // For simplicity, consider "all months paid" if at least current month is paid
-  const allMonthsPaid = monthsPaid >= currentMonth;
+  // Check if expected month is paid (monthly payment)
+  const monthNamesFull = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
   
-  // Determine status
+  // Get all monthly payments for the year
+  const monthlyPayments = db.prepare(`
+    SELECT payment_date, description FROM payments
+    WHERE member_id = ? AND payment_type = 'monthly' AND strftime('%Y', payment_date) = ?
+  `).all(memberId, currentYear.toString());
+  
+  // Check if expected month is paid (by description or date)
+  let expectedMonthPaid = false;
+  for (const payment of monthlyPayments) {
+    // Check description first
+    const descLower = (payment.description || '').toLowerCase();
+    if (descLower.includes(monthNamesFull[expectedMonth - 1])) {
+      expectedMonthPaid = true;
+      break;
+    }
+    
+    // Check payment date month
+    const paymentMonth = new Date(payment.payment_date).getMonth() + 1;
+    if (paymentMonth === expectedMonth) {
+      expectedMonthPaid = true;
+      break;
+    }
+  }
+
+  // Determine status based on EXACT rules:
+  // 🟢 VERDE: Matrícula ✅ + Mensualidad ✅ + Licencia ✅
+  // 🟡 AMARILLO: Matrícula ✅ + Mensualidad ✅ + Licencia ❌
+  // 🔴 ROJO: Cualquier otro caso donde falte algo
   let status, reason;
 
-  if (enrollmentPaid && licensePaid && monthsPaid >= currentMonth) {
+  if (enrollmentPaid && expectedMonthPaid && licensePaid) {
+    // 🟢 VERDE: Todo pagado
     status = 'al_dia';
-    reason = `Al día (${monthsPaid}/${currentMonth} mensualidades)`;
-  } else if (enrollmentPaid && monthsPaid >= currentMonth && !licensePaid) {
+    reason = 'Al día';
+  } else if (enrollmentPaid && expectedMonthPaid && !licensePaid) {
+    // 🟡 AMARILLO: Matrícula y Mensualidad pagadas, pero falta Licencia
     status = 'al_dia_con_obs';
-    reason = 'Al día con Obs (falta licencia)';
+    reason = 'Al día con Obs';
   } else {
+    // 🔴 ROJO: Falta algo (matrícula, mensualidad y/o licencia)
     status = 'en_mora';
     const reasons = [];
     if (!enrollmentPaid) reasons.push('matrícula');
-    if (monthsPaid < currentMonth) reasons.push(`mensualidades (${monthsPaid}/${currentMonth})`);
+    if (!expectedMonthPaid) reasons.push('mensualidad');
     if (!licensePaid) reasons.push('licencia');
     reason = 'En mora (' + reasons.join(', ') + ')';
   }
 
-  return { status, reason, details: { enrollmentPaid, licensePaid, monthsPaid, currentMonth } };
+  return { 
+    status, 
+    reason, 
+    details: { 
+      enrollmentPaid, 
+      licensePaid, 
+      expectedMonthPaid,
+      expectedMonth,
+      currentMonth,
+      currentDay
+    } 
+  };
 }
 
 /**
