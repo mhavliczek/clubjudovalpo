@@ -8,8 +8,11 @@ function showFeesForm() {
   document.getElementById('feesYear').value = currentYear;
   document.getElementById('enrollmentAmount').value = '';
   document.getElementById('monthlyAmount').value = '';
-  document.getElementById('licenseAmount').value = '';
-  showForm('feesForm');
+  
+  const form = document.getElementById('feesForm');
+  if (form) {
+    form.classList.remove('hidden');
+  }
 }
 
 // Load UF value from Central Bank
