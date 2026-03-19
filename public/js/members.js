@@ -276,7 +276,7 @@ async function saveMember() {
 
   const id = document.getElementById('memberId').value;
   const createUser = document.getElementById('createUser').checked;
-  
+
   const condition = document.getElementById('memberCondition').value;
   const data = {
     rut, first_name: document.getElementById('firstName').value,
@@ -319,13 +319,29 @@ async function saveMember() {
       },
       body: JSON.stringify(data)
     });
+    
     const result = await res.json();
-    alert(id ? 'Miembro actualizado' : 'Miembro creado');
+    
+    if (!res.ok) {
+      throw new Error(result.error || 'Error al guardar miembro');
+    }
+    
+    alert(id ? 'Miembro actualizado' : 'Miembro creado exitosamente');
     hideForm('memberForm');
-    loadMembers();
-    loadStats();
-    loadMembersSelect();
-  } catch (e) { alert('Error: ' + e.message); }
+    
+    // Recargar datos
+    await loadMembers();
+    await loadStats();
+    await loadMembersSelect();
+    
+    // Si se creó un nuevo miembro, seleccionarlo para mostrar su detalle
+    if (!id && result.id) {
+      setTimeout(() => showMemberDetail(result.id), 100);
+    }
+  } catch (e) { 
+    alert('Error: ' + e.message); 
+    console.error('Error saving member:', e);
+  }
 }
 
 // Edit member

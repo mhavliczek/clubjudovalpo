@@ -103,7 +103,8 @@ try {
   db.exec(`ALTER TABLE members ADD COLUMN board_position TEXT`);
 } catch (e) { /* Column may already exist */ }
 try {
-  db.exec(`ALTER TABLE members ADD COLUMN rut TEXT UNIQUE`);
+  db.exec(`ALTER TABLE members ADD COLUMN rut TEXT`);
+  db.exec(`CREATE UNIQUE INDEX IF NOT EXISTS idx_members_rut ON members(rut)`);
 } catch (e) { /* Column may already exist */ }
 
 // Add new fields for judoka profile
@@ -119,6 +120,12 @@ try {
 try {
   db.exec(`ALTER TABLE members ADD COLUMN is_guardian INTEGER DEFAULT 0`);
 } catch (e) { /* Column may already exist */ }
+
+// Add student fields to members table
+try { db.exec(`ALTER TABLE members ADD COLUMN condition TEXT DEFAULT 'profession'`); } catch (e) { }
+try { db.exec(`ALTER TABLE members ADD COLUMN school_id INTEGER`); } catch (e) { }
+try { db.exec(`ALTER TABLE members ADD COLUMN education_level TEXT`); } catch (e) { }
+try { db.exec(`ALTER TABLE members ADD COLUMN grade_course TEXT`); } catch (e) { }
 
 // Create guardian info table
 db.exec(`
