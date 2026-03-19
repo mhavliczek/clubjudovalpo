@@ -107,6 +107,11 @@ try {
   db.exec(`CREATE UNIQUE INDEX IF NOT EXISTS idx_members_rut ON members(rut)`);
 } catch (e) { /* Column may already exist */ }
 
+// Add document type column (rut/passport)
+try {
+  db.exec(`ALTER TABLE members ADD COLUMN document_type TEXT DEFAULT 'rut'`);
+} catch (e) { /* Column may already exist */ }
+
 // Add new fields for judoka profile
 try {
   db.exec(`ALTER TABLE members ADD COLUMN profession TEXT`);
@@ -143,6 +148,11 @@ db.exec(`
     FOREIGN KEY (member_id) REFERENCES members(id) ON DELETE CASCADE
   );
 `);
+
+// Add document type to guardian_info
+try {
+  db.exec(`ALTER TABLE guardian_info ADD COLUMN document_type TEXT DEFAULT 'rut'`);
+} catch (e) { /* Column may already exist */ }
 
 // Create schools table (for students)
 db.exec(`

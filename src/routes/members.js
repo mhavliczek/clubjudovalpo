@@ -111,7 +111,7 @@ router.post('/', requireAdmin, (req, res) => {
   const {
     first_name, last_name, email, phone, date_of_birth,
     address, emergency_contact, emergency_phone, medical_info,
-    rut, member_type, is_board_member, board_position,
+    rut, document_type, member_type, is_board_member, board_position,
     profession, weight, medical_conditions, is_guardian,
     guardian_info, create_user, user_role,
     condition, school_id, education_level, grade_course
@@ -121,24 +121,29 @@ router.post('/', requireAdmin, (req, res) => {
     return res.status(400).json({ error: 'Nombre y apellido son requeridos' });
   }
 
-  // Validar RUT si se proporciona
-  if (rut) {
+  // Validar RUT solo si es tipo RUT
+  if (document_type === 'rut' && rut) {
     if (!validarRut(rut)) {
       return res.status(400).json({ error: 'RUT inválido. Verifique el formato y dígito verificador.' });
     }
   }
+  
+  // Validar pasaporte (solo verificar que no esté vacío)
+  if (document_type === 'passport' && !rut) {
+    return res.status(400).json({ error: 'El número de pasaporte no puede estar vacío.' });
+  }
 
   try {
     const stmt = db.prepare(`
-      INSERT INTO members (first_name, last_name, email, phone, date_of_birth, address, emergency_contact, emergency_phone, medical_info, rut, member_type, is_board_member, board_position, profession, weight, medical_conditions, is_guardian, condition, school_id, education_level, grade_course)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO members (first_name, last_name, email, phone, date_of_birth, address, emergency_contact, emergency_phone, medical_info, rut, document_type, member_type, is_board_member, board_position, profession, weight, medical_conditions, is_guardian, condition, school_id, education_level, grade_course)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     const result = stmt.run(
       first_name, last_name, email || null, phone || null,
       date_of_birth || null, address || null,
       emergency_contact || null, emergency_phone || null,
-      medical_info || null, rut || null, member_type || 'judoca',
+      medical_info || null, rut || null, document_type || 'rut', member_type || 'judoca',
       is_board_member || 0, board_position || null,
       profession || null, weight || null, medical_conditions || null,
       is_guardian || 0,
@@ -152,14 +157,19 @@ router.post('/', requireAdmin, (req, res) => {
 
     // Save guardian info if provided
     if (guardian_info && is_guardian) {
-      const { full_name, rut: guardian_rut, date_of_birth: guardian_dob, address: guardian_address, email: guardian_email, phone: guardian_phone } = guardian_info;
-      if (guardian_rut && !validarRut(guardian_rut)) {
+      const { full_name, rut: guardian_rut, document_type: guardian_document_type, date_of_birth: guardian_dob, address: guardian_address, email: guardian_email, phone: guardian_phone } = guardian_info;
+      // Validar RUT solo si es tipo RUT
+      if (guardian_document_type === 'rut' && guardian_rut && !validarRut(guardian_rut)) {
         return res.status(400).json({ error: 'RUT del apoderado inválido' });
       }
+      // Validar pasaporte
+      if (guardian_document_type === 'passport' && !guardian_rut) {
+        return res.status(400).json({ error: 'El número de pasaporte del apoderado no puede estar vacío.' });
+      }
       db.prepare(`
-        INSERT INTO guardian_info (member_id, full_name, rut, date_of_birth, address, email, phone)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-      `).run(memberId, full_name, guardian_rut, guardian_dob, guardian_address, guardian_email, guardian_phone);
+        INSERT INTO guardian_info (member_id, full_name, rut, document_type, date_of_birth, address, email, phone)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      `).run(memberId, full_name, guardian_rut, guardian_document_type || 'rut', guardian_dob, guardian_address, guardian_email, guardian_phone);
     }
 
     // Create user if requested

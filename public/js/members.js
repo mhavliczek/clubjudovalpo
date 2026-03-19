@@ -261,16 +261,30 @@ async function showMemberDetail(memberId) {
 
 // Save member
 async function saveMember() {
+  const documentType = document.getElementById('documentType').value;
   const rut = document.getElementById('rut').value;
-  if (rut && !validarRut(rut)) {
+  
+  // Validar solo si es RUT
+  if (documentType === 'rut' && rut && !validarRut(rut)) {
     alert('RUT inválido. Verifique el formato y dígito verificador.');
+    return;
+  }
+  
+  // Validar pasaporte (solo que no esté vacío si se seleccionó pasaporte)
+  if (documentType === 'passport' && !rut) {
+    alert('El número de pasaporte no puede estar vacío.');
     return;
   }
 
   const isGuardian = document.getElementById('isGuardian').checked;
+  const guardianDocumentType = document.getElementById('guardianDocumentType').value;
   const guardianRut = document.getElementById('guardianRut').value;
-  if (isGuardian && guardianRut && !validarRut(guardianRut)) {
+  if (isGuardian && guardianDocumentType === 'rut' && guardianRut && !validarRut(guardianRut)) {
     alert('RUT del apoderado inválido.');
+    return;
+  }
+  if (isGuardian && guardianDocumentType === 'passport' && !guardianRut) {
+    alert('El número de pasaporte del apoderado no puede estar vacío.');
     return;
   }
 
@@ -279,7 +293,9 @@ async function saveMember() {
 
   const condition = document.getElementById('memberCondition').value;
   const data = {
-    rut, first_name: document.getElementById('firstName').value,
+    document_type: documentType,
+    rut,
+    first_name: document.getElementById('firstName').value,
     last_name: document.getElementById('lastName').value,
     email: document.getElementById('email').value,
     phone: document.getElementById('phone').value,
@@ -300,6 +316,7 @@ async function saveMember() {
     grade_course: condition === 'student' ? (document.getElementById('gradeCourse').value || null) : null,
     guardian_info: isGuardian ? {
       full_name: document.getElementById('guardianName').value,
+      document_type: guardianDocumentType,
       rut: guardianRut,
       date_of_birth: convertDateToISO(document.getElementById('guardianDob').value),
       address: document.getElementById('guardianAddress').value,
@@ -350,8 +367,9 @@ async function editMember(id) {
     headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
   });
   const m = await res.json();
-  
+
   document.getElementById('memberId').value = m.id;
+  document.getElementById('documentType').value = m.document_type || 'rut';
   document.getElementById('rut').value = m.rut || '';
   document.getElementById('firstName').value = m.first_name;
   document.getElementById('lastName').value = m.last_name;
@@ -368,15 +386,18 @@ async function editMember(id) {
   document.getElementById('isBoardMember').checked = m.is_board_member === 1;
   document.getElementById('boardPosition').value = m.board_position || '';
   document.getElementById('isGuardian').checked = m.is_guardian === 1;
+  toggleDocumentType();
 
   if (m.guardian_info) {
     document.getElementById('guardianName').value = m.guardian_info.full_name || '';
+    document.getElementById('guardianDocumentType').value = m.guardian_info.document_type || 'rut';
     document.getElementById('guardianRut').value = m.guardian_info.rut || '';
     document.getElementById('guardianDob').value = m.guardian_info.date_of_birth ? m.guardian_info.date_of_birth.split('-').reverse().join('-') : '';
     document.getElementById('guardianAddress').value = m.guardian_info.address || '';
     document.getElementById('guardianEmail').value = m.guardian_info.email || '';
     document.getElementById('guardianPhone').value = m.guardian_info.phone || '';
     toggleGuardianForm();
+    toggleGuardianDocumentType();
   }
 
   const createUserCheckbox = document.getElementById('createUser');
@@ -524,7 +545,7 @@ function autoFillUserEmail() {
   const emailInput = document.getElementById('userEmail');
   const passwordInput = document.getElementById('userPassword');
   const selectedOption = memberSelect.options[memberSelect.selectedIndex];
-  
+
   if (selectedOption.value && selectedOption.dataset.email) {
     emailInput.value = selectedOption.dataset.email;
     const rut = selectedOption.dataset.rut || '';
@@ -532,5 +553,37 @@ function autoFillUserEmail() {
   } else {
     emailInput.value = '';
     passwordInput.value = '';
+  }
+}
+
+// Toggle document type (RUT/Pasaporte)
+function toggleDocumentType() {
+  const documentType = document.getElementById('documentType').value;
+  const rutInput = document.getElementById('rut');
+  const rutStatus = document.getElementById('rutStatus');
+  
+  if (documentType === 'passport') {
+    rutInput.placeholder = 'Número de Pasaporte';
+    rutInput.removeAttribute('oninput');
+    rutInput.removeAttribute('onchange');
+    rutStatus.textContent = '';
+  } else {
+    rutInput.placeholder = 'RUT';
+    rutInput.setAttribute('oninput', 'formatRut(this)');
+    rutInput.setAttribute('onchange', 'checkRutValidity(this)');
+  }
+}
+
+// Toggle guardian document type (RUT/Pasaporte)
+function toggleGuardianDocumentType() {
+  const guardianDocumentType = document.getElementById('guardianDocumentType').value;
+  const guardianRutInput = document.getElementById('guardianRut');
+  
+  if (guardianDocumentType === 'passport') {
+    guardianRutInput.placeholder = 'Número de Pasaporte';
+    guardianRutInput.removeAttribute('oninput');
+  } else {
+    guardianRutInput.placeholder = 'RUT';
+    guardianRutInput.setAttribute('oninput', 'formatRut(this)');
   }
 }

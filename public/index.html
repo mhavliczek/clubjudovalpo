@@ -153,13 +153,16 @@
               <h2>💵 Montos Anuales</h2>
               <button class="btn" onclick="loadFees()">Cargar Montos</button>
               <button class="btn btn-success" onclick="showFeesForm()">Definir Montos</button>
+
+              <!-- UF Value Display -->
+              <div id="ufValueDisplay" style="margin-top: 15px;"></div>
+
               <div id="feesForm" class="hidden" style="margin-top: 15px; padding: 15px; background: #f8f9fa; border-radius: 5px;">
                 <h3>Definir Montos del Año</h3>
-                <div class="form-row" style="flex-direction: column;">
+                <div class="form-row" style="flex-direction: column; gap: 10px;">
                   <input type="number" id="feesYear" placeholder="Año" min="2020" max="2100" style="width: 100%;">
                   <input type="number" id="enrollmentAmount" placeholder="Monto Matrícula ($)" step="1000" style="width: 100%;">
                   <input type="number" id="monthlyAmount" placeholder="Monto Mensualidad ($)" step="1000" style="width: 100%;">
-                  <input type="number" id="licenseAmount" placeholder="Monto Licencia ($)" step="1000" style="width: 100%;">
                 </div>
                 <div style="margin-top: 15px; display: flex; gap: 10px;">
                   <button class="btn btn-success" onclick="saveFees()">Guardar</button>
@@ -167,6 +170,9 @@
                 </div>
               </div>
               <div id="feesList" class="result" style="margin-top: 15px;"></div>
+
+              <!-- License Values Table -->
+              <div id="licenseTableContainer" style="margin-top: 20px;"></div>
             </div>
           </div>
 
@@ -226,6 +232,10 @@
         <h4>📋 Datos Personales</h4>
         <div class="form-row">
           <div style="width: 100%; display: flex; gap: 10px; align-items: center;">
+            <select id="documentType" style="width: 120px;" onchange="toggleDocumentType()">
+              <option value="rut">RUT</option>
+              <option value="passport">Pasaporte</option>
+            </select>
             <input type="text" id="rut" placeholder="RUT" style="width: 100%;" oninput="formatRut(this)" onchange="checkRutValidity(this)">
             <span id="rutStatus" style="font-size: 20px;"></span>
           </div>
@@ -310,7 +320,13 @@
         <div id="guardianForm" class="hidden" style="margin-top: 10px; padding: 15px; background: #e9ecef; border-radius: 5px;">
           <div class="form-row" style="flex-direction: column;">
             <input type="text" id="guardianName" placeholder="Nombre" style="width: 100%;">
-            <input type="text" id="guardianRut" placeholder="RUT" style="width: 100%;" oninput="formatRut(this)">
+            <div style="width: 100%; display: flex; gap: 10px; align-items: center;">
+              <select id="guardianDocumentType" style="width: 120px;" onchange="toggleGuardianDocumentType()">
+                <option value="rut">RUT</option>
+                <option value="passport">Pasaporte</option>
+              </select>
+              <input type="text" id="guardianRut" placeholder="RUT" style="width: 100%;" oninput="formatRut(this)">
+            </div>
             <input type="date" id="guardianDob" placeholder="Fecha nacimiento" style="width: 100%;">
             <input type="text" id="guardianAddress" placeholder="Dirección" style="width: 100%;">
             <input type="email" id="guardianEmail" placeholder="Email" style="width: 100%;">

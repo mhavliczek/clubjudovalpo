@@ -12,6 +12,7 @@ const newsRouter = require('./routes/news');
 const instructorsRouter = require('./routes/instructors');
 const schoolsRouter = require('./routes/schools');
 const feesRouter = require('./routes/fees');
+const ufRouter = require('./routes/uf');
 const { authenticate, requireAdmin } = require('./middleware/auth');
 
 const app = express();
@@ -40,6 +41,7 @@ app.use('/api/news', authenticate, newsRouter);
 app.use('/api/instructors', authenticate, instructorsRouter);
 app.use('/api/schools', authenticate, schoolsRouter);
 app.use('/api/fees', authenticate, feesRouter);
+app.use('/api/uf', authenticate, ufRouter);
 
 // Config endpoint (public)
 app.get('/api/config', (req, res) => {
