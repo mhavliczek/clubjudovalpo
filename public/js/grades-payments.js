@@ -6,8 +6,14 @@
 function togglePaymentFields() {
   const paymentType = document.getElementById('paymentType').value;
   const monthlyFields = document.getElementById('monthlyFields');
+  const licenseGradeFields = document.getElementById('licenseGradeFields');
   const amountInput = document.getElementById('amount');
-  
+
+  // Reset fields
+  licenseGradeFields.classList.add('hidden');
+  document.getElementById('licenseGrade').value = '';
+  document.getElementById('licenseAmountDisplay').textContent = '';
+
   // Show month selector only for monthly payments
   if (paymentType === 'monthly') {
     monthlyFields.classList.remove('hidden');
@@ -20,9 +26,61 @@ function togglePaymentFields() {
   } else {
     monthlyFields.classList.add('hidden');
   }
-  
+
+  // Show license grade selector for license payments
+  if (paymentType === 'license') {
+    licenseGradeFields.classList.remove('hidden');
+  }
+
   // Auto-fill amount based on fees
   loadFeesForPayment();
+}
+
+// Calculate license amount based on grade
+async function calculateLicenseAmount() {
+  const grade = document.getElementById('licenseGrade').value;
+  const display = document.getElementById('licenseAmountDisplay');
+  const amountInput = document.getElementById('amount');
+
+  if (!grade) {
+    display.textContent = '';
+    amountInput.value = '';
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API}/api/uf/valor`, {
+      headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+    });
+    const ufData = await res.json();
+
+    if (!ufData.success) return;
+
+    const ufValue = ufData.uf_value;
+
+    const licenseValues = {
+      '6_kyu': 0.31,
+      '5_kyu': 0.35,
+      '4_kyu': 0.44,
+      '3_kyu': 0.50,
+      '2_kyu': 0.56,
+      '1_kyu': 0.60,
+      '1_dan': 0.73,
+      '2_dan': 0.94,
+      '3_dan': 1.13,
+      '4_dan': 1.26,
+      '5_dan': 1.89,
+      '6_dan': 2.51
+    };
+
+    const ufAmount = licenseValues[grade] || 0;
+    const clpAmount = Math.round(ufAmount * ufValue);
+
+    amountInput.value = clpAmount;
+    display.textContent = `${ufAmount} UF = $${clpAmount.toLocaleString('es-CL')}`;
+  } catch (e) {
+    console.error('Error calculating license amount:', e);
+  }
 }
 
 // Load fees for auto-fill amount
@@ -238,41 +296,57 @@ async function savePaymentFromModal() {
   const year = parseInt(document.getElementById('paymentYear').value) || new Date().getFullYear();
   const month = parseInt(document.getElementById('paymentMonth').value);
   const description = document.getElementById('payDescription').value;
+  const licenseGrade = document.getElementById('licenseGrade').value;
 
   if (!memberId) {
     alert('Debe seleccionar un miembro');
     return;
   }
-  
+
   if (!paymentType) {
     alert('Debe seleccionar un tipo de pago');
     return;
   }
-  
+
   if (!amount) {
     alert('Debe ingresar un monto');
     return;
   }
-  
+
   // For monthly payments, month is required
   if (paymentType === 'monthly' && (month === undefined || month === null)) {
     alert('Debe seleccionar un mes para la mensualidad');
     return;
   }
-  
+
+  // For license payments, grade is required
+  if (paymentType === 'license' && !licenseGrade) {
+    alert('Debe seleccionar el grado para la licencia');
+    return;
+  }
+
   // Calculate payment date based on type
   let paymentDate;
   let finalDescription = description;
-  
+
   if (paymentType === 'monthly') {
     // Monthly: use selected month and year
     paymentDate = `${year}-${String(month + 1).padStart(2, '0')}-01`;
     const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
     finalDescription = description || monthNames[month];
-  } else if (paymentType === 'enrollment' || paymentType === 'license') {
+  } else if (paymentType === 'enrollment') {
     // Annual payments: January 1st of selected year
     paymentDate = `${year}-01-01`;
-    finalDescription = description || (paymentType === 'enrollment' ? 'Matrícula' : 'Licencia') + ` ${year}`;
+    finalDescription = description || `Matrícula ${year}`;
+  } else if (paymentType === 'license') {
+    // License: January 1st of selected year with grade
+    paymentDate = `${year}-01-01`;
+    const gradeNames = {
+      '6_kyu': '6 KYU', '5_kyu': '5 KYU', '4_kyu': '4 KYU', '3_kyu': '3 KYU',
+      '2_kyu': '2 KYU', '1_kyu': '1 KYU', '1_dan': '1 DAN', '2_dan': '2 DAN',
+      '3_dan': '3 DAN', '4_dan': '4 DAN', '5_dan': '5 DAN', '6_dan': '6 DAN'
+    };
+    finalDescription = description || `Licencia ${gradeNames[licenseGrade]} ${year}`;
   } else {
     // Other payments: today
     paymentDate = new Date().toISOString().split('T')[0];

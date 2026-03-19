@@ -386,10 +386,10 @@
       <!-- Payment Form Modal -->
       <div id="paymentFormModal" class="modal hidden">
         <h3>💰 Registrar Pago</h3>
-        
+
         <label style="display: block; margin: 10px 0 5px; font-weight: bold;">Miembro:</label>
         <select id="payMemberId" style="width: 100%;" onchange="loadFeesForPayment()"><option value="">Seleccionar miembro</option></select>
-        
+
         <label style="display: block; margin: 10px 0 5px; font-weight: bold;">Tipo de Pago:</label>
         <select id="paymentType" style="width: 100%;" onchange="togglePaymentFields()">
           <option value="">Seleccionar tipo</option>
@@ -400,7 +400,28 @@
           <option value="competition">🏆 Competición</option>
           <option value="other">Otro</option>
         </select>
-        
+
+        <!-- License Grade Selector -->
+        <div id="licenseGradeFields" class="hidden">
+          <label style="display: block; margin: 10px 0 5px; font-weight: bold; color: #1976d2;">🥋 Grado para Licencia:</label>
+          <select id="licenseGrade" style="width: 100%;" onchange="calculateLicenseAmount()">
+            <option value="">-- Seleccionar Grado --</option>
+            <option value="6_kyu">6 KYU - 0.31 UF</option>
+            <option value="5_kyu">5 KYU - 0.35 UF</option>
+            <option value="4_kyu">4 KYU - 0.44 UF</option>
+            <option value="3_kyu">3 KYU - 0.50 UF</option>
+            <option value="2_kyu">2 KYU - 0.56 UF</option>
+            <option value="1_kyu">1 KYU - 0.60 UF</option>
+            <option value="1_dan">1 DAN - 0.73 UF</option>
+            <option value="2_dan">2 DAN - 0.94 UF</option>
+            <option value="3_dan">3 DAN - 1.13 UF</option>
+            <option value="4_dan">4 DAN - 1.26 UF</option>
+            <option value="5_dan">5 DAN - 1.89 UF</option>
+            <option value="6_dan">6 DAN - 2.51 UF</option>
+          </select>
+          <p id="licenseAmountDisplay" style="color: #1976d2; font-weight: bold; margin-top: 10px; font-size: 16px;"></p>
+        </div>
+
         <div id="monthlyFields" class="hidden">
           <label style="display: block; margin: 10px 0 5px; font-weight: bold;">Mes:</label>
           <select id="paymentMonth" style="width: 100%;">
@@ -419,16 +440,16 @@
             <option value="11">Diciembre</option>
           </select>
         </div>
-        
+
         <label style="display: block; margin: 10px 0 5px; font-weight: bold;">Año:</label>
         <input type="number" id="paymentYear" placeholder="Año" min="2020" max="2100" style="width: 100%;" onchange="reloadPaidMonths()" onkeyup="reloadPaidMonths()">
-        
+
         <label style="display: block; margin: 10px 0 5px; font-weight: bold;">Monto ($):</label>
         <input type="number" id="amount" placeholder="Monto" step="1000" style="width: 100%;">
-        
+
         <label style="display: block; margin: 10px 0 5px; font-weight: bold;">Descripción (opcional):</label>
         <input type="text" id="payDescription" placeholder="Descripción" style="width: 100%;">
-        
+
         <div style="margin-top: 20px; display: flex; gap: 10px;">
           <button class="btn btn-success" onclick="savePaymentFromModal()">Guardar</button>
           <button class="btn" onclick="hideForm('paymentFormModal')">Cancelar</button>
