@@ -2,7 +2,8 @@
    CLUB DE JUDO - API & UTILS
    =================================== */
 
-const API = '';
+// Make API global
+window.API = '';
 let currentUser = null;
 let clubName = 'Judo Club';
 

@@ -485,13 +485,15 @@
 
   <!-- Initialize -->
   <script>
-    loadConfig();
-    const token = localStorage.getItem('token');
-    if (token) {
-      document.getElementById('loginView').classList.add('hidden');
-      document.getElementById('appView').classList.remove('hidden');
-      initApp();
-    }
+    document.addEventListener('DOMContentLoaded', () => {
+      loadConfig();
+      const token = localStorage.getItem('token');
+      if (token) {
+        document.getElementById('loginView').classList.add('hidden');
+        document.getElementById('appView').classList.remove('hidden');
+        initApp();
+      }
+    });
   </script>
 </body>
 </html>
