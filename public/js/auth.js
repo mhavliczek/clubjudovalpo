@@ -11,7 +11,28 @@ async function loadConfig() {
     document.getElementById('loginTitle').textContent = '🥋 ' + clubName;
     document.getElementById('clubTitle').textContent = '🥋 ' + clubName;
     document.title = clubName;
+    
+    // Load club logo
+    loadClubLogo();
   } catch (e) { console.error('Error loading config:', e); }
+}
+
+// Load club logo from settings
+async function loadClubLogo() {
+  try {
+    const res = await fetch(`${API}/api/settings/logo`);
+    const data = await res.json();
+    
+    if (data.url) {
+      const headerLogo = document.getElementById('headerLogo');
+      if (headerLogo) {
+        headerLogo.src = data.url;
+        headerLogo.style.display = 'block';
+      }
+    }
+  } catch (e) { 
+    console.log('No logo configured'); 
+  }
 }
 
 // Login

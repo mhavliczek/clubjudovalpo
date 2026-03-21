@@ -108,6 +108,8 @@ async function showMemberDetail(memberId) {
           <div style="display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end;">
             <span class="status-badge" style="background: ${m.status === 'active' ? '#d4edda' : '#f8d7da'};">${m.status === 'active' ? '✅ Activo' : '❌ Inactivo'}</span>
             <span class="status-badge" style="background: #0066cc; color: white;">${m.member_type === 'judoca' ? '🥋 Judoca' : '👤 Miembro'}</span>
+            ${m.is_board_member ? `<span class="status-badge" style="background: #ffc107; color: #333;">🏛️ Directiva</span>` : ''}
+            ${m.is_commission_member ? `<span class="status-badge" style="background: #e91e63; color: white;">📋 ${getCommissionName(m.commission_type)}</span>` : ''}
             ${m.condition === 'student' && m.school_info ? `<span class="status-badge" style="background: #17a2b8; color: white;">🎓 ${m.school_info.name}</span>` : ''}
           </div>
         </div>
@@ -252,6 +254,41 @@ async function showMemberDetail(memberId) {
           </div>
         </details>
         ` : ''}
+
+        <!-- Curriculum Deportivo -->
+        <details style="background: #f3e5f5; border-color: #9c27b0;">
+          <summary style="color: #7b1fa2;">🏆 Curriculum Deportivo</summary>
+          <div style="margin-top: 15px;">
+            <div style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap;">
+              <button class="btn btn-success" onclick="document.getElementById('curriculumForm').classList.toggle('hidden')">+ Agregar Torneo</button>
+              <button class="btn" onclick="CurriculumModule.exportExcel()">📊 Exportar Excel</button>
+              <button class="btn" onclick="CurriculumModule.generateCertificate()">📄 Certificado PDF</button>
+              <button class="btn" onclick="CurriculumModule.generateCurriculum()">📋 Curriculum Deportivo PDF</button>
+            </div>
+
+            <div id="curriculumForm" class="hidden" style="padding: 15px; background: #fff; border-radius: 5px; margin-bottom: 15px;">
+              <h4 style="margin-top: 0;">Agregar Torneo</h4>
+              <div class="form-row" style="flex-direction: column; gap: 10px;">
+                <input type="text" id="tournamentName" placeholder="Nombre del torneo" style="width: 100%;">
+                <input type="date" id="tournamentDate" placeholder="Fecha" style="width: 100%;">
+                <input type="text" id="tournamentLocation" placeholder="Lugar de realización" style="width: 100%;">
+                <select id="tournamentType" style="width: 100%;">
+                  <option value="abierto">Abierto (sin puntaje)</option>
+                  <option value="federado">Federado (con puntaje)</option>
+                </select>
+                <input type="text" id="tournamentCategory" placeholder="Categoría" style="width: 100%;">
+                <input type="text" id="tournamentWeight" placeholder="Peso" style="width: 100%;">
+                <input type="text" id="tournamentBelt" placeholder="Grado con que compite" style="width: 100%;">
+                <input type="text" id="tournamentPlace" placeholder="Lugar obtenido (ej: 1er, 2do, 3ro)" style="width: 100%;">
+                <button class="btn btn-success" id="saveCurriculumBtn">Guardar Torneo</button>
+              </div>
+            </div>
+
+            <div id="curriculumList">
+              <p style="color: #999; text-align: center;">Cargando torneos...</p>
+            </div>
+          </div>
+        </details>
       </div>
     `;
   } catch (e) {
@@ -301,6 +338,7 @@ async function saveMember() {
     phone: document.getElementById('phone').value,
     date_of_birth: convertDateToISO(document.getElementById('dob').value),
     address: document.getElementById('address').value,
+    association: document.getElementById('association').value || null,
     profession: condition === 'profession' ? document.getElementById('profession').value : null,
     weight: document.getElementById('weight').value || null,
     emergency_contact: document.getElementById('emergencyContact').value,
@@ -309,6 +347,8 @@ async function saveMember() {
     member_type: document.getElementById('memberType').value,
     is_board_member: document.getElementById('isBoardMember').checked ? 1 : 0,
     board_position: document.getElementById('boardPosition').value,
+    is_commission_member: document.getElementById('isCommissionMember').checked ? 1 : 0,
+    commission_type: document.getElementById('isCommissionMember').checked ? (document.getElementById('commissionType').value || null) : null,
     is_guardian: isGuardian ? 1 : 0,
     condition: condition,
     school_id: condition === 'student' ? (document.getElementById('memberSchoolId').value || null) : null,
@@ -377,6 +417,7 @@ async function editMember(id) {
   document.getElementById('phone').value = m.phone;
   document.getElementById('dob').value = m.date_of_birth ? m.date_of_birth.split('-').reverse().join('-') : '';
   document.getElementById('address').value = m.address;
+  document.getElementById('association').value = m.association || '';
   document.getElementById('profession').value = m.profession || '';
   document.getElementById('weight').value = m.weight || '';
   document.getElementById('emergencyContact').value = m.emergency_contact;
@@ -385,6 +426,11 @@ async function editMember(id) {
   document.getElementById('memberType').value = m.member_type || 'judoca';
   document.getElementById('isBoardMember').checked = m.is_board_member === 1;
   document.getElementById('boardPosition').value = m.board_position || '';
+  document.getElementById('isCommissionMember').checked = m.is_commission_member === 1;
+  document.getElementById('commissionType').value = m.commission_type || '';
+  if (m.is_commission_member) {
+    toggleCommissionForm();
+  }
   document.getElementById('isGuardian').checked = m.is_guardian === 1;
   toggleDocumentType();
 
@@ -586,4 +632,16 @@ function toggleGuardianDocumentType() {
     guardianRutInput.placeholder = 'RUT';
     guardianRutInput.setAttribute('oninput', 'formatRut(this)');
   }
+}
+
+// Get commission name from type
+function getCommissionName(type) {
+  const commissions = {
+    'apoderados': 'Com. Apoderados',
+    'tecnica': 'Com. Técnica',
+    'etica': 'Com. Ética',
+    'revisora': 'Com. Revisora',
+    'delegado': 'Delegado DS22'
+  };
+  return commissions[type] || 'Comisión';
 }

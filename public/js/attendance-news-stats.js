@@ -169,7 +169,17 @@ async function loadMyInfo() {
     loadMyGrade();
     loadMyAttendance();
     loadMyPayments();
+    
+    // Initialize curriculum
+    if (window.CurriculumModule) {
+      CurriculumModule.init(currentUser.member_id);
+    }
   } catch (e) { document.getElementById('myInfo').innerHTML = '<p>Error: ' + e.message + '</p>'; }
+}
+
+// Toggle curriculum form
+function toggleCurriculumForm() {
+  document.getElementById('curriculumForm').classList.toggle('hidden');
 }
 
 async function loadMyGrade() {

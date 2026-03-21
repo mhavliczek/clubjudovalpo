@@ -1,0 +1,12 @@
+Judo Club Server running on http://localhost:3000
+API Endpoints:
+  GET    /health
+  GET    /api/stats
+  GET    /api/members
+  POST   /api/members
+  GET    /api/grades/current
+  POST   /api/grades
+  GET    /api/attendance
+  POST   /api/attendance
+  GET    /api/payments
+  POST   /api/payments

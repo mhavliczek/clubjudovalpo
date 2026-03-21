@@ -125,6 +125,9 @@ try {
 try {
   db.exec(`ALTER TABLE members ADD COLUMN is_guardian INTEGER DEFAULT 0`);
 } catch (e) { /* Column may already exist */ }
+try {
+  db.exec(`ALTER TABLE members ADD COLUMN association TEXT`);
+} catch (e) { /* Column may already exist */ }
 
 // Add student fields to members table
 try { db.exec(`ALTER TABLE members ADD COLUMN condition TEXT DEFAULT 'profession'`); } catch (e) { }
@@ -222,6 +225,24 @@ db.exec(`
     grade_date TEXT NOT NULL,
     instructor TEXT,
     notes TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (member_id) REFERENCES members(id) ON DELETE CASCADE
+  );
+`);
+
+// Create curriculum table (for tournaments)
+db.exec(`
+  CREATE TABLE IF NOT EXISTS curriculum (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    member_id INTEGER NOT NULL,
+    tournament_name TEXT NOT NULL,
+    tournament_date TEXT NOT NULL,
+    location TEXT,
+    tournament_type TEXT DEFAULT 'abierto',
+    category TEXT,
+    weight TEXT,
+    belt_grade TEXT,
+    place_obtained TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (member_id) REFERENCES members(id) ON DELETE CASCADE
   );

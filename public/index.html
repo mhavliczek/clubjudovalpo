@@ -22,7 +22,10 @@
   <!-- Main App View -->
   <div id="appView" class="container hidden">
     <div class="header">
-      <h1 id="clubTitle">🥋 Judo Club</h1>
+      <div style="display: flex; align-items: center; gap: 15px;">
+        <img id="headerLogo" src="" alt="Logo" style="height: 80px; width: auto; object-fit: contain; display: none;">
+        <h1 id="clubTitle" style="margin: 0;">🥋 Judo Club</h1>
+      </div>
       <div class="user-info">
         <span id="userEmail"></span>
         <span id="userRole" class="role-badge"></span>
@@ -59,6 +62,7 @@
             <button class="btn" onclick="showSection('fees')">💵 Montos</button>
             <button class="btn" onclick="showSection('attendance')">📅 Asistencia</button>
             <button class="btn" onclick="showSection('news')">📰 Noticias</button>
+            <button class="btn" onclick="showSection('settings')">⚙️ Configuración</button>
           </nav>
         </div>
 
@@ -223,6 +227,47 @@
               <div id="newsList" style="margin-top: 15px;"></div>
             </div>
           </div>
+
+          <!-- Settings Section -->
+          <div id="settingsSection" class="content-section hidden">
+            <div class="section">
+              <h2>⚙️ Configuración del Club</h2>
+              
+              <div style="margin-bottom: 30px;">
+                <h3>🎨 Logo del Club</h3>
+                <p style="color: #666; margin-bottom: 15px;">Sube el logo del club. Se usará en los certificados PDF y documentos oficiales.</p>
+                
+                <div style="background: #e3f2fd; padding: 15px; border-radius: 5px; margin-bottom: 15px; border-left: 4px solid #2196f3;">
+                  <p style="margin: 0 0 10px 0; font-weight: bold; color: #1976d2;">📏 Especificaciones recomendadas:</p>
+                  <ul style="margin: 0; padding-left: 20px; color: #666;">
+                    <li><strong>Dimensiones:</strong> 400x200 píxeles (o proporción similar)</li>
+                    <li><strong>Formato:</strong> PNG con fondo transparente (recomendado) o JPG</li>
+                    <li><strong>Tamaño máximo:</strong> 2 MB</li>
+                    <li><strong>Colores:</strong> Logo debe ser visible sobre fondo blanco</li>
+                  </ul>
+                </div>
+                
+                <div style="display: flex; gap: 15px; align-items: center; margin-bottom: 15px;">
+                  <img id="currentLogo" src="" alt="Logo actual" style="max-width: 200px; max-height: 100px; border: 1px solid #ddd; border-radius: 5px; display: none; background: #f5f5f5;">
+                  <div id="noLogoText" style="color: #999;">No hay logo subido</div>
+                </div>
+                
+                <input type="file" id="clubLogoInput" accept="image/*" style="margin-bottom: 10px;">
+                <button class="btn btn-success" onclick="uploadClubLogo()">📤 Subir Logo</button>
+                <button class="btn" onclick="previewLogo()" style="margin-left: 10px;">👁️ Vista Previa</button>
+              </div>
+
+              <div style="margin-bottom: 30px;">
+                <h3>👤 Director del Club</h3>
+                <p style="color: #666; margin-bottom: 15px;">Ingresa el nombre del Director Técnico del Club. Aparecerá en los certificados PDF.</p>
+
+                <div style="display: flex; flex-direction: column; gap: 10px; max-width: 400px;">
+                  <input type="text" id="clubDirectorInput" placeholder="Nombre del Director (ej: Juan Pérez)" style="width: 100%;">
+                  <button class="btn btn-success" onclick="saveClubDirector()">💾 Guardar Nombre del Director</button>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -245,8 +290,9 @@
           <input type="tel" id="phone" placeholder="Teléfono" style="width: 100%;">
           <input type="date" id="dob" placeholder="Fecha nacimiento" style="width: 100%;">
           <input type="text" id="address" placeholder="Dirección" style="width: 100%;">
+          <input type="text" id="association" placeholder="Asociación (ej: Srs. Preuniversitario Federico Santa María)" style="width: 100%;">
         </div>
-        
+
         <h4>🎓 Condición</h4>
         <div class="form-row">
           <select id="memberCondition" style="width: 100%;" onchange="toggleConditionFields()">
@@ -303,6 +349,22 @@
             <label for="isBoardMember">Directiva</label>
           </div>
           <input type="text" id="boardPosition" placeholder="Cargo" style="width: 100%;">
+          
+          <!-- Comisión -->
+          <div style="width: 100%; display: flex; align-items: center; gap: 10px; margin-top: 10px;">
+            <input type="checkbox" id="isCommissionMember" style="width: auto;" onchange="toggleCommissionForm()">
+            <label for="isCommissionMember">¿Es parte de una comisión?</label>
+          </div>
+          <div id="commissionForm" class="hidden" style="margin-top: 10px; padding: 10px; background: #e3f2fd; border-radius: 5px; width: 100%;">
+            <select id="commissionType" style="width: 100%;">
+              <option value="">Seleccionar comisión</option>
+              <option value="apoderados">Comisión de Apoderados</option>
+              <option value="tecnica">Comisión Técnica</option>
+              <option value="etica">Comisión de Ética y Disciplina</option>
+              <option value="revisora">Comisión Revisora de Cuentas</option>
+              <option value="delegado">Delegado DS22</option>
+            </select>
+          </div>
         </div>
         <h4>⚠️ Información Médica</h4>
         <div class="form-row">
@@ -373,7 +435,7 @@
           </optgroup>
         </select>
         <input type="date" id="gradeDate" placeholder="Fecha" style="width: 100%; margin-top: 10px;">
-        <label style="display: block; margin: 10px 0 5px; font-weight: bold;">📜 Otorgado Por:</label>
+        <label style="display: block; margin: 10px 0 5px; font-weight: bold;">��� Otorgado Por:</label>
         <select id="instructorSelect" multiple style="width: 100%; height: 100px;"></select>
         <small>💡 Ctrl/Cmd + Click para múltiples</small>
         <input type="text" id="gradeNotes" placeholder="Notas" style="width: 100%; margin-top: 10px;">
@@ -469,6 +531,39 @@
       <div id="myAttendance"></div>
       <h3>💰 Mis Pagos</h3>
       <div id="myPayments"></div>
+      
+      <!-- Curriculum Deportivo -->
+      <h3 style="margin-top: 30px;">🏆 Curriculum Deportivo</h3>
+      <div style="background: #f3e5f5; padding: 20px; border-radius: 8px; border-left: 4px solid #9c27b0;">
+        <p style="margin-bottom: 15px; color: #7b1fa2;">Registra tus torneos y logros deportivos. Esta información se usará para generar tu certificado de deportista.</p>
+
+        <button class="btn btn-success" onclick="toggleCurriculumForm()" style="margin-bottom: 15px;">+ Agregar Torneo</button>
+        <button class="btn" onclick="CurriculumModule.exportExcel()">📊 Exportar Excel</button>
+        <button class="btn" onclick="CurriculumModule.generateCertificate()">📄 Certificado PDF</button>
+        <button class="btn" onclick="CurriculumModule.generateCurriculum()">📋 Curriculum Deportivo PDF</button>
+        
+        <div id="curriculumForm" class="hidden" style="margin-top: 15px; padding: 15px; background: #fff; border-radius: 5px;">
+          <h4 style="margin-top: 0;">Agregar Torneo</h4>
+          <div style="display: flex; flex-direction: column; gap: 10px;">
+            <input type="text" id="tournamentName" placeholder="Nombre del torneo" style="width: 100%;">
+            <input type="date" id="tournamentDate" placeholder="Fecha" style="width: 100%;">
+            <input type="text" id="tournamentLocation" placeholder="Lugar de realización" style="width: 100%;">
+            <select id="tournamentType" style="width: 100%;">
+              <option value="abierto">Abierto (sin puntaje)</option>
+              <option value="federado">Federado (con puntaje)</option>
+            </select>
+            <input type="text" id="tournamentCategory" placeholder="Categoría" style="width: 100%;">
+            <input type="text" id="tournamentWeight" placeholder="Peso" style="width: 100%;">
+            <input type="text" id="tournamentBelt" placeholder="Grado con que compite" style="width: 100%;">
+            <input type="text" id="tournamentPlace" placeholder="Lugar obtenido (ej: 1er, 2do, 3ro)" style="width: 100%;">
+            <button class="btn btn-success" onclick="saveCurriculumTournament()">Guardar Torneo</button>
+          </div>
+        </div>
+        
+        <div id="curriculumList" style="margin-top: 15px;">
+          <p style="color: #999; text-align: center;">Cargando torneos...</p>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -482,7 +577,8 @@
   <script src="js/fees.js"></script>
   <script src="js/grades-payments.js"></script>
   <script src="js/attendance-news-stats.js"></script>
-
+  <script src="js/modules/curriculum.js"></script>
+  <script src="js/modules/settings.js"></script>
   <!-- Initialize -->
   <script>
     document.addEventListener('DOMContentLoaded', () => {

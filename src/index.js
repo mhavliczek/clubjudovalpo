@@ -13,6 +13,8 @@ const instructorsRouter = require('./routes/instructors');
 const schoolsRouter = require('./routes/schools');
 const feesRouter = require('./routes/fees');
 const ufRouter = require('./routes/uf');
+const curriculumRouter = require('./routes/curriculum');
+const settingsRouter = require('./routes/settings');
 const { authenticate, requireAdmin } = require('./middleware/auth');
 
 const app = express();
@@ -22,7 +24,7 @@ const CLUB_NAME = process.env.CLUB_NAME || 'Judo Club';
 // Middleware
 app.use(cors());
 app.use(express.json());
-app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -42,6 +44,8 @@ app.use('/api/instructors', authenticate, instructorsRouter);
 app.use('/api/schools', authenticate, schoolsRouter);
 app.use('/api/fees', authenticate, feesRouter);
 app.use('/api/uf', authenticate, ufRouter);
+app.use('/api/curriculum', curriculumRouter);
+app.use('/api/settings', settingsRouter);
 
 // Config endpoint (public)
 app.get('/api/config', (req, res) => {

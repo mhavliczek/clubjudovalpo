@@ -110,11 +110,12 @@ router.delete('/:id/payment-status/:year', requireAdmin, (req, res) => {
 router.post('/', requireAdmin, (req, res) => {
   const {
     first_name, last_name, email, phone, date_of_birth,
-    address, emergency_contact, emergency_phone, medical_info,
+    address, association, emergency_contact, emergency_phone, medical_info,
     rut, document_type, member_type, is_board_member, board_position,
     profession, weight, medical_conditions, is_guardian,
     guardian_info, create_user, user_role,
-    condition, school_id, education_level, grade_course
+    condition, school_id, education_level, grade_course,
+    is_commission_member, commission_type
   } = req.body;
 
   if (!first_name || !last_name) {
@@ -135,13 +136,13 @@ router.post('/', requireAdmin, (req, res) => {
 
   try {
     const stmt = db.prepare(`
-      INSERT INTO members (first_name, last_name, email, phone, date_of_birth, address, emergency_contact, emergency_phone, medical_info, rut, document_type, member_type, is_board_member, board_position, profession, weight, medical_conditions, is_guardian, condition, school_id, education_level, grade_course)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO members (first_name, last_name, email, phone, date_of_birth, address, association, emergency_contact, emergency_phone, medical_info, rut, document_type, member_type, is_board_member, board_position, profession, weight, medical_conditions, is_guardian, condition, school_id, education_level, grade_course)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     const result = stmt.run(
       first_name, last_name, email || null, phone || null,
-      date_of_birth || null, address || null,
+      date_of_birth || null, address || null, association || null,
       emergency_contact || null, emergency_phone || null,
       medical_info || null, rut || null, document_type || 'rut', member_type || 'judoca',
       is_board_member || 0, board_position || null,
@@ -200,7 +201,7 @@ router.put('/:id', requireAdmin, (req, res) => {
   const { id } = req.params;
   const {
     first_name, last_name, email, phone, date_of_birth,
-    address, emergency_contact, emergency_phone, medical_info, status,
+    address, association, emergency_contact, emergency_phone, medical_info, status,
     rut, member_type, is_board_member, board_position,
     profession, weight, medical_conditions, is_guardian,
     guardian_info, condition, school_id, education_level, grade_course
@@ -222,6 +223,7 @@ router.put('/:id', requireAdmin, (req, res) => {
         phone = COALESCE(?, phone),
         date_of_birth = COALESCE(?, date_of_birth),
         address = COALESCE(?, address),
+        association = COALESCE(?, association),
         emergency_contact = COALESCE(?, emergency_contact),
         emergency_phone = COALESCE(?, emergency_phone),
         medical_info = COALESCE(?, medical_info),
@@ -244,7 +246,7 @@ router.put('/:id', requireAdmin, (req, res) => {
 
     stmt.run(
       first_name, last_name, email, phone, date_of_birth,
-      address, emergency_contact, emergency_phone,
+      address, association, emergency_contact, emergency_phone,
       medical_info, status, rut, member_type,
       is_board_member, board_position,
       profession, weight, medical_conditions,

@@ -7,16 +7,26 @@ function showSection(sectionName) {
   // Hide all sections
   document.querySelectorAll('.content-section').forEach(s => s.classList.add('hidden'));
   // Show selected section
-  document.getElementById(sectionName + 'Section').classList.remove('hidden');
-  
+  const section = document.getElementById(sectionName + 'Section');
+  if (section) {
+    section.classList.remove('hidden');
+  }
+
   // Load data based on section
-  if (sectionName === 'dashboard') loadStats();
-  if (sectionName === 'members') loadMembers();
-  if (sectionName === 'instructors') loadInstructorsSection();
-  if (sectionName === 'schools') loadSchools();
-  if (sectionName === 'fees') loadFees();
-  if (sectionName === 'attendance') loadAttendance();
-  if (sectionName === 'news') loadNews();
+  const loaders = {
+    'dashboard': () => loadStats(),
+    'members': () => loadMembers(),
+    'instructors': () => loadInstructorsSection(),
+    'schools': () => loadSchools(),
+    'fees': () => loadFees(),
+    'attendance': () => loadAttendance(),
+    'news': () => loadNews(),
+    'settings': () => window.SettingsModule?.init()
+  };
+
+  if (loaders[sectionName]) {
+    loaders[sectionName]();
+  }
 }
 
 // Toggle guardian form visibility
@@ -31,6 +41,13 @@ function toggleUserForm() {
   const createUser = document.getElementById('createUser').checked;
   const createUserForm = document.getElementById('createUserForm');
   createUserForm.classList.toggle('hidden', !createUser);
+}
+
+// Toggle commission form visibility
+function toggleCommissionForm() {
+  const isCommission = document.getElementById('isCommissionMember').checked;
+  const commissionForm = document.getElementById('commissionForm');
+  commissionForm.classList.toggle('hidden', !isCommission);
 }
 
 // Filter members by search
