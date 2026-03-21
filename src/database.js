@@ -203,6 +203,11 @@ try {
   db.exec(`ALTER TABLE guardian_info ADD COLUMN document_type TEXT DEFAULT 'rut'`);
 } catch (e) { /* Column may already exist */ }
 
+// Add photo field for QR profile
+try {
+  db.exec(`ALTER TABLE members ADD COLUMN photo TEXT`);
+} catch (e) { /* Column may already exist */ }
+
 // Create schools table (for students)
 db.exec(`
   CREATE TABLE IF NOT EXISTS schools (

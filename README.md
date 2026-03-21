@@ -159,6 +159,126 @@ La tabla muestra las siguientes columnas:
 
 ---
 
+## 📱 Sistema de Código QR para Asistencia
+
+### **Descripción General**
+
+Cada miembro del club puede generar un código QR personal que se utiliza para registrar su asistencia de forma rápida y segura. El QR contiene información verificable del miembro.
+
+### **Características del QR**
+
+| Elemento | Descripción |
+|----------|-------------|
+| **Foto del Miembro** | Opcional, se puede subir desde el perfil |
+| **Nombre Completo** | Nombre y apellido del miembro |
+| **RUT** | Documento de identidad |
+| **Member ID** | Identificador único en la base de datos |
+| **Timestamp** | Fecha y hora de generación del QR |
+
+### **Funcionalidades por Rol**
+
+#### **Judoca (Deportista)**
+- ✅ Subir foto de perfil (JPG, PNG, máx 5 MB)
+- ✅ Generar su código QR personal
+- ✅ Visualizar QR con foto y datos
+- ✅ Mostrar QR para registrar asistencia
+
+#### **Apoderado**
+- ✅ Todas las funciones del Judoca
+- ✅ Ver lista de hijos a cargo
+- ✅ Generar QR para cada hijo
+- ✅ Visualizar QR de cada hijo en modal
+
+#### **Administrador**
+- ✅ Escanear QR de cualquier miembro
+- ✅ Validar autenticidad del QR
+- ✅ Verificar foto y RUT
+- ✅ Registrar asistencia automáticamente
+
+---
+
+### **API Endpoints - QR**
+
+| Endpoint | Método | Descripción |
+|----------|--------|-------------|
+| `/api/qr/upload-photo` | POST | Subir foto de perfil |
+| `/api/qr/generate-qr/:memberId` | GET | Generar código QR |
+| `/api/qr/my-children` | GET | Obtener hijos del apoderado |
+| `/api/qr/scan-qr` | POST | Validar QR escaneado (admin) |
+
+---
+
+### **Flujo de Registro de Asistencia con QR**
+
+```
+┌───────────────────────��─────────────────────────────────────┐
+│                    FLUJO DE ASISTENCIA                       │
+├─────────────────────────────────────────────────────────────┤
+│                                                              │
+│  1. MIEMBRO                     2. ADMIN                     │
+│  ┌──────────────────┐           ┌──────────────────┐        │
+│  │ Genera QR en     │           │ Escanea QR con   │        │
+│  │ su perfil        │ ────────▶ │ cámara/celular   │        │
+│  │                  │           │                  │        │
+│  │ [QR con foto]    │           │ [Escáner]        │        │
+│  └──────────────────┘           └──────────────────┘        │
+│           │                              │                   │
+│           │                              ▼                   │
+│           │                     ┌──────────────────┐        │
+│           │                     │ 3. Validación    │        │
+│           │                     │ - QR válido      │        │
+│           │                     │ - RUT coincide   │        │
+│           │                     │ - Foto verifica  │        │
+│           │                     └──────────────────┘        │
+│           │                              │                   │
+│           ▼                              ▼                   │
+│  ┌──────────────────┐           ┌──────────────────┐        │
+│  │ QR mostrado en   │           │ 4. Registro      │        │
+│  │ pantalla celular │           │ Asistencia       │        │
+│  │ o impreso        │           │ Exitosa ✅       │        │
+│  └──────────────────┘           └──────────────────┘        │
+│                                                              │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
+### **Datos del QR (Formato JSON)**
+
+El código QR contiene la siguiente información en formato JSON:
+
+```json
+{
+  "type": "judo_member",
+  "member_id": 123,
+  "rut": "12.345.678-9",
+  "name": "Juan Pérez",
+  "timestamp": "2026-03-21T15:30:00.000Z"
+}
+```
+
+---
+
+### **Seguridad del QR**
+
+1. **Validación de RUT**: El sistema verifica que el RUT del QR coincida con el miembro
+2. **Alerta de Seguridad**: Si hay discrepancia, se muestra alerta al administrador
+3. **Timestamp**: El QR incluye fecha de generación para trazabilidad
+4. **Solo Admin**: Solo administradores pueden escanear y validar QRs
+
+---
+
+### **Recomendaciones de Uso**
+
+| Para Miembros | Para Administradores |
+|---------------|---------------------|
+| ✅ Subir foto reciente | ✅ Verificar foto al escanear |
+| ✅ Mantener QR accesible | ✅ Validar RUT visualmente |
+| ✅ Mostrar en celular o impreso | ✅ Prestar atención a alertas |
+| ✅ Actualizar foto si cambia | ✅ Reportar QRs sospechosos |
+
+---
+
 ## Installation
 
 ```bash

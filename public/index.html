@@ -595,6 +595,38 @@
           <p style="color: #999; text-align: center;">Cargando torneos...</p>
         </div>
       </div>
+
+      <!-- Código QR -->
+      <h3 style="margin-top: 30px;">📱 Mi Código QR</h3>
+      <div style="background: #e3f2fd; padding: 20px; border-radius: 8px; border-left: 4px solid #2196f3;">
+        <p style="margin-bottom: 15px; color: #1976d2;">
+          Genera tu código QR personal para registrar tu asistencia. Muestra tu foto y RUT.
+        </p>
+        
+        <!-- Photo Upload -->
+        <div style="margin-bottom: 20px; padding: 15px; background: #fff; border-radius: 5px;">
+          <h4 style="margin: 0 0 10px 0; color: #1976d2;">📸 Tu Foto de Perfil</h4>
+          <div style="display: flex; gap: 15px; align-items: flex-start; flex-wrap: wrap;">
+            <img id="photoPreview" src="" alt="Vista previa" style="width: 100px; height: 100px; object-fit: cover; border-radius: 50%; border: 2px solid #2196f3; display: none;">
+            <div style="flex: 1;">
+              <input type="file" id="photoInput" accept="image/*" style="margin-bottom: 10px;">
+              <br>
+              <button class="btn btn-success" id="uploadPhotoBtn">📤 Subir Foto</button>
+              <small style="display: block; margin-top: 5px; color: #666;">
+                Formatos: JPG, PNG | Máximo: 5 MB
+              </small>
+            </div>
+          </div>
+        </div>
+
+        <!-- QR Code Display -->
+        <div id="qrCodeContainer">
+          <p style="color: #999; text-align: center;">Cargando QR...</p>
+        </div>
+
+        <!-- Children List (for guardians) -->
+        <div id="childrenListContainer" style="margin-top: 20px;"></div>
+      </div>
     </div>
   </div>
 
@@ -609,6 +641,7 @@
   <script src="js/grades-payments.js"></script>
   <script src="js/attendance-news-stats.js"></script>
   <script src="js/modules/curriculum.js"></script>
+  <script src="js/modules/qr.js"></script>
   <script src="js/modules/settings.js"></script>
   <!-- Initialize -->
   <script>

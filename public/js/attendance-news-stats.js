@@ -169,10 +169,15 @@ async function loadMyInfo() {
     loadMyGrade();
     loadMyAttendance();
     loadMyPayments();
-    
+
     // Initialize curriculum
     if (window.CurriculumModule) {
       CurriculumModule.init(currentUser.member_id);
+    }
+    
+    // Initialize QR module
+    if (window.QRModule) {
+      QRModule.init(currentUser.member_id, false);
     }
   } catch (e) { document.getElementById('myInfo').innerHTML = '<p>Error: ' + e.message + '</p>'; }
 }
