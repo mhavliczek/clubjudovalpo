@@ -5,6 +5,25 @@ const path = require('path');
 const fs = require('fs');
 const PDFDocument = require('pdfkit');
 
+// Helper functions
+function getBeltName(belt) {
+  if (!belt) return belt;
+  const beltMap = {
+    '6to kyu': '6º Kyu', '5to kyu': '5º Kyu', '4to kyu': '4º Kyu',
+    '3er kyu': '3º Kyu', '2do kyu': '2º Kyu', '1er kyu': '1º Kyu',
+    '1er dan': '1º Dan', '2do dan': '2º Dan', '3er dan': '3º Dan',
+    '4to dan': '4º Dan', '5to dan': '5º Dan', '6to dan': '6º Dan',
+    '7mo dan': '7º Dan', '8vo dan': '8º Dan', '9no dan': '9º Dan', '10mo dan': '10º Dan'
+  };
+  return beltMap[belt.toLowerCase()] || belt;
+}
+
+function formatDateChile(dateStr) {
+  if (!dateStr) return '';
+  const [year, month, day] = dateStr.split('-');
+  return `${day}-${month}-${year}`;
+}
+
 // Obtener torneos de un miembro
 router.get('/member/:memberId', (req, res) => {
   try {
@@ -296,7 +315,7 @@ router.get('/curriculum/:memberId/pdf', async (req, res) => {
       LEFT JOIN (
         SELECT member_id, belt_color, grade_date
         FROM belt_grades
-        WHERE member_id = ?
+        WHERE member_id = ? AND status = 'approved'
         ORDER BY grade_date DESC
         LIMIT 1
       ) bg ON m.id = bg.member_id
@@ -308,12 +327,23 @@ router.get('/curriculum/:memberId/pdf', async (req, res) => {
     }
 
     const tournaments = db.prepare(`
-      SELECT * FROM curriculum 
-      WHERE member_id = ? 
+      SELECT * FROM curriculum
+      WHERE member_id = ?
       ORDER BY tournament_date DESC
     `).all(req.params.memberId);
 
-    const doc = new PDFDocument({ size: 'A4', margins: { top: 50, bottom: 50, left: 50, right: 50 } });
+    // Obtener solo grados aprobados para el historial
+    const approvedGrades = db.prepare(`
+      SELECT belt_color, grade_date, status_date
+      FROM belt_grades
+      WHERE member_id = ? AND status = 'approved'
+      ORDER BY grade_date DESC
+    `).all(req.params.memberId);
+
+    const doc = new PDFDocument({ 
+      size: 'A4', 
+      margins: { top: 50, bottom: 50, left: 50, right: 50 }
+    });
 
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename=curriculum_${member.first_name}_${member.last_name}.pdf`);
@@ -321,22 +351,33 @@ router.get('/curriculum/:memberId/pdf', async (req, res) => {
     doc.pipe(res);
 
     // Título
-    doc.fontSize(20).font('Helvetica-Bold').text('Curriculum Deportivo', { align: 'center' });
+    doc.fontSize(20).text('Curriculum Deportivo', { align: 'center' });
     doc.moveDown(1);
     
     // Datos del deportista
-    doc.fontSize(12).font('Helvetica').text(`Nombre: ${member.first_name} ${member.last_name}`);
-    doc.text(`Grado: ${member.belt_color || 'No registrado'}`);
+    doc.fontSize(12).text(`Nombre: ${member.first_name} ${member.last_name}`);
+    doc.text(`Grado Actual: ${member.belt_color || 'No registrado'}`);
     doc.moveDown(2);
+
+    // Historial de Grados Aprobados
+    if (approvedGrades && approvedGrades.length > 0) {
+      doc.fontSize(14).text('Historial de Grados Aprobados', { underline: true });
+      doc.moveDown(1);
+      
+      approvedGrades.forEach((g, i) => {
+        doc.fontSize(11).text(`${i + 1}. ${getBeltName(g.belt_color)} - ${formatDateChile(g.grade_date)}`);
+      });
+      doc.moveDown(2);
+    }
 
     // Tabla de torneos
     if (tournaments.length > 0) {
-      doc.fontSize(14).font('Helvetica-Bold').text('Torneos Participados', { underline: true });
+      doc.fontSize(14).text('Torneos Participados', { underline: true });
       doc.moveDown(1);
       
       tournaments.forEach((t, i) => {
-        doc.fontSize(11).font('Helvetica-Bold').text(`${i + 1}. ${t.tournament_name}`);
-        doc.fontSize(10).font('Helvetica').text(`   Fecha: ${t.tournament_date} | Lugar: ${t.location}`);
+        doc.fontSize(11).text(`${i + 1}. ${t.tournament_name}`);
+        doc.fontSize(10).text(`   Fecha: ${t.tournament_date} | Lugar: ${t.location}`);
         doc.text(`   Categoría: ${t.category} | Peso: ${t.weight} | Lugar: ${t.place_obtained}`);
         doc.moveDown(1);
       });

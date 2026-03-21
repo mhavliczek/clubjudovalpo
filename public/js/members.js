@@ -65,6 +65,10 @@ async function showMemberDetail(memberId) {
     const m = await res.json();
     const currentYear = new Date().getFullYear();
     const currentMonth = new Date().getMonth() + 1;
+    
+    // Get current user from localStorage
+    const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+    const isAdmin = currentUser.role === 'admin';
 
     // Calculate which months are paid
     const paidMonths = {};
@@ -130,19 +134,41 @@ async function showMemberDetail(memberId) {
           <summary style="color: #856404;">🎗️ Historial de Cinturón</summary>
           <div style="margin-top: 15px;">
             ${m.belt_grades && m.belt_grades.length > 0 ? `
-              <table style="width: 100%; font-size: 13px;">
-                ${m.belt_grades.map(g => `
-                  <tr style="border-bottom: 1px solid #ddd;">
-                    <td style="padding: 8px;">${getBeltName(g.belt_color)}</td>
-                    <td style="padding: 8px;">${formatDateChile(g.grade_date)}</td>
-                    <td style="padding: 8px;">${g.otorgado_por || g.instructor || '-'}</td>
-                    <td style="padding: 8px;">
-                      <button class="btn btn-danger" onclick="deleteGradeFromMember(${g.id}, ${m.id})" style="font-size: 11px;">Eliminar</button>
-                    </td>
+              <table style="width: 100%; font-size: 12px;">
+                <thead>
+                  <tr style="background: #0066cc; color: white;">
+                    <th style="padding: 8px;">Grado</th>
+                    <th style="padding: 8px;">Fecha Rendición</th>
+                    <th style="padding: 8px;">Nota</th>
+                    <th style="padding: 8px;">Estado</th>
+                    <th style="padding: 8px;">Fecha Estado</th>
+                    <th style="padding: 8px;">Otorgado Por</th>
+                    ${isAdmin ? '<th style="padding: 8px;">Acción</th>' : ''}
                   </tr>
-                `).join('')}
+                </thead>
+                <tbody>
+                  ${m.belt_grades.map(g => {
+                    const statusBadge = g.status === 'approved' ? '✅ Aprobado' : g.status === 'failed' ? '❌ Reprobado' : '⏳ Pendiente';
+                    const statusColor = g.status === 'approved' ? '#d4edda' : g.status === 'failed' ? '#f8d7da' : '#fff3cd';
+                    return `
+                      <tr style="border-bottom: 1px solid #ddd;">
+                        <td style="padding: 8px; font-weight: bold;">${getBeltName(g.belt_color)}</td>
+                        <td style="padding: 8px;">${g.exam_date ? formatDateChile(g.exam_date) : formatDateChile(g.grade_date)}</td>
+                        <td style="padding: 8px; text-align: center;">${g.score !== null && g.score !== undefined ? g.score.toFixed(1) : '-'}</td>
+                        <td style="padding: 8px;"><span style="background: ${statusColor}; padding: 2px 8px; border-radius: 3px; font-size: 11px;">${statusBadge}</span></td>
+                        <td style="padding: 8px;">${g.status_date ? formatDateChile(g.status_date) : '-'}</td>
+                        <td style="padding: 8px;">${g.otorgado_por || g.instructor || '-'}</td>
+                        ${isAdmin ? `
+                          <td style="padding: 8px; text-align: center;">
+                            <button class="btn btn-danger" onclick="deleteGradeFromMember(${g.id}, ${m.id})" style="font-size: 11px; padding: 3px 6px;">🗑️</button>
+                          </td>
+                        ` : ''}
+                      </tr>
+                    `;
+                  }).join('')}
+                </tbody>
               </table>
-            ` : '<p style="color: #999;">Sin grados registrados</p>'}
+            ` : '<p style="color: #999; text-align: center;">Sin grados registrados</p>'}
             <button class="btn btn-success" onclick="showGradeForm(${m.id})" style="margin-top: 10px; font-size: 12px;">+ Agregar Grado</button>
           </div>
         </details>
@@ -295,6 +321,12 @@ async function showMemberDetail(memberId) {
         </details>
       </div>
     `;
+    
+    // Initialize CurriculumModule with current member
+    if (window.CurriculumModule) {
+      CurriculumModule.currentMemberId = m.id;
+      CurriculumModule.load();
+    }
   } catch (e) {
     document.getElementById('memberDetail').innerHTML = '<p style="color: red;">Error: ' + e.message + '</p>';
   }

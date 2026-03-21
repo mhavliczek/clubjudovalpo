@@ -38,6 +38,10 @@ db.exec(`
     member_id INTEGER NOT NULL,
     belt_color TEXT NOT NULL,
     grade_date TEXT DEFAULT (date('now')),
+    exam_date TEXT,
+    score REAL,
+    status TEXT DEFAULT 'pending',
+    status_date TEXT,
     instructor TEXT,
     notes TEXT,
     FOREIGN KEY (member_id) REFERENCES members(id) ON DELETE CASCADE
@@ -135,6 +139,20 @@ try {
 // Add honorary member flag
 try {
   db.exec(`ALTER TABLE members ADD COLUMN is_honorary INTEGER DEFAULT 0`);
+} catch (e) { /* Column may already exist */ }
+
+// Add exam fields to belt_grades
+try {
+  db.exec(`ALTER TABLE belt_grades ADD COLUMN exam_date TEXT`);
+} catch (e) { /* Column may already exist */ }
+try {
+  db.exec(`ALTER TABLE belt_grades ADD COLUMN score REAL`);
+} catch (e) { /* Column may already exist */ }
+try {
+  db.exec(`ALTER TABLE belt_grades ADD COLUMN status TEXT DEFAULT 'pending'`);
+} catch (e) { /* Column may already exist */ }
+try {
+  db.exec(`ALTER TABLE belt_grades ADD COLUMN status_date TEXT`);
 } catch (e) { /* Column may already exist */ }
 try {
   db.exec(`ALTER TABLE members ADD COLUMN association TEXT`);

@@ -114,6 +114,8 @@ async function loadFeesForPayment() {
 function showGradeForm(memberId) {
   document.getElementById('gradeMemberId').value = memberId;
   document.getElementById('gradeDate').value = new Date().toISOString().split('T')[0];
+  document.getElementById('examDate').value = new Date().toISOString().split('T')[0];
+  document.getElementById('gradeScore').value = '';
   document.getElementById('gradeNotes').value = '';
   loadInstructorsForSelect();
   showForm('gradeFormModal');
@@ -144,10 +146,20 @@ async function saveGradeFromModal() {
   const selectedOptions = Array.from(instructorSelect.selectedOptions).map(opt => opt.value).filter(n => n !== '');
   const otorgadoPor = selectedOptions.join(', ');
 
+  const score = parseFloat(document.getElementById('gradeScore').value);
+  
+  // Validar nota (1.0 a 7.0)
+  if (document.getElementById('gradeScore').value && (isNaN(score) || score < 1.0 || score > 7.0)) {
+    alert('La nota debe estar entre 1.0 y 7.0');
+    return;
+  }
+
   const data = {
     member_id: parseInt(document.getElementById('gradeMemberId').value),
     belt_color: document.getElementById('beltColor').value,
     grade_date: document.getElementById('gradeDate').value,
+    exam_date: document.getElementById('examDate').value,
+    score: document.getElementById('gradeScore').value ? score : null,
     otorgado_por: otorgadoPor,
     notes: document.getElementById('gradeNotes').value
   };
@@ -168,7 +180,10 @@ async function saveGradeFromModal() {
     });
     const result = await res.json();
     if (!res.ok) throw new Error(result.error);
-    alert('Grado registrado');
+    
+    const statusMsg = result.status === 'approved' ? '✅ Aprobado' : result.status === 'failed' ? '❌ Reprobado' : '⏳ Pendiente';
+    alert('Grado registrado\nEstado: ' + statusMsg);
+    
     hideForm('gradeFormModal');
     instructorSelect.value = '';
     document.getElementById('gradeNotes').value = '';

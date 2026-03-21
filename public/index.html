@@ -457,6 +457,15 @@
           </optgroup>
         </select>
         <input type="date" id="gradeDate" placeholder="Fecha" style="width: 100%; margin-top: 10px;">
+        <div style="margin-top: 15px; padding: 15px; background: #e3f2fd; border-radius: 5px; border-left: 4px solid #2196f3;">
+          <h4 style="margin: 0 0 10px 0; color: #1976d2;">Evaluacion del Examen</h4>
+          <label style="display: block; margin: 10px 0 5px; font-weight: bold;">Fecha de Rendicion:</label>
+          <input type="date" id="examDate" style="width: 100%;">
+          <label style="display: block; margin: 10px 0 5px; font-weight: bold;">Nota (1.0 - 7.0):</label>
+          <input type="number" id="gradeScore" step="0.1" min="1.0" max="7.0" placeholder="Ej: 5.5" style="width: 100%;">
+          <small style="color: #666;">4.0-7.0: Aprobado | 1.0-3.9: Reprobado | Sin nota: Pendiente</small>
+        </div>
+
         <label style="display: block; margin: 10px 0 5px; font-weight: bold;">��� Otorgado Por:</label>
         <select id="instructorSelect" multiple style="width: 100%; height: 100px;"></select>
         <small>💡 Ctrl/Cmd + Click para múltiples</small>

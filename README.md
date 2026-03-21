@@ -102,6 +102,63 @@ El sistema genera certificados PDF con:
 
 ---
 
+## 🥋 Sistema de Grados de Cinturón con Evaluación
+
+### **Campos de Evaluación**
+
+Cuando se registra un nuevo grado, se puede ingresar:
+
+| Campo | Descripción | Obligatorio |
+|-------|-------------|-------------|
+| **Grado** | Tipo de cinturón (Kyu/Dan) | ✅ Sí |
+| **Fecha de Grado** | Fecha de aprobación | ✅ Sí |
+| **Fecha de Rendición** | Fecha del examen | ❌ No |
+| **Nota** | Evaluación del 1.0 al 7.0 | ❌ No |
+| **Otorgado Por** | Instructor(es) que evalúan | ❌ No |
+| **Notas** | Comentarios adicionales | ❌ No |
+
+### **Estados de Grado**
+
+| Nota | Estado | Descripción |
+|------|--------|-------------|
+| **4.0 - 7.0** | ✅ **Aprobado** | El miembro aprobó el examen |
+| **1.0 - 3.9** | ❌ **Reprobado** | El miembro reprobó el examen |
+| **Sin nota** | ⏳ **Pendiente** | No se ingresó nota, estado pendiente |
+
+### **Reglas de Negocio**
+
+1. **Fecha de Estado**: Cuando se aprueba (≥ 4.0), la `status_date` = `grade_date`
+2. **Visibilidad Admin**: Ve todos los grados (aprobados, reprobados, pendientes)
+3. **Visibilidad Judoca**: Solo ve grados **aprobados** en su perfil
+4. **CV Deportivo PDF**: Solo incluye grados **aprobados**
+5. **Certificado de Grados**: Solo muestra grados **aprobados**
+
+### **Tabla de Historial de Grados**
+
+La tabla muestra las siguientes columnas:
+
+| Columna | Descripción |
+|---------|-------------|
+| **Grado** | Nombre del cinturón (ej: 5º Kyu) |
+| **Fecha Rendición** | Fecha del examen (o fecha de grado si no hay) |
+| **Nota** | Nota obtenida (1.0 - 7.0) |
+| **Estado** | Badge de color según estado |
+| **Fecha Estado** | Fecha cuando se aprobó el grado |
+| **Otorgado Por** | Nombre del instructor(es) |
+| **Acción** | Botón eliminar (solo admin) |
+
+### **Permisos por Rol**
+
+| Funcionalidad | Admin | Judoca |
+|---------------|-------|--------|
+| Ver todos los grados | ✅ Sí | ❌ No (solo aprobados) |
+| Agregar grado | ✅ Sí | ❌ No |
+| Eliminar grado | ✅ Sí | ❌ No |
+| Ver nota y estado | ✅ Sí | ❌ No (solo si está aprobado) |
+| Generar CV Deportivo | ✅ Sí (ve todo) | ✅ Sí (solo aprobados) |
+
+---
+
 ## Installation
 
 ```bash
