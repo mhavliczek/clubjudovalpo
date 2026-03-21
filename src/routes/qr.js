@@ -181,18 +181,68 @@ router.post('/scan-qr', requireAdmin, (req, res) => {
       });
     }
 
-    res.json({
-      member: {
-        id: member.id,
-        name: `${member.first_name} ${member.last_name}`,
-        rut: member.rut,
-        photo: member.photo,
-        status: member.status,
-        guardian: member.guardian_first_name ? 
-          `${member.guardian_first_name} ${member.guardian_last_name}` : null
-      },
-      valid: true
-    });
+    // Registrar asistencia automáticamente
+    const today = new Date().toISOString().split('T')[0];
+    
+    try {
+      // Verificar si ya tiene asistencia hoy
+      const existingAttendance = db.prepare(`
+        SELECT id FROM attendance WHERE member_id = ? AND class_date = ?
+      `).get(qr_data.member_id, today);
+
+      let attendanceRegistered = false;
+      let attendanceId = null;
+
+      if (!existingAttendance) {
+        // Registrar nueva asistencia
+        const result = db.prepare(`
+          INSERT INTO attendance (member_id, class_date, class_type, notes)
+          VALUES (?, ?, 'regular', 'Registrado vía QR')
+        `).run(qr_data.member_id, today);
+        
+        attendanceRegistered = true;
+        attendanceId = result.lastInsertRowid;
+      } else {
+        attendanceId = existingAttendance.id;
+      }
+
+      res.json({
+        member: {
+          id: member.id,
+          name: `${member.first_name} ${member.last_name}`,
+          rut: member.rut,
+          photo: member.photo,
+          status: member.status,
+          guardian: member.guardian_first_name ? 
+            `${member.guardian_first_name} ${member.guardian_last_name}` : null
+        },
+        valid: true,
+        attendance: {
+          registered: attendanceRegistered,
+          already_registered: !attendanceRegistered,
+          date: today,
+          id: attendanceId
+        }
+      });
+    } catch (attendanceError) {
+      console.error('Error registering attendance:', attendanceError);
+      // Retornar datos del miembro pero indicar error en asistencia
+      res.json({
+        member: {
+          id: member.id,
+          name: `${member.first_name} ${member.last_name}`,
+          rut: member.rut,
+          photo: member.photo,
+          status: member.status,
+          guardian: member.guardian_first_name ? 
+            `${member.guardian_first_name} ${member.guardian_last_name}` : null
+        },
+        valid: true,
+        attendance: {
+          error: attendanceError.message
+        }
+      });
+    }
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

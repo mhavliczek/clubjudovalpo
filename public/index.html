@@ -185,7 +185,8 @@
             <div class="section">
               <h2>📅 Asistencia</h2>
               <button class="btn" onclick="loadAttendance()">Cargar Asistencia</button>
-              <button class="btn btn-success" onclick="showForm('attendanceForm')">Registrar Asistencia</button>
+              <button class="btn btn-success" onclick="showForm('attendanceForm')">Registrar Manual</button>
+              <button class="btn" onclick="QRScanModule.showScanModal()" style="background: #9c27b0; color: white;">📱 Escanear QR</button>
               <div id="attendanceForm" class="hidden" style="margin-top: 15px; padding: 15px; background: #f8f9fa; border-radius: 5px;">
                 <h3>Registrar Asistencia</h3>
                 <div class="form-row">
@@ -642,6 +643,7 @@
   <script src="js/attendance-news-stats.js"></script>
   <script src="js/modules/curriculum.js"></script>
   <script src="js/modules/qr.js"></script>
+  <script src="js/modules/qr-scan.js"></script>
   <script src="js/modules/settings.js"></script>
   <!-- Initialize -->
   <script>

@@ -91,6 +91,11 @@ function initApp() {
       document.getElementById('memberPortal').classList.add('hidden');
       showSection('dashboard');
       loadMembersSelect();
+      
+      // Initialize QR Scan module for admin
+      if (window.QRScanModule) {
+        QRScanModule.init();
+      }
     } else {
       document.getElementById('adminPanel').classList.add('hidden');
       document.getElementById('adminNewsPanel').classList.add('hidden');
