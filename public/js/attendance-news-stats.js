@@ -30,15 +30,15 @@ async function loadAttendance() {
     }
     document.getElementById('attendanceList').innerHTML = `
       <table>
-        <tr><th>ID</th><th>Miembro</th><th>Fecha</th><th>Tipo</th><th>Notas</th><th>Acciones</th></tr>
+        <tr><th>Fecha</th><th>Miembro</th><th>RUT</th><th>Tipo</th><th>Notas</th><th>Acciones</th></tr>
         ${records.map(r => `
-          <tr>
-            <td>${r.id}</td>
-            <td>${r.member_name}</td>
-            <td>${r.class_date}</td>
-            <td>${r.class_type}</td>
+          <tr style="${r.notes === 'Registrado vía QR' ? 'background: #e8f5e9;' : ''}">
+            <td>${formatDateChile(r.class_date)}</td>
+            <td><strong>${r.first_name} ${r.last_name}</strong></td>
+            <td>${r.rut || 'Sin RUT'}</td>
+            <td>${r.class_type === 'regular' ? '📅 Regular' : r.class_type}</td>
             <td>${r.notes || '-'}</td>
-            <td><button class="btn btn-danger" onclick="deleteAttendance(${r.id})">Eliminar</button></td>
+            <td><button class="btn btn-danger" onclick="deleteAttendance(${r.id})">🗑️ Eliminar</button></td>
           </tr>
         `).join('')}
       </table>
@@ -221,7 +221,13 @@ async function loadMyAttendance() {
     document.getElementById('myAttendance').innerHTML = `
       <table>
         <tr><th>Fecha</th><th>Tipo</th><th>Notas</th></tr>
-        ${records.map(r => `<tr><td>${r.class_date}</td><td>${r.class_type}</td><td>${r.notes || '-'}</td></tr>`).join('')}
+        ${records.map(r => `
+          <tr style="${r.notes === 'Registrado vía QR' ? 'background: #e8f5e9;' : ''}">
+            <td>${formatDateChile(r.class_date)}</td>
+            <td>${r.class_type === 'regular' ? '📅 Regular' : r.class_type}</td>
+            <td>${r.notes === 'Registrado vía QR' ? '✅ Registrado vía QR' : (r.notes || '-')}</td>
+          </tr>
+        `).join('')}
       </table>
     `;
   } catch (e) { document.getElementById('myAttendance').innerHTML = '<p>Error: ' + e.message + '</p>'; }

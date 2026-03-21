@@ -11,7 +11,7 @@ router.get('/', (req, res) => {
   const viewMemberId = req.user.role !== 'admin' ? req.user.member_id : member_id;
 
   let query = `
-    SELECT a.*, m.first_name, m.last_name
+    SELECT a.*, m.first_name, m.last_name, m.rut, m.photo
     FROM attendance a
     JOIN members m ON a.member_id = m.id
     WHERE 1=1
