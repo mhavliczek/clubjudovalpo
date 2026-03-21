@@ -6,6 +6,10 @@ const QRSCAN_API_BASE = (typeof API_BASE !== 'undefined') ? API_BASE : '';
 const QRSCAN_getToken = (typeof getToken !== 'undefined') ? getToken : () => localStorage.getItem('token');
 
 const QRScanModule = {
+  stream: null,
+  scanInterval: null,
+  isScanning: false,
+
   init() {
     this.bindEvents();
   },
@@ -17,6 +21,110 @@ const QRScanModule = {
         this.processManualQR();
       }
     });
+  },
+
+  async startCamera() {
+    const video = document.getElementById('qrCamera');
+    const canvas = document.getElementById('qrCanvas');
+    const statusDiv = document.getElementById('cameraStatus');
+    const startBtn = document.getElementById('startCameraBtn');
+    const stopBtn = document.getElementById('stopCameraBtn');
+
+    if (!video || !canvas) return;
+
+    try {
+      statusDiv.textContent = '⏳ Solicitando permiso de cámara...';
+      startBtn.disabled = true;
+
+      // Request camera with rear camera preference for mobile
+      this.stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'environment' } // Use rear camera on mobile
+      });
+
+      video.srcObject = this.stream;
+      video.style.display = 'block';
+      startBtn.style.display = 'none';
+      stopBtn.style.display = 'inline-block';
+      statusDiv.textContent = '✅ Cámara activa. Apunta al QR...';
+
+      // Start scanning
+      this.isScanning = true;
+      this.scanFromCamera(video, canvas);
+
+    } catch (error) {
+      console.error('Error accessing camera:', error);
+      statusDiv.textContent = '❌ Error: ' + error.message;
+      startBtn.disabled = false;
+    }
+  },
+
+  stopCamera() {
+    const video = document.getElementById('qrCamera');
+    const statusDiv = document.getElementById('cameraStatus');
+    const startBtn = document.getElementById('startCameraBtn');
+    const stopBtn = document.getElementById('stopCameraBtn');
+
+    if (this.stream) {
+      this.stream.getTracks().forEach(track => track.stop());
+      this.stream = null;
+    }
+
+    if (this.scanInterval) {
+      clearInterval(this.scanInterval);
+      this.scanInterval = null;
+    }
+
+    this.isScanning = false;
+
+    if (video) {
+      video.style.display = 'none';
+      video.srcObject = null;
+    }
+
+    if (statusDiv) {
+      statusDiv.textContent = 'Cámara detenida';
+    }
+
+    if (startBtn) {
+      startBtn.style.display = 'inline-block';
+      startBtn.disabled = false;
+    }
+
+    if (stopBtn) {
+      stopBtn.style.display = 'none';
+    }
+  },
+
+  scanFromCamera(video, canvas) {
+    const ctx = canvas.getContext('2d');
+
+    this.scanInterval = setInterval(() => {
+      if (!this.isScanning || video.readyState !== video.HAVE_ENOUGH_DATA) {
+        return;
+      }
+
+      canvas.height = video.videoHeight;
+      canvas.width = video.videoWidth;
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const code = jsQR(imageData.data, imageData.width, imageData.height);
+
+      if (code) {
+        console.log('QR Code found:', code.data);
+        
+        // Try to parse QR data
+        try {
+          const qrData = JSON.parse(code.data);
+          if (qrData.type === 'judo_member') {
+            this.scanQR(qrData);
+            this.stopCamera();
+          }
+        } catch (e) {
+          console.log('QR data is not valid JSON');
+        }
+      }
+    }, 500); // Scan every 500ms
   },
 
   showScanModal() {
@@ -33,14 +141,26 @@ const QRScanModule = {
     modal.style.zIndex = '10000';
     modal.style.minWidth = '400px';
     modal.style.maxWidth = '90%';
+    modal.style.maxHeight = '90vh';
+    modal.style.overflowY = 'auto';
     
     modal.innerHTML = `
       <h3 style="margin: 0 0 20px 0; text-align: center; color: #1976d2;">📱 Escanear QR de Asistencia</h3>
       
-      <!-- Camera Section (Future) -->
+      <!-- Camera Section -->
       <div style="margin-bottom: 20px; padding: 20px; background: #f5f5f5; border-radius: 10px; text-align: center;">
-        <p style="color: #666; margin-bottom: 15px;">📷 Opción 1: Escanear con cámara (próximamente)</p>
-        <button class="btn" disabled style="opacity: 0.5; cursor: not-allowed;">📷 Activar Cámara</button>
+        <p style="color: #666; margin-bottom: 15px;">📷 Opción 1: Escanear con cámara</p>
+        <video id="qrCamera" autoplay playsinline style="width: 100%; max-width: 400px; border-radius: 10px; display: none; margin: 0 auto 10px;"></video>
+        <canvas id="qrCanvas" style="display: none;"></canvas>
+        <div id="cameraStatus" style="margin: 10px 0; color: #666; font-size: 14px;"></div>
+        <button class="btn btn-success" id="startCameraBtn" onclick="QRScanModule.startCamera()" style="margin-bottom: 10px;">📷 Activar Cámara</button>
+        <button class="btn" id="stopCameraBtn" onclick="QRScanModule.stopCamera()" style="display: none; margin-bottom: 10px;">⏹️ Detener Cámara</button>
+        <p style="font-size: 12px; color: #999;">Apunta la cámara al código QR del miembro</p>
+      </div>
+      
+      <!-- Divider -->
+      <div style="text-align: center; margin: 15px 0; color: #999;">
+        <span>─ O ─</span>
       </div>
       
       <!-- Manual Input -->
@@ -57,9 +177,6 @@ const QRScanModule = {
       <div id="scanResult" style="display: none; margin-top: 20px; padding: 15px; border-radius: 10px;"></div>
       
       <div style="display: flex; gap: 10px; margin-top: 20px;">
-        <button class="btn btn-success" onclick="QRScanModule.processManualQR()" style="flex: 1;">
-          ✅ Validar y Registrar
-        </button>
         <button class="btn" onclick="document.getElementById('qrScanModal').remove()" style="flex: 1;">
           ❌ Cerrar
         </button>
