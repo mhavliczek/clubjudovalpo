@@ -107,7 +107,11 @@ async function showMemberDetail(memberId) {
           </div>
           <div style="display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end;">
             <span class="status-badge" style="background: ${m.status === 'active' ? '#d4edda' : '#f8d7da'};">${m.status === 'active' ? '✅ Activo' : '❌ Inactivo'}</span>
-            <span class="status-badge" style="background: #0066cc; color: white;">${m.member_type === 'judoca' ? '🥋 Judoca' : '👤 Miembro'}</span>
+            <span class="status-badge" style="background: #0066cc; color: white;">
+              ${m.member_type === 'deportista' ? '🥋 Deportista' : 
+                m.member_type === 'apoderado' ? '👨‍👧‍👦 Apoderado' : 
+                m.member_type === 'honorifico' ? '🏅 Honorífico' : '👤 Socio Común'}
+            </span>
             ${m.is_board_member ? `<span class="status-badge" style="background: #ffc107; color: #333;">🏛️ Directiva</span>` : ''}
             ${m.is_commission_member ? `<span class="status-badge" style="background: #e91e63; color: white;">📋 ${getCommissionName(m.commission_type)}</span>` : ''}
             ${m.condition === 'student' && m.school_info ? `<span class="status-badge" style="background: #17a2b8; color: white;">🎓 ${m.school_info.name}</span>` : ''}
@@ -313,22 +317,49 @@ async function saveMember() {
     return;
   }
 
-  const isGuardian = document.getElementById('isGuardian').checked;
-  const guardianDocumentType = document.getElementById('guardianDocumentType').value;
-  const guardianRut = document.getElementById('guardianRut').value;
-  if (isGuardian && guardianDocumentType === 'rut' && guardianRut && !validarRut(guardianRut)) {
-    alert('RUT del apoderado inválido.');
-    return;
-  }
-  if (isGuardian && guardianDocumentType === 'passport' && !guardianRut) {
-    alert('El número de pasaporte del apoderado no puede estar vacío.');
-    return;
-  }
-
   const id = document.getElementById('memberId').value;
   const createUser = document.getElementById('createUser').checked;
 
   const condition = document.getElementById('memberCondition').value;
+  const memberType = document.getElementById('memberType').value;
+
+  // Obtener datos del apoderado
+  const guardianDocumentType = document.getElementById('guardianDocumentType')?.value || 'rut';
+  const guardianRut = document.getElementById('guardianRut')?.value || '';
+  const guardianMemberSelect = document.getElementById('guardianMemberSelect');
+
+  // Validar RUT del apoderado si se está creando uno nuevo
+  const isNewGuardian = guardianMemberSelect && guardianMemberSelect.value === 'new';
+  
+  if (isNewGuardian && guardianDocumentType === 'rut' && guardianRut && !validarRut(guardianRut)) {
+    alert('RUT del apoderado inválido.');
+    return;
+  }
+  if (isNewGuardian && guardianDocumentType === 'passport' && !guardianRut) {
+    alert('El número de pasaporte del apoderado no puede estar vacío.');
+    return;
+  }
+
+  // Calcular edad para determinar si es obligatorio el apoderado
+  const dob = document.getElementById('dob').value;
+  let isMinor = false;
+  if (dob) {
+    const birthDate = new Date(dob);
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    isMinor = age < 18;
+  }
+
+  // Verificar si se seleccionó un apoderado existente
+  const selectedGuardianId = guardianMemberSelect && guardianMemberSelect.value !== 'new' ? guardianMemberSelect.value : null;
+
+  // Si es menor y no hay apoderado seleccionado, guardar información del nuevo apoderado
+  const saveGuardianInfo = isMinor && !selectedGuardianId && document.getElementById('guardianName').value.trim() !== '';
+
   const data = {
     document_type: documentType,
     rut,
@@ -344,21 +375,23 @@ async function saveMember() {
     emergency_contact: document.getElementById('emergencyContact').value,
     medical_info: document.getElementById('medicalInfo').value,
     medical_conditions: document.getElementById('medicalConditions').value,
-    member_type: document.getElementById('memberType').value,
+    member_type: memberType,
+    is_honorary: memberType === 'honorifico' ? 1 : 0,
     is_board_member: document.getElementById('isBoardMember').checked ? 1 : 0,
     board_position: document.getElementById('boardPosition').value,
     is_commission_member: document.getElementById('isCommissionMember').checked ? 1 : 0,
     commission_type: document.getElementById('isCommissionMember').checked ? (document.getElementById('commissionType').value || null) : null,
-    is_guardian: isGuardian ? 1 : 0,
+    guardian_id: selectedGuardianId || (isMinor ? null : null),
     condition: condition,
     school_id: condition === 'student' ? (document.getElementById('memberSchoolId').value || null) : null,
     education_level: condition === 'student' ? (document.getElementById('educationLevel').value || null) : null,
     grade_course: condition === 'student' ? (document.getElementById('gradeCourse').value || null) : null,
-    guardian_info: isGuardian ? {
+    guardian_info: saveGuardianInfo ? {
       full_name: document.getElementById('guardianName').value,
       document_type: guardianDocumentType,
       rut: guardianRut,
       date_of_birth: convertDateToISO(document.getElementById('guardianDob').value),
+      profession: document.getElementById('guardianProfession').value || null,
       address: document.getElementById('guardianAddress').value,
       email: document.getElementById('guardianEmail').value,
       phone: document.getElementById('guardianPhone').value
@@ -403,10 +436,24 @@ async function saveMember() {
 
 // Edit member
 async function editMember(id) {
-  const res = await fetch(`${API}/api/members/${id}`, {
-    headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
-  });
-  const m = await res.json();
+  console.log('✏️ Editing member ID:', id);
+  
+  try {
+    const res = await fetch(`${API}/api/members/${id}`, {
+      headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+    });
+    
+    console.log('📡 Response status:', res.status);
+    
+    if (!res.ok) {
+      const error = await res.json();
+      console.error('❌ API error:', error);
+      alert('Error al cargar miembro: ' + (error.error || 'Error desconocido'));
+      return;
+    }
+    
+    const m = await res.json();
+    console.log('📄 Member data:', m);
 
   document.getElementById('memberId').value = m.id;
   document.getElementById('documentType').value = m.document_type || 'rut';
@@ -419,11 +466,14 @@ async function editMember(id) {
   document.getElementById('address').value = m.address;
   document.getElementById('association').value = m.association || '';
   document.getElementById('profession').value = m.profession || '';
+  
+  // Verificar edad y mostrar/ocultar apoderado
+  checkAgeAndToggleGuardian();
   document.getElementById('weight').value = m.weight || '';
   document.getElementById('emergencyContact').value = m.emergency_contact;
   document.getElementById('medicalInfo').value = m.medical_info;
   document.getElementById('medicalConditions').value = m.medical_conditions || '';
-  document.getElementById('memberType').value = m.member_type || 'judoca';
+  document.getElementById('memberType').value = m.member_type || 'deportista';
   document.getElementById('isBoardMember').checked = m.is_board_member === 1;
   document.getElementById('boardPosition').value = m.board_position || '';
   document.getElementById('isCommissionMember').checked = m.is_commission_member === 1;
@@ -431,7 +481,6 @@ async function editMember(id) {
   if (m.is_commission_member) {
     toggleCommissionForm();
   }
-  document.getElementById('isGuardian').checked = m.is_guardian === 1;
   toggleDocumentType();
 
   if (m.guardian_info) {
@@ -439,11 +488,10 @@ async function editMember(id) {
     document.getElementById('guardianDocumentType').value = m.guardian_info.document_type || 'rut';
     document.getElementById('guardianRut').value = m.guardian_info.rut || '';
     document.getElementById('guardianDob').value = m.guardian_info.date_of_birth ? m.guardian_info.date_of_birth.split('-').reverse().join('-') : '';
+    document.getElementById('guardianProfession').value = m.guardian_info.profession || '';
     document.getElementById('guardianAddress').value = m.guardian_info.address || '';
     document.getElementById('guardianEmail').value = m.guardian_info.email || '';
     document.getElementById('guardianPhone').value = m.guardian_info.phone || '';
-    toggleGuardianForm();
-    toggleGuardianDocumentType();
   }
 
   const createUserCheckbox = document.getElementById('createUser');
@@ -460,6 +508,10 @@ async function editMember(id) {
   }
 
   showForm('memberForm');
+  } catch (e) {
+    console.error('❌ Error editing member:', e);
+    alert('Error al cargar miembro: ' + e.message);
+  }
 }
 
 // Toggle member status (active/inactive)
@@ -620,17 +672,148 @@ function toggleDocumentType() {
   }
 }
 
+// Calcular edad y mostrar/ocultar formulario de apoderado
+function checkAgeAndToggleGuardian() {
+  const dob = document.getElementById('dob').value;
+  if (!dob) return;
+
+  const birthDate = new Date(dob);
+  const today = new Date();
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const monthDiff = today.getMonth() - birthDate.getMonth();
+  
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+    age--;
+  }
+
+  const guardianSection = document.getElementById('guardianSection');
+  const guardianSectionTitle = document.getElementById('guardianSectionTitle');
+  const memberTypeSelect = document.getElementById('memberType');
+
+  if (age < 18) {
+    // Menor de edad - mostrar formulario de apoderado
+    guardianSection.classList.remove('hidden');
+    guardianSectionTitle.classList.remove('hidden');
+    
+    // Forzar tipo de socio a "Deportista" para menores
+    memberTypeSelect.value = 'deportista';
+    memberTypeSelect.disabled = true;
+    
+    // Mostrar mensaje informativo
+    const typeInfo = document.getElementById('memberTypeInfo');
+    if (typeInfo) {
+      typeInfo.innerHTML = '<p style="color: #1976d2; font-size: 13px; margin-top: 5px;">ℹ️ Los menores de edad solo pueden registrarse como <strong>Deportistas</strong>. El tipo de socio se habilitará al cumplir 18 años.</p>';
+    }
+  } else {
+    // Mayor de edad - ocultar formulario de apoderado
+    guardianSection.classList.add('hidden');
+    guardianSectionTitle.classList.add('hidden');
+    
+    // Habilitar selección de tipo de socio
+    memberTypeSelect.disabled = false;
+    
+    // Limpiar campos de apoderado
+    document.getElementById('guardianName').value = '';
+    document.getElementById('guardianRut').value = '';
+    document.getElementById('guardianDob').value = '';
+    document.getElementById('guardianProfession').value = '';
+    document.getElementById('guardianAddress').value = '';
+    document.getElementById('guardianEmail').value = '';
+    document.getElementById('guardianPhone').value = '';
+    document.getElementById('guardianMemberSelect').value = '';
+    
+    // Ocultar mensaje informativo
+    const typeInfo = document.getElementById('memberTypeInfo');
+    if (typeInfo) {
+      typeInfo.innerHTML = '';
+    }
+  }
+}
+
 // Toggle guardian document type (RUT/Pasaporte)
 function toggleGuardianDocumentType() {
   const guardianDocumentType = document.getElementById('guardianDocumentType').value;
   const guardianRutInput = document.getElementById('guardianRut');
-  
+
   if (guardianDocumentType === 'passport') {
     guardianRutInput.placeholder = 'Número de Pasaporte';
     guardianRutInput.removeAttribute('oninput');
   } else {
     guardianRutInput.placeholder = 'RUT';
     guardianRutInput.setAttribute('oninput', 'formatRut(this)');
+  }
+}
+
+// Toggle guardian form type (existing guardian vs new guardian)
+function toggleGuardianFormType() {
+  const select = document.getElementById('guardianMemberSelect');
+  const newGuardianForm = document.getElementById('newGuardianForm');
+  
+  if (select.value === 'new' || select.value === '') {
+    newGuardianForm.classList.remove('hidden');
+  } else {
+    // Guardian existente seleccionado
+    newGuardianForm.classList.add('hidden');
+  }
+}
+
+// Load guardians select for dropdown
+async function loadGuardiansSelect() {
+  try {
+    const res = await fetch(`${API}/api/members`, {
+      headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+    });
+    const members = await res.json();
+    
+    const guardians = members.filter(m => m.member_type === 'apoderado' || m.is_guardian);
+    
+    const select = document.getElementById('guardianMemberSelect');
+    if (select) {
+      const options = '<option value="">-- Seleccionar --</option>' +
+        '<option value="new">Crear nuevo apoderado</option>' +
+        guardians.map(g => `<option value="${g.id}">${g.first_name} ${g.last_name} (${g.rut || 'Sin RUT'})</option>`).join('');
+      select.innerHTML = options;
+    }
+  } catch (e) {
+    console.error('Error loading guardians:', e);
+  }
+}
+
+// Toggle honorary member info
+function toggleHonoraryInfo() {
+  const memberType = document.getElementById('memberType').value;
+  const honoraryInfo = document.getElementById('honoraryInfo');
+  const dob = document.getElementById('dob').value;
+  
+  // Verificar si es menor de edad
+  let isMinor = false;
+  if (dob) {
+    const birthDate = new Date(dob);
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    isMinor = age < 18;
+  }
+  
+  // Si es menor y trata de seleccionar Apoderado, revertir a Deportista
+  if (isMinor && memberType === 'apoderado') {
+    alert('⚠️ Un menor de edad no puede ser Apoderado.\n\nEl tipo de socio se ha cambiado automáticamente a "Deportista".');
+    document.getElementById('memberType').value = 'deportista';
+  }
+  
+  // Si es menor y trata de seleccionar Socio Común u Honorífico, también revertir
+  if (isMinor && (memberType === 'comun' || memberType === 'honorifico')) {
+    alert('⚠️ Un menor de edad solo puede registrarse como Deportista.\n\nEl tipo de socio se ha cambiado automáticamente a "Deportista".');
+    document.getElementById('memberType').value = 'deportista';
+  }
+  
+  if (memberType === 'honorifico') {
+    honoraryInfo.classList.remove('hidden');
+  } else {
+    honoraryInfo.classList.add('hidden');
   }
 }
 

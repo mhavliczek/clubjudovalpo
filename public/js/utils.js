@@ -8,7 +8,31 @@ let currentUser = null;
 let clubName = 'Judo Club';
 
 // Utility Functions
-function showForm(id) { document.getElementById(id).classList.remove('hidden'); }
+function showForm(id) {
+  document.getElementById(id).classList.remove('hidden');
+  
+  // Initialize member type listener if it's the member form
+  if (id === 'memberForm') {
+    const memberTypeSelect = document.getElementById('memberType');
+    if (memberTypeSelect) {
+      // Remove existing listeners to avoid duplicates
+      memberTypeSelect.replaceWith(memberTypeSelect.cloneNode(true));
+      
+      // Re-get the reference after replacement
+      const newMemberTypeSelect = document.getElementById('memberType');
+      newMemberTypeSelect.addEventListener('change', function() {
+        toggleHonoraryInfo();
+        checkAgeAndToggleGuardian();
+      });
+      toggleHonoraryInfo(); // Initial check
+    }
+    
+    // Load guardians list
+    if (typeof loadGuardiansSelect === 'function') {
+      loadGuardiansSelect();
+    }
+  }
+}
 function hideForm(id) { document.getElementById(id).classList.add('hidden'); }
 
 // Format RUT without dots, only with dash

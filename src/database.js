@@ -94,7 +94,7 @@ db.exec(`
 
 // Add member type and board columns to members table
 try {
-  db.exec(`ALTER TABLE members ADD COLUMN member_type TEXT DEFAULT 'judoca'`);
+  db.exec(`ALTER TABLE members ADD COLUMN member_type TEXT DEFAULT 'deportista'`);
 } catch (e) { /* Column may already exist */ }
 try {
   db.exec(`ALTER TABLE members ADD COLUMN is_board_member INTEGER DEFAULT 0`);
@@ -125,6 +125,17 @@ try {
 try {
   db.exec(`ALTER TABLE members ADD COLUMN is_guardian INTEGER DEFAULT 0`);
 } catch (e) { /* Column may already exist */ }
+
+// Add guardian_id for minors (reference to guardian member)
+try {
+  db.exec(`ALTER TABLE members ADD COLUMN guardian_id INTEGER`);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_members_guardian ON members(guardian_id)`);
+} catch (e) { /* Column may already exist */ }
+
+// Add honorary member flag
+try {
+  db.exec(`ALTER TABLE members ADD COLUMN is_honorary INTEGER DEFAULT 0`);
+} catch (e) { /* Column may already exist */ }
 try {
   db.exec(`ALTER TABLE members ADD COLUMN association TEXT`);
 } catch (e) { /* Column may already exist */ }
@@ -143,12 +154,29 @@ db.exec(`
     full_name TEXT NOT NULL,
     rut TEXT NOT NULL,
     date_of_birth TEXT,
+    profession TEXT,
     address TEXT,
     email TEXT,
     phone TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (member_id) REFERENCES members(id) ON DELETE CASCADE
+  );
+`);
+
+// Create guardian relationships table (for managing multiple minors per guardian)
+db.exec(`
+  CREATE TABLE IF NOT EXISTS guardian_relationships (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    guardian_id INTEGER NOT NULL,
+    member_id INTEGER NOT NULL,
+    start_date TEXT DEFAULT (date('now')),
+    end_date TEXT,
+    is_active INTEGER DEFAULT 1,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (guardian_id) REFERENCES members(id) ON DELETE CASCADE,
+    FOREIGN KEY (member_id) REFERENCES members(id) ON DELETE CASCADE,
+    UNIQUE(guardian_id, member_id)
   );
 `);
 

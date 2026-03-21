@@ -288,7 +288,7 @@
           <input type="text" id="lastName" placeholder="Apellido" style="width: 100%;">
           <input type="email" id="email" placeholder="Email" style="width: 100%;">
           <input type="tel" id="phone" placeholder="Teléfono" style="width: 100%;">
-          <input type="date" id="dob" placeholder="Fecha nacimiento" style="width: 100%;">
+          <input type="date" id="dob" placeholder="Fecha nacimiento" style="width: 100%;" onchange="checkAgeAndToggleGuardian()">
           <input type="text" id="address" placeholder="Dirección" style="width: 100%;">
           <input type="text" id="association" placeholder="Asociación (ej: Srs. Preuniversitario Federico Santa María)" style="width: 100%;">
         </div>
@@ -299,6 +299,26 @@
             <option value="profession">Profesión</option>
             <option value="student">Estudiante</option>
           </select>
+        </div>
+
+        <h4>👥 Tipo de Socio</h4>
+        <div class="form-row">
+          <select id="memberType" style="width: 100%;">
+            <option value="deportista">Deportista (Judoca)</option>
+            <option value="comun">Socio Común (No deportista)</option>
+            <option value="apoderado">Apoderado</option>
+            <option value="honorifico">Socio Honorífico</option>
+          </select>
+          <div id="memberTypeInfo" style="min-height: 20px;"></div>
+          <div id="honoraryInfo" class="hidden" style="margin-top: 10px; padding: 10px; background: #fff3cd; border-radius: 5px; border-left: 4px solid #ffc107;">
+            <strong>🏅 Socio Honorífico:</strong> Exento de pagos. Requiere aprobación de la directiva.
+          </div>
+          <small style="color: #666; margin-top: 5px;">
+            • <strong>Deportista:</strong> Judoca activo, participa en torneos<br>
+            • <strong>Socio Común:</strong> Miembro no deportista, paga membresía<br>
+            • <strong>Apoderado:</strong> Responsable de menores, paga por ellos<br>
+            • <strong>Socio Honorífico:</strong> Exento de pagos, designado por la directiva
+          </small>
         </div>
         
         <div id="professionFields">
@@ -339,10 +359,6 @@
         
         <h4>🥋 Datos de Judo</h4>
         <div class="form-row">
-          <select id="memberType" style="width: 100%;">
-            <option value="judoca">Judoca</option>
-            <option value="member">Miembro</option>
-          </select>
           <input type="number" id="weight" placeholder="Peso (kg)" step="0.1" style="width: 100%;">
           <div style="width: 100%; display: flex; align-items: center; gap: 10px; margin-top: 10px;">
             <input type="checkbox" id="isBoardMember" style="width: auto;">
@@ -370,29 +386,36 @@
         <div class="form-row">
           <input type="text" id="emergencyContact" placeholder="Contacto emergencia" style="width: 100%;">
           <input type="text" id="medicalInfo" placeholder="Info médica" style="width: 100%;">
-          <input type="text" id="medicalConditions" placeholder="Enfermedad base" style="width: 100%;">
+          <input type="text" id="medicalConditions" placeholder="Enfermedad base y tratamiento" style="width: 100%;">
         </div>
-        <h4>👤 Apoderado</h4>
-        <div class="form-row">
-          <div style="width: 100%; display: flex; align-items: center; gap: 10px;">
-            <input type="checkbox" id="isGuardian" style="width: auto;" onchange="toggleGuardianForm()">
-            <label for="isGuardian">¿Es apoderado?</label>
+        <h4 id="guardianSectionTitle" class="hidden">👤 Apoderado (Deportista menor de 18 años)</h4>
+        <div id="guardianSection" class="hidden" style="margin-top: 10px; padding: 15px; background: #e9ecef; border-radius: 5px;">
+          <p style="color: #666; font-size: 13px; margin-bottom: 10px;">Complete los datos del apoderado del deportista</p>
+          
+          <div style="margin-bottom: 15px;">
+            <label style="font-size: 13px; color: #666;">¿El apoderado ya es miembro del club?</label>
+            <select id="guardianMemberSelect" style="width: 100%; margin-top: 5px;" onchange="toggleGuardianFormType()">
+              <option value="">-- Seleccionar --</option>
+              <option value="new">Crear nuevo apoderado</option>
+              <!-- Las opciones de apoderados existentes se cargan dinámicamente -->
+            </select>
           </div>
-        </div>
-        <div id="guardianForm" class="hidden" style="margin-top: 10px; padding: 15px; background: #e9ecef; border-radius: 5px;">
-          <div class="form-row" style="flex-direction: column;">
-            <input type="text" id="guardianName" placeholder="Nombre" style="width: 100%;">
-            <div style="width: 100%; display: flex; gap: 10px; align-items: center;">
+          
+          <div id="newGuardianForm" class="hidden" style="flex-direction: column;">
+            <p style="font-size: 12px; color: #666; margin-bottom: 10px;">Ingrese los datos del nuevo apoderado:</p>
+            <input type="text" id="guardianName" placeholder="Nombre completo del apoderado" style="width: 100%;">
+            <div style="width: 100%; display: flex; gap: 10px; align-items: center; margin-top: 10px;">
               <select id="guardianDocumentType" style="width: 120px;" onchange="toggleGuardianDocumentType()">
                 <option value="rut">RUT</option>
                 <option value="passport">Pasaporte</option>
               </select>
               <input type="text" id="guardianRut" placeholder="RUT" style="width: 100%;" oninput="formatRut(this)">
             </div>
-            <input type="date" id="guardianDob" placeholder="Fecha nacimiento" style="width: 100%;">
-            <input type="text" id="guardianAddress" placeholder="Dirección" style="width: 100%;">
-            <input type="email" id="guardianEmail" placeholder="Email" style="width: 100%;">
-            <input type="tel" id="guardianPhone" placeholder="Teléfono" style="width: 100%;">
+            <input type="date" id="guardianDob" placeholder="Fecha de nacimiento" style="width: 100%; margin-top: 10px;">
+            <input type="text" id="guardianProfession" placeholder="Profesión/Ocupación" style="width: 100%; margin-top: 10px;">
+            <input type="text" id="guardianAddress" placeholder="Dirección" style="width: 100%; margin-top: 10px;">
+            <input type="email" id="guardianEmail" placeholder="Email" style="width: 100%; margin-top: 10px;">
+            <input type="tel" id="guardianPhone" placeholder="Nº telefónico" style="width: 100%; margin-top: 10px;">
           </div>
         </div>
         <h4>🔐 Usuario</h4>
@@ -420,8 +443,7 @@
         <select id="beltColor" style="width: 100%; margin-top: 10px;">
           <option value="">Seleccionar grado</option>
           <optgroup label="Grados Kyu">
-            <option value="9no kyu">9no Kyu</option><option value="8vo kyu">8vo Kyu</option>
-            <option value="7mo kyu">7mo Kyu</option><option value="6to kyu">6to Kyu</option>
+            <option value="6to kyu">6to Kyu</option>
             <option value="5to kyu">5to Kyu</option><option value="4to kyu">4to Kyu</option>
             <option value="3er kyu">3er Kyu</option><option value="2do kyu">2do Kyu</option>
             <option value="1er kyu">1er Kyu</option>
