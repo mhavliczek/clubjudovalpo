@@ -3,6 +3,36 @@ const router = express.Router();
 const db = require('../database');
 const { requireAdmin } = require('../middleware/auth');
 
+// Get attendance report with summary for all members (admin only)
+router.get('/report', requireAdmin, (req, res) => {
+  const { start_date, end_date } = req.query;
+
+  try {
+    // Get all attendance records with member info
+    const query = `
+      SELECT 
+        m.id,
+        m.first_name,
+        m.last_name,
+        m.rut,
+        COUNT(a.id) as total_asistencias,
+        MAX(a.class_date) as ultima_asistencia,
+        GROUP_CONCAT(DISTINCT a.class_type) as tipos_clase
+      FROM members m
+      LEFT JOIN attendance a ON m.id = a.member_id
+        ${start_date || end_date ? `AND a.class_date BETWEEN '${start_date || '2000-01-01'}' AND '${end_date || date('now')}'` : ''}
+      GROUP BY m.id
+      ORDER BY total_asistencias DESC
+    `;
+
+    const report = db.prepare(query).all();
+
+    res.json(report);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Get attendance records
 router.get('/', (req, res) => {
   const { member_id, start_date, end_date, class_type } = req.query;
@@ -134,6 +164,78 @@ router.delete('/:id', requireAdmin, (req, res) => {
       return res.status(404).json({ error: 'Attendance record not found' });
     }
     res.json({ message: 'Attendance record deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Export attendance report to Excel (admin only)
+router.get('/report/excel', requireAdmin, (req, res) => {
+  const { start_date, end_date } = req.query;
+  const ExcelJS = require('exceljs');
+
+  try {
+    const query = `
+      SELECT 
+        m.id,
+        m.first_name,
+        m.last_name,
+        m.rut,
+        COUNT(a.id) as total_asistencias,
+        MAX(a.class_date) as ultima_asistencia,
+        GROUP_CONCAT(DISTINCT a.class_type) as tipos_clase
+      FROM members m
+      LEFT JOIN attendance a ON m.id = a.member_id
+        ${start_date || end_date ? `AND a.class_date BETWEEN '${start_date || '2000-01-01'}' AND '${end_date || date('now')}'` : ''}
+      GROUP BY m.id
+      ORDER BY total_asistencias DESC
+    `;
+
+    const report = db.prepare(query).all();
+
+    // Create workbook
+    const workbook = new ExcelJS.Workbook();
+    workbook.addWorksheet('Reporte de Asistencias');
+    const worksheet = workbook.getWorksheet('Reporte de Asistencias');
+
+    // Define columns
+    worksheet.columns = [
+      { header: 'ID', key: 'id', width: 10 },
+      { header: 'Nombre', key: 'first_name', width: 20 },
+      { header: 'Apellido', key: 'last_name', width: 20 },
+      { header: 'RUT', key: 'rut', width: 15 },
+      { header: 'Total Asistencias', key: 'total_asistencias', width: 20 },
+      { header: 'Última Asistencia', key: 'ultima_asistencia', width: 20 },
+      { header: 'Tipos de Clase', key: 'tipos_clase', width: 25 }
+    ];
+
+    // Add header style
+    worksheet.getRow(1).font = { bold: true };
+    worksheet.getRow(1).fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FF0066CC' }
+    };
+    worksheet.getRow(1).font = { color: { argb: 'FFFFFFFF' }, bold: true };
+
+    // Add data
+    report.forEach(row => {
+      worksheet.addRow(row);
+    });
+
+    // Set response headers
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    );
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="reporte_asistencias_${new Date().toISOString().split('T')[0]}.xlsx"`
+    );
+
+    return workbook.xlsx.write(res).then(() => {
+      res.end();
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

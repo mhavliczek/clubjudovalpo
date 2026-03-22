@@ -8,18 +8,63 @@ const QR_getToken = (typeof getToken !== 'undefined') ? getToken : () => localSt
 const QRModule = {
   currentMemberId: null,
   isGuardian: false,
+  eventsBound: false,
 
   init(memberId, isGuardian = false) {
+    // Reset previous state
+    this.currentMemberId = null;
+    this.isGuardian = false;
+    
+    // Clear QR code container
+    const container = document.getElementById('qrCodeContainer');
+    if (container) {
+      container.innerHTML = '<p style="color: #999; text-align: center;">Cargando QR...</p>';
+    }
+    
+    // Clear photo preview
+    const photoPreview = document.getElementById('photoPreview');
+    if (photoPreview) {
+      photoPreview.src = '';
+      photoPreview.style.display = 'none';
+    }
+    
+    // Clear file input
+    const photoInput = document.getElementById('photoInput');
+    if (photoInput) {
+      photoInput.value = '';
+    }
+    
+    // Set new member ID and initialize
     this.currentMemberId = memberId;
     this.isGuardian = isGuardian;
+    
+    // Remove previous event listeners to avoid duplicates
+    this.unbindEvents();
+    
     this.load();
     this.bindEvents();
   },
 
+  unbindEvents() {
+    const uploadBtn = document.getElementById('uploadPhotoBtn');
+    const generateBtn = document.getElementById('generateQRBtn');
+    const photoInput = document.getElementById('photoInput');
+    
+    if (uploadBtn) uploadBtn.replaceWith(uploadBtn.cloneNode(true));
+    if (generateBtn) generateBtn.replaceWith(generateBtn.cloneNode(true));
+    if (photoInput) photoInput.replaceWith(photoInput.cloneNode(true));
+    
+    this.eventsBound = false;
+  },
+
   bindEvents() {
+    if (this.eventsBound) return; // Prevent duplicate binding
+    
     document.getElementById('uploadPhotoBtn')?.addEventListener('click', () => this.uploadPhoto());
     document.getElementById('generateQRBtn')?.addEventListener('click', () => this.generateQR());
     document.getElementById('photoInput')?.addEventListener('change', () => this.previewPhoto());
+    
+    this.eventsBound = true;
   },
 
   async load() {

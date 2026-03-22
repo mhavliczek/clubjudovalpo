@@ -101,18 +101,8 @@ router.post('/logo', requireAdmin, upload.single('logo'), async (req, res) => {
     }
 
     console.log('💾 Logo URL:', logoUrl);
-    
+
     // Guardar en configuración
-    db.exec(`
-      CREATE TABLE IF NOT EXISTS settings (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        key TEXT UNIQUE NOT NULL,
-        value TEXT,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-      )
-    `);
-    
     db.prepare(`
       INSERT OR REPLACE INTO settings (key, value, updated_at) 
       VALUES ('club_logo', ?, CURRENT_TIMESTAMP)
@@ -165,6 +155,87 @@ router.get('/director', (req, res) => {
     res.json({ value: director ? director.value : null });
   } catch (error) {
     res.json({ value: null });
+  }
+});
+
+// Configurar multer para firma del director
+const signatureStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const uploadsDir = path.join(__dirname, '..', 'uploads');
+    if (!fs.existsSync(uploadsDir)) {
+      fs.mkdirSync(uploadsDir, { recursive: true });
+    }
+    cb(null, uploadsDir);
+  },
+  filename: (req, file, cb) => {
+    cb(null, 'director-signature-' + Date.now() + '.png');
+  }
+});
+
+const signatureUpload = multer({
+  storage: signatureStorage,
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Solo se permiten imágenes'));
+    }
+  }
+});
+
+// Subir firma del director
+router.post('/director-signature', requireAdmin, signatureUpload.single('signature'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No se subió ninguna imagen' });
+    }
+
+    const uploadsDir = path.join(__dirname, '..', 'uploads');
+    const inputPath = req.file.path;
+    const outputPath = path.join(uploadsDir, 'director-signature.png');
+
+    // Procesar imagen para firma (hacer fondo transparente si es posible)
+    try {
+      await sharp(inputPath)
+        .resize(300, 150, { fit: 'contain', background: { r: 255, g: 255, b: 255, alpha: 0 } })
+        .png()
+        .toFile(outputPath);
+    } catch (e) {
+      // Si falla sharp, copiar archivo original
+      await fs.promises.copyFile(inputPath, outputPath);
+    }
+
+    // Eliminar archivo temporal
+    try {
+      await fs.promises.unlink(inputPath);
+    } catch (e) {}
+
+    const signatureUrl = '/uploads/director-signature.png';
+
+    // Guardar en configuración
+    db.prepare(`
+      INSERT OR REPLACE INTO settings (key, value, updated_at)
+      VALUES ('director_signature', ?, CURRENT_TIMESTAMP)
+    `).run(signatureUrl);
+
+    res.json({
+      message: 'Firma subida exitosamente',
+      url: signatureUrl
+    });
+  } catch (error) {
+    console.error('Signature upload error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Obtener firma del director
+router.get('/director-signature', (req, res) => {
+  try {
+    const signature = db.prepare("SELECT value FROM settings WHERE key = 'director_signature'").get();
+    res.json({ url: signature ? signature.value : null });
+  } catch (error) {
+    res.json({ url: null });
   }
 });
 

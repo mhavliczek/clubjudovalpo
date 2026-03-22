@@ -187,6 +187,14 @@
               <button class="btn" onclick="loadAttendance()">Cargar Asistencia</button>
               <button class="btn btn-success" onclick="showForm('attendanceForm')">Registrar Manual</button>
               <button class="btn" onclick="QRScanModule.showScanModal()" style="background: #9c27b0; color: white;">📱 Escanear QR</button>
+              <button class="btn" onclick="exportAttendanceReport()" style="background: #28a745; color: white;">📊 Exportar Reporte</button>
+              <div id="attendanceFilters" class="hidden" style="margin-top: 15px; padding: 10px; background: #f8f9fa; border-radius: 5px;">
+                <div class="form-row">
+                  <input type="date" id="reportStartDate" placeholder="Desde">
+                  <input type="date" id="reportEndDate" placeholder="Hasta">
+                  <button class="btn" onclick="exportAttendanceReport()">Exportar Excel</button>
+                </div>
+              </div>
               <div id="attendanceForm" class="hidden" style="margin-top: 15px; padding: 15px; background: #f8f9fa; border-radius: 5px;">
                 <h3>Registrar Asistencia</h3>
                 <div class="form-row">
@@ -267,6 +275,31 @@
                   <button class="btn btn-success" onclick="saveClubDirector()">💾 Guardar Nombre del Director</button>
                 </div>
               </div>
+
+              <div style="margin-bottom: 30px;">
+                <h3>✍️ Firma del Director</h3>
+                <p style="color: #666; margin-bottom: 15px;">Sube la firma del Director Técnico. Aparecerá sobre el nombre en los certificados PDF.</p>
+
+                <div style="background: #f3e5f5; padding: 15px; border-radius: 5px; margin-bottom: 15px; border-left: 4px solid #9c27b0;">
+                  <p style="margin: 0 0 10px 0; font-weight: bold; color: #7b1fa2;">📸 Especificaciones recomendadas:</p>
+                  <ul style="margin: 0; padding-left: 20px; color: #666;">
+                    <li><strong>Dimensiones:</strong> 300x150 píxeles (o proporción similar)</li>
+                    <li><strong>Formato:</strong> PNG con fondo transparente (recomendado)</li>
+                    <li><strong>Tamaño máximo:</strong> 1 MB</li>
+                    <li><strong>Color:</strong> Firma oscura sobre fondo claro</li>
+                  </ul>
+                </div>
+
+                <div style="display: flex; gap: 15px; align-items: center; margin-bottom: 15px;">
+                  <img id="currentSignature" src="" alt="Firma actual" style="max-width: 200px; max-height: 80px; border: 1px solid #ddd; border-radius: 5px; display: none; background: #f5f5f5;">
+                  <div id="noSignatureText" style="color: #999;">No hay firma subida</div>
+                </div>
+
+                <input type="file" id="directorSignatureInput" accept="image/*" style="margin-bottom: 10px;">
+                <br>
+                <button class="btn btn-success" onclick="uploadDirectorSignature()">📤 Subir Firma del Director</button>
+                <button class="btn" onclick="previewSignature()" style="margin-left: 10px;">👁️ Vista Previa</button>
+              </div>
             </div>
           </div>
         </div>
@@ -289,7 +322,10 @@
           <input type="text" id="lastName" placeholder="Apellido" style="width: 100%;">
           <input type="email" id="email" placeholder="Email" style="width: 100%;">
           <input type="tel" id="phone" placeholder="Teléfono" style="width: 100%;">
-          <input type="date" id="dob" placeholder="Fecha nacimiento" style="width: 100%;" onchange="checkAgeAndToggleGuardian()">
+          <div style="width: 100%;">
+            <label for="dob" style="display: block; margin-bottom: 5px; font-weight: 600; color: #555; font-size: 13px;">📅 Fecha de Nacimiento:</label>
+            <input type="date" id="dob" placeholder="Fecha nacimiento" style="width: 100%;" onchange="checkAgeAndToggleGuardian()">
+          </div>
           <input type="text" id="address" placeholder="Dirección" style="width: 100%;">
           <input type="text" id="association" placeholder="Asociación (ej: Srs. Preuniversitario Federico Santa María)" style="width: 100%;">
         </div>
@@ -655,6 +691,10 @@
         document.getElementById('loginView').classList.add('hidden');
         document.getElementById('appView').classList.remove('hidden');
         initApp();
+      }
+      // Initialize settings module (load logo, director, signature)
+      if (window.SettingsModule) {
+        SettingsModule.init();
       }
     });
   </script>

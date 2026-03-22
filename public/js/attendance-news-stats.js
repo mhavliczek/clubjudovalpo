@@ -71,11 +71,36 @@ async function saveAttendance() {
 // Delete attendance
 async function deleteAttendance(id) {
   if (!confirm('¿Eliminar registro?')) return;
-  await fetch(`${API}/api/attendance/${id}`, { 
+  await fetch(`${API}/api/attendance/${id}`, {
     method: 'DELETE',
     headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
   });
   loadAttendance();
+}
+
+// Export attendance report
+function exportAttendanceReport() {
+  const filtersDiv = document.getElementById('attendanceFilters');
+  if (filtersDiv.classList.contains('hidden')) {
+    filtersDiv.classList.remove('hidden');
+    return;
+  }
+
+  const startDate = document.getElementById('reportStartDate').value;
+  const endDate = document.getElementById('reportEndDate').value;
+
+  let url = `${API}/api/attendance/report/excel`;
+  const params = new URLSearchParams();
+
+  if (startDate) params.append('start_date', startDate);
+  if (endDate) params.append('end_date', endDate);
+
+  const queryString = params.toString();
+  if (queryString) {
+    url += '?' + queryString;
+  }
+
+  window.open(url, '_blank');
 }
 
 // Load news
@@ -203,6 +228,8 @@ async function loadMyGrade() {
       <p><strong>Grado:</strong> ${getBeltName(currentGrade.belt_color)}</p>
       <p><strong>Fecha:</strong> ${formatDateChile(currentGrade.grade_date)}</p>
       <p><strong>Instructor:</strong> ${currentGrade.instructor || '-'}</p>
+      ${currentGrade.score ? `<p><strong>Nota:</strong> ${currentGrade.score}</p>` : ''}
+      ${currentGrade.notes ? `<p><strong>Comentarios:</strong> ${currentGrade.notes}</p>` : ''}
     `;
   } catch (e) { document.getElementById('myGrade').innerHTML = '<p>Error: ' + e.message + '</p>'; }
 }

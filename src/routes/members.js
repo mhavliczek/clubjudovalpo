@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../database');
 const { requireAdmin } = require('../middleware/auth');
-const { validarRut } = require('../utils/rut');
+const { validarRut, obtenerCuerpoRut } = require('../utils/rut');
 const { calculatePaymentStatus, setPaymentStatusOverride, removePaymentStatusOverride } = require('../utils/paymentStatus');
 
 // Get all members (admin only)
@@ -177,7 +177,8 @@ router.post('/', requireAdmin, (req, res) => {
     // Create user if requested
     if (create_user && email) {
       const bcrypt = require('bcryptjs');
-      const passwordSuffix = rut ? rut.slice(-4) : '1234';
+      // Contraseña por defecto: últimos 4 dígitos del cuerpo del RUT
+      const passwordSuffix = rut ? obtenerCuerpoRut(rut).slice(-4) : '1234';
       const hashedPassword = bcrypt.hashSync(passwordSuffix, 10);
       db.prepare(`
         INSERT INTO users (email, password, role, member_id)
@@ -298,6 +299,10 @@ router.put('/:id', requireAdmin, (req, res) => {
 // Delete member (admin only)
 router.delete('/:id', requireAdmin, (req, res) => {
   try {
+    // Primero eliminar el usuario asociado (si existe) para liberar el email
+    db.prepare('DELETE FROM users WHERE member_id = ?').run(req.params.id);
+    
+    // Eliminar el miembro (las tablas relacionadas con CASCADE se limpiarán automáticamente)
     const result = db.prepare('DELETE FROM members WHERE id = ?').run(req.params.id);
     if (result.changes === 0) {
       return res.status(404).json({ error: 'Member not found' });

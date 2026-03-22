@@ -184,6 +184,23 @@ function generateCertificatePDF(req, res) {
       // Ignorar error
     }
 
+    // Obtener firma del director
+    let signaturePath = null;
+    try {
+      const signature = db.prepare("SELECT value FROM settings WHERE key = 'director_signature'").get();
+      if (signature && signature.value) {
+        signaturePath = path.join(__dirname, '..', 'uploads', 'director-signature.png');
+        if (!fs.existsSync(signaturePath)) {
+          console.log('Firma no existe en:', signaturePath);
+          signaturePath = null;
+        } else {
+          console.log('Firma encontrada en:', signaturePath);
+        }
+      }
+    } catch (e) {
+      console.error('Error al cargar firma:', e);
+    }
+
     // Fechas y horarios de entrenamiento
     const trainingDays = 'martes y jueves';
     const trainingTimeStart = '19:00';
@@ -262,6 +279,24 @@ function generateCertificatePDF(req, res) {
     const signatureY = doc.y;
     const signatureX = textLeft + (textWidth / 2) - 100;
 
+    // Dibujar firma del director (si existe)
+    if (signaturePath) {
+      try {
+        // Dibujar firma centrada sobre la línea
+        const signatureWidth = 200;
+        const signatureHeight = 80;
+        const signatureImageX = signatureX + (200 - signatureWidth) / 2;
+        doc.image(signaturePath, signatureImageX, signatureY - 60, {
+          width: signatureWidth,
+          height: signatureHeight,
+          align: 'center'
+        });
+      } catch (e) {
+        console.error('Error al dibujar firma:', e);
+      }
+    }
+
+    // Línea de firma
     doc.moveTo(signatureX, signatureY)
        .lineTo(signatureX + 200, signatureY)
        .stroke();
@@ -340,8 +375,50 @@ router.get('/curriculum/:memberId/pdf', async (req, res) => {
       ORDER BY grade_date DESC
     `).all(req.params.memberId);
 
-    const doc = new PDFDocument({ 
-      size: 'A4', 
+    // Obtener logo del club
+    let logoPath = null;
+    try {
+      const logo = db.prepare("SELECT value FROM settings WHERE key = 'club_logo'").get();
+      if (logo && logo.value) {
+        logoPath = path.join(__dirname, '..', 'uploads', 'logo.png');
+        if (!fs.existsSync(logoPath)) {
+          logoPath = null;
+        }
+      }
+    } catch (e) {
+      console.error('Error al cargar logo:', e);
+    }
+
+    // Obtener firma del director
+    let signaturePath = null;
+    try {
+      const signature = db.prepare("SELECT value FROM settings WHERE key = 'director_signature'").get();
+      if (signature && signature.value) {
+        signaturePath = path.join(__dirname, '..', 'uploads', 'director-signature.png');
+        if (!fs.existsSync(signaturePath)) {
+          signaturePath = null;
+        }
+      }
+    } catch (e) {
+      console.error('Error al cargar firma:', e);
+    }
+
+    // Obtener nombre del Director
+    let directorName = '';
+    try {
+      const director = db.prepare("SELECT value FROM settings WHERE key = 'club_director'").get();
+      if (director && director.value) {
+        directorName = director.value;
+      }
+    } catch (e) {
+      // Ignorar error
+    }
+
+    const clubName = process.env.CLUB_NAME || 'Club de Judo Valparaíso';
+    const city = process.env.CLUB_CITY || 'Valparaíso';
+
+    const doc = new PDFDocument({
+      size: 'A4',
       margins: { top: 50, bottom: 50, left: 50, right: 50 }
     });
 
@@ -349,6 +426,11 @@ router.get('/curriculum/:memberId/pdf', async (req, res) => {
     res.setHeader('Content-Disposition', `attachment; filename=curriculum_${member.first_name}_${member.last_name}.pdf`);
 
     doc.pipe(res);
+
+    // ========== LOGO EN ESQUINA SUPERIOR DERECHA ==========
+    if (logoPath) {
+      doc.image(logoPath, doc.page.width - 120, 20, { width: 80 });
+    }
 
     // Título
     doc.fontSize(20).text('Curriculum Deportivo', { align: 'center' });
@@ -383,6 +465,57 @@ router.get('/curriculum/:memberId/pdf', async (req, res) => {
       });
     } else {
       doc.fontSize(12).text('No hay torneos registrados.', { align: 'center' });
+    }
+
+    // Fecha y lugar
+    doc.moveDown(3);
+    const today = new Date();
+    const options = { year: 'numeric', month: 'long', day: 'numeric' };
+    const formattedDate = today.toLocaleDateString('es-CL', options);
+    
+    doc.fontSize(11)
+       .text(`${city}, ${formattedDate}`, doc.page.width - 150, doc.y, { align: 'right' });
+    
+    doc.moveDown(3);
+
+    // ========== FIRMA DEL DIRECTOR ==========
+    const signatureY = doc.y;
+    const signatureX = (doc.page.width / 2) - 100;
+
+    // Dibujar firma del director (si existe)
+    if (signaturePath) {
+      try {
+        const signatureWidth = 200;
+        const signatureHeight = 80;
+        const signatureImageX = signatureX + (200 - signatureWidth) / 2;
+        doc.image(signaturePath, signatureImageX, signatureY - 50, {
+          width: signatureWidth,
+          height: signatureHeight,
+          align: 'center'
+        });
+      } catch (e) {
+        console.error('Error al dibujar firma:', e);
+      }
+    }
+
+    // Línea de firma
+    doc.moveTo(signatureX, signatureY)
+       .lineTo(signatureX + 200, signatureY)
+       .stroke();
+
+    doc.fontSize(11)
+       .text(directorName || 'Director Técnico', signatureX, signatureY + 10, { width: 200, align: 'center' })
+       .text('Director Técnico', signatureX, signatureY + 25, { width: 200, align: 'center' })
+       .text(clubName, signatureX, signatureY + 40, { width: 200, align: 'center' });
+
+    // ========== MARCA DE AGUA (LOGO GRANDE AL CENTRO) ==========
+    if (logoPath) {
+      doc.opacity(0.05);
+      doc.image(logoPath, doc.page.width / 2 - 150, doc.page.height / 2 - 150, {
+        width: 300,
+        align: 'center'
+      });
+      doc.opacity(1);
     }
 
     doc.end();

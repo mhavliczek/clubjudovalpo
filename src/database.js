@@ -281,6 +281,17 @@ db.exec(`
   );
 `);
 
+// Create settings table
+db.exec(`
+  CREATE TABLE IF NOT EXISTS settings (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    key TEXT UNIQUE NOT NULL,
+    value TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )
+`);
+
 // Create curriculum table (for tournaments)
 db.exec(`
   CREATE TABLE IF NOT EXISTS curriculum (

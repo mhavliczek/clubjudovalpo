@@ -319,16 +319,149 @@ async function showMemberDetail(memberId) {
             </div>
           </div>
         </details>
+
+        <!-- Historial de Asistencias -->
+        <details style="background: #e8f5e9; border-color: #4caf50;">
+          <summary style="color: #2e7d32;">📅 Historial de Asistencias</summary>
+          <div style="margin-top: 15px;">
+            <div id="attendanceStats_${m.id}" style="margin-bottom: 15px;">
+              <p style="color: #666;">Cargando estadísticas...</p>
+            </div>
+            <div id="attendanceList_${m.id}">
+              <p style="color: #666;">Cargando asistencias...</p>
+            </div>
+          </div>
+        </details>
       </div>
     `;
-    
+
     // Initialize CurriculumModule with current member
     if (window.CurriculumModule) {
       CurriculumModule.currentMemberId = m.id;
       CurriculumModule.load();
     }
+
+    // Load attendance data
+    loadMemberAttendance(m.id);
   } catch (e) {
     document.getElementById('memberDetail').innerHTML = '<p style="color: red;">Error: ' + e.message + '</p>';
+  }
+}
+
+// Load member attendance history
+async function loadMemberAttendance(memberId) {
+  try {
+    const [attendanceRes, summaryRes] = await Promise.all([
+      fetch(`${API}/api/attendance?member_id=${memberId}`, {
+        headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+      }),
+      fetch(`${API}/api/attendance/summary?member_id=${memberId}`, {
+        headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+      })
+    ]);
+
+    const attendance = await attendanceRes.json();
+    const summary = await summaryRes.json();
+
+    // Calculate stats
+    const totalAsistencias = attendance.length;
+    const asistenciasRegular = attendance.filter(a => a.class_type === 'regular').length;
+    const asistenciasCompetencia = attendance.filter(a => a.class_type === 'competition').length;
+    const asistenciasExamen = attendance.filter(a => a.class_type === 'grading').length;
+    const asistenciasEspeciales = attendance.filter(a => a.class_type === 'special').length;
+
+    const statsHtml = `
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px;">
+        <div style="background: #fff; padding: 10px; border-radius: 5px; text-align: center; border: 1px solid #ddd;">
+          <p style="margin: 0; font-size: 12px; color: #666;">Total</p>
+          <p style="margin: 5px 0 0 0; font-size: 24px; font-weight: bold; color: #0066cc;">${totalAsistencias}</p>
+        </div>
+        <div style="background: #fff; padding: 10px; border-radius: 5px; text-align: center; border: 1px solid #ddd;">
+          <p style="margin: 0; font-size: 12px; color: #666;">Regulares</p>
+          <p style="margin: 5px 0 0 0; font-size: 24px; font-weight: bold; color: #4caf50;">${asistenciasRegular}</p>
+        </div>
+        <div style="background: #fff; padding: 10px; border-radius: 5px; text-align: center; border: 1px solid #ddd;">
+          <p style="margin: 0; font-size: 12px; color: #666;">Competencias</p>
+          <p style="margin: 5px 0 0 0; font-size: 24px; font-weight: bold; color: #ff9800;">${asistenciasCompetencia}</p>
+        </div>
+        <div style="background: #fff; padding: 10px; border-radius: 5px; text-align: center; border: 1px solid #ddd;">
+          <p style="margin: 0; font-size: 12px; color: #666;">Exámenes</p>
+          <p style="margin: 5px 0 0 0; font-size: 24px; font-weight: bold; color: #9c27b0;">${asistenciasExamen}</p>
+        </div>
+      </div>
+    `;
+
+    document.getElementById(`attendanceStats_${memberId}`).innerHTML = statsHtml;
+
+    // Render attendance list
+    if (attendance.length > 0) {
+      const html = `
+        <table style="width: 100%; font-size: 12px; margin-top: 15px;">
+          <thead>
+            <tr style="background: #4caf50; color: white;">
+              <th style="padding: 8px; text-align: left;">Fecha</th>
+              <th style="padding: 8px;">Tipo</th>
+              <th style="padding: 8px;">Notas</th>
+              ${JSON.parse(localStorage.getItem('user') || {}).role === 'admin' ? '<th style="padding: 8px;">Acción</th>' : ''}
+            </tr>
+          </thead>
+          <tbody>
+            ${attendance.map(a => `
+              <tr style="border-bottom: 1px solid #ddd;">
+                <td style="padding: 8px;">${formatDateChile(a.class_date)}</td>
+                <td style="padding: 8px;">${getClassTypeName(a.class_type)}</td>
+                <td style="padding: 8px;">${a.notes || '-'}</td>
+                ${JSON.parse(localStorage.getItem('user') || {}).role === 'admin' ? `
+                  <td style="padding: 8px; text-align: center;">
+                    <button class="btn btn-danger" onclick="deleteAttendance(${a.id}, ${memberId})" style="font-size: 11px; padding: 3px 6px;">🗑️</button>
+                  </td>
+                ` : ''}
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
+      document.getElementById(`attendanceList_${memberId}`).innerHTML = html;
+    } else {
+      document.getElementById(`attendanceList_${memberId}`).innerHTML = '<p style="color: #999; text-align: center; margin-top: 15px;">Sin asistencias registradas</p>';
+    }
+  } catch (e) {
+    console.error('Error loading attendance:', e);
+    document.getElementById(`attendanceStats_${memberId}`).innerHTML = '<p style="color: red;">Error al cargar asistencias</p>';
+    document.getElementById(`attendanceList_${memberId}`).innerHTML = '<p style="color: red;">Error al cargar asistencias</p>';
+  }
+}
+
+// Get class type name
+function getClassTypeName(type) {
+  const types = {
+    'regular': '📚 Regular',
+    'competition': '🏆 Competencia',
+    'grading': '🥋 Examen',
+    'special': '⭐ Especial'
+  };
+  return types[type] || type;
+}
+
+// Delete attendance record
+async function deleteAttendance(attendanceId, memberId) {
+  if (!confirm('¿Eliminar esta asistencia?')) return;
+
+  try {
+    const res = await fetch(`${API}/api/attendance/${attendanceId}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+    });
+
+    if (!res.ok) {
+      const error = await res.json();
+      throw new Error(error.error || 'Error al eliminar');
+    }
+
+    alert('Asistencia eliminada');
+    loadMemberAttendance(memberId);
+  } catch (e) {
+    alert('Error: ' + e.message);
   }
 }
 
