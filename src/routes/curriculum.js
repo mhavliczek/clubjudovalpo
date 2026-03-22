@@ -255,9 +255,14 @@ function generateCertificatePDF(req, res) {
 
     doc.fontSize(11).font('Helvetica');
 
-    // Texto justificado
-    const guardianName = guardian ? guardian.first_name + ' ' + guardian.last_name : 'el/la apoderado/a';
-    const bodyText = `De nuestra consideración, como ${clubName} por petición del socio/a Apoderado/a ${guardianName} y Director del Club ${directorName || 'el Director'}, indicamos que ${member.first_name} ${member.last_name} es judoka activo de nuestro Club, el cual pertenece al grupo selectivo de deportistas que entrenan los días ${trainingDays} desde las ${trainingTimeStart} hrs hasta las ${trainingTimeEnd} hrs para los diversos torneos en que dichos deportistas representan al Club. Hacemos la presente indicación como justificación del retiro anticipado de la deportista en las actividades extra académicas que realiza.`;
+    // Obtener fecha de ingreso del miembro
+    const joinDate = member.join_date ? formatDateChile(member.join_date) : 'XX/XX/XXXX';
+    const memberRut = member.rut || 'XX.XXX-X';
+
+    // Nuevo texto del certificado
+    const bodyText = `De nuestra consideración, como ${clubName} por petición del deportista ${member.first_name} ${member.last_name}, Rut ${memberRut}, indicamos que pertenece a nuestra organización desde ${joinDate}.
+
+Hacemos entrega del presente certificado para los fines que el deportista estime conveniente.`;
 
     doc.text(bodyText, textLeft, doc.y, {
       width: textWidth,
@@ -302,8 +307,8 @@ function generateCertificatePDF(req, res) {
        .stroke();
 
     doc.fontSize(11)
-       .text(directorName || 'Director Técnico', signatureX, signatureY + 10, { width: 200, align: 'center' })
-       .text('Director Técnico', signatureX, signatureY + 25, { width: 200, align: 'center' })
+       .text(directorName || 'Presidente', signatureX, signatureY + 10, { width: 200, align: 'center' })
+       .text('Presidente', signatureX, signatureY + 25, { width: 200, align: 'center' })
        .text(clubName, signatureX, signatureY + 40, { width: 200, align: 'center' });
 
     // ========== MARCA DE AGUA ==========
@@ -504,8 +509,8 @@ router.get('/curriculum/:memberId/pdf', async (req, res) => {
        .stroke();
 
     doc.fontSize(11)
-       .text(directorName || 'Director Técnico', signatureX, signatureY + 10, { width: 200, align: 'center' })
-       .text('Director Técnico', signatureX, signatureY + 25, { width: 200, align: 'center' })
+       .text(directorName || 'Presidente', signatureX, signatureY + 10, { width: 200, align: 'center' })
+       .text('Presidente', signatureX, signatureY + 25, { width: 200, align: 'center' })
        .text(clubName, signatureX, signatureY + 40, { width: 200, align: 'center' });
 
     // ========== MARCA DE AGUA (LOGO GRANDE AL CENTRO) ==========

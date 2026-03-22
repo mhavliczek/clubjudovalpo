@@ -79,7 +79,7 @@ async function deleteAttendance(id) {
 }
 
 // Export attendance report
-function exportAttendanceReport() {
+async function exportAttendanceReport() {
   const filtersDiv = document.getElementById('attendanceFilters');
   if (filtersDiv.classList.contains('hidden')) {
     filtersDiv.classList.remove('hidden');
@@ -100,7 +100,41 @@ function exportAttendanceReport() {
     url += '?' + queryString;
   }
 
-  window.open(url, '_blank');
+  try {
+    const token = localStorage.getItem('token');
+    
+    const response = await fetch(url, {
+      headers: {
+        'Authorization': 'Bearer ' + token
+      }
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Error al exportar');
+    }
+
+    // Get blob and download
+    const blob = await response.blob();
+    const downloadUrl = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = downloadUrl;
+    
+    // Generate filename with date range
+    const today = new Date().toISOString().split('T')[0];
+    const filename = `asistencias_${startDate || 'inicio'}_${endDate || 'fin'}_${today}.xlsx`;
+    a.download = filename;
+    
+    document.body.appendChild(a);
+    a.click();
+    
+    // Cleanup
+    window.URL.revokeObjectURL(downloadUrl);
+    document.body.removeChild(a);
+  } catch (error) {
+    console.error('Error exporting attendance:', error);
+    alert('❌ Error al exportar: ' + error.message);
+  }
 }
 
 // Load news
