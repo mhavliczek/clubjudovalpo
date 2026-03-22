@@ -130,54 +130,58 @@ const QRScanModule = {
   showScanModal() {
     const modal = document.createElement('div');
     modal.id = 'qrScanModal';
+    modal.className = 'qr-scan-modal';
     modal.style.position = 'fixed';
     modal.style.top = '50%';
     modal.style.left = '50%';
     modal.style.transform = 'translate(-50%, -50%)';
     modal.style.background = 'white';
-    modal.style.padding = '30px';
+    modal.style.padding = '20px';
     modal.style.borderRadius = '15px';
     modal.style.boxShadow = '0 4px 20px rgba(0,0,0,0.3)';
     modal.style.zIndex = '10000';
-    modal.style.minWidth = '400px';
-    modal.style.maxWidth = '90%';
+    modal.style.width = '90%';
+    modal.style.maxWidth = '500px';
     modal.style.maxHeight = '90vh';
     modal.style.overflowY = 'auto';
-    
+
     modal.innerHTML = `
-      <h3 style="margin: 0 0 20px 0; text-align: center; color: #1976d2;">📱 Escanear QR de Asistencia</h3>
-      
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h3 style="margin: 0; color: #1976d2; font-size: 18px;">📱 Escanear QR</h3>
+        <button class="btn" onclick="document.getElementById('qrScanModal').remove()" style="padding: 5px 10px; font-size: 20px; line-height: 1;">×</button>
+      </div>
+
       <!-- Camera Section -->
-      <div style="margin-bottom: 20px; padding: 20px; background: #f5f5f5; border-radius: 10px; text-align: center;">
-        <p style="color: #666; margin-bottom: 15px;">📷 Opción 1: Escanear con cámara</p>
-        <video id="qrCamera" autoplay playsinline style="width: 100%; max-width: 400px; border-radius: 10px; display: none; margin: 0 auto 10px;"></video>
+      <div style="margin-bottom: 20px; padding: 15px; background: #f5f5f5; border-radius: 10px; text-align: center;">
+        <p style="color: #666; margin-bottom: 10px; font-weight: bold;">📷 Opción 1: Escanear con cámara</p>
+        <video id="qrCamera" autoplay playsinline style="width: 100%; max-width: 100%; border-radius: 10px; display: none; margin: 0 auto 10px; background: #000;"></video>
         <canvas id="qrCanvas" style="display: none;"></canvas>
         <div id="cameraStatus" style="margin: 10px 0; color: #666; font-size: 14px;"></div>
-        <button class="btn btn-success" id="startCameraBtn" onclick="QRScanModule.startCamera()" style="margin-bottom: 10px;">📷 Activar Cámara</button>
-        <button class="btn" id="stopCameraBtn" onclick="QRScanModule.stopCamera()" style="display: none; margin-bottom: 10px;">⏹️ Detener Cámara</button>
-        <p style="font-size: 12px; color: #999;">Apunta la cámara al código QR del miembro</p>
+        <button class="btn btn-success" id="startCameraBtn" onclick="QRScanModule.startCamera()" style="margin-bottom: 10px; min-height: 44px;">📷 Activar Cámara</button>
+        <button class="btn" id="stopCameraBtn" onclick="QRScanModule.stopCamera()" style="display: none; margin-bottom: 10px; min-height: 44px;">⏹️ Detener Cámara</button>
+        <p style="font-size: 12px; color: #999; margin: 5px 0 0 0;">Apunta la cámara al QR del miembro</p>
       </div>
-      
+
       <!-- Divider -->
-      <div style="text-align: center; margin: 15px 0; color: #999;">
+      <div style="text-align: center; margin: 15px 0; color: #999; font-size: 14px;">
         <span>─ O ─</span>
       </div>
-      
+
       <!-- Manual Input -->
       <div style="margin-bottom: 20px;">
-        <p style="color: #666; margin-bottom: 10px;">📝 Opción 2: Ingresar datos manualmente</p>
-        <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #333;">Member ID:</label>
-        <input type="number" id="manualMemberId" placeholder="Ej: 123" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin-bottom: 10px;">
-        
-        <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #333;">RUT:</label>
-        <input type="text" id="manualRut" placeholder="Ej: 12.345.678-9" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+        <p style="color: #666; margin-bottom: 10px; font-weight: bold;">📝 Opción 2: Ingreso manual</p>
+        <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #333; font-size: 14px;">Member ID:</label>
+        <input type="number" id="manualMemberId" placeholder="Ej: 123" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 5px; margin-bottom: 10px; font-size: 16px;" inputmode="numeric">
+
+        <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #333; font-size: 14px;">RUT:</label>
+        <input type="text" id="manualRut" placeholder="Ej: 12.345.678-9" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 5px; font-size: 16px;" inputmode="text">
       </div>
-      
+
       <!-- Result Display -->
       <div id="scanResult" style="display: none; margin-top: 20px; padding: 15px; border-radius: 10px;"></div>
-      
+
       <div style="display: flex; gap: 10px; margin-top: 20px;">
-        <button class="btn" onclick="document.getElementById('qrScanModal').remove()" style="flex: 1;">
+        <button class="btn" onclick="document.getElementById('qrScanModal').remove()" style="flex: 1; min-height: 44px; padding: 12px 20px;">
           ❌ Cerrar
         </button>
       </div>

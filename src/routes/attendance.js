@@ -81,10 +81,10 @@ router.get('/', (req, res) => {
 // Get attendance summary for a date range
 router.get('/summary', (req, res) => {
   const { start_date, end_date } = req.query;
-  
+
   try {
     const summary = db.prepare(`
-      SELECT 
+      SELECT
         m.id,
         m.first_name,
         m.last_name,
@@ -95,9 +95,43 @@ router.get('/summary', (req, res) => {
       WHERE m.status = 'active'
       GROUP BY m.id
       ORDER BY attendance_count DESC
-    `).all(start_date || '2000-01-01', end_date || date('now'));
-    
+    `).all(start_date || '2000-01-01', end_date || 'now');
+
     res.json(summary);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get attendance summary for a specific member
+router.get('/summary/member', (req, res) => {
+  const { member_id } = req.query;
+
+  if (!member_id) {
+    return res.status(400).json({ error: 'Member ID is required' });
+  }
+
+  try {
+    const summary = db.prepare(`
+      SELECT
+        COUNT(a.id) as total_asistencias,
+        SUM(CASE WHEN a.class_type = 'regular' THEN 1 ELSE 0 END) as regulares,
+        SUM(CASE WHEN a.class_type = 'competition' THEN 1 ELSE 0 END) as competencias,
+        SUM(CASE WHEN a.class_type = 'grading' THEN 1 ELSE 0 END) as examenes,
+        SUM(CASE WHEN a.class_type = 'special' THEN 1 ELSE 0 END) as especiales,
+        MAX(a.class_date) as ultima_asistencia
+      FROM attendance a
+      WHERE a.member_id = ?
+    `).get(member_id);
+
+    res.json(summary || {
+      total_asistencias: 0,
+      regulares: 0,
+      competencias: 0,
+      examenes: 0,
+      especiales: 0,
+      ultima_asistencia: null
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

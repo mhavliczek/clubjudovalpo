@@ -23,6 +23,7 @@
   <div id="appView" class="container hidden">
     <div class="header">
       <div style="display: flex; align-items: center; gap: 15px;">
+        <button class="mobile-menu-toggle" onclick="toggleSidebar()" style="display: none;">☰</button>
         <img id="headerLogo" src="" alt="Logo" style="height: 80px; width: auto; object-fit: contain; display: none;">
         <h1 id="clubTitle" style="margin: 0;">🥋 Judo Club</h1>
       </div>
@@ -33,6 +34,9 @@
         <button class="btn btn-warning" onclick="logout()">Salir</button>
       </div>
     </div>
+
+    <!-- Sidebar Overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
 
     <!-- Change Password Modal -->
     <div id="changePasswordForm" class="modal hidden">
@@ -52,17 +56,18 @@
     <div id="adminPanel" class="hidden">
       <div class="main-layout">
         <!-- Left Sidebar -->
-        <div class="sidebar">
+        <div class="sidebar" id="sidebar">
+          <button class="sidebar-close" onclick="toggleSidebar()">❌ Cerrar Menú</button>
           <h3>🥋 Menú</h3>
           <nav>
-            <button class="btn" onclick="showSection('dashboard')">📊 Dashboard</button>
-            <button class="btn" onclick="showSection('members')">👥 Miembros</button>
-            <button class="btn" onclick="showSection('instructors')">🥋 Instructores</button>
-            <button class="btn" onclick="showSection('schools')">🏫 Colegios</button>
-            <button class="btn" onclick="showSection('fees')">💵 Montos</button>
-            <button class="btn" onclick="showSection('attendance')">📅 Asistencia</button>
-            <button class="btn" onclick="showSection('news')">📰 Noticias</button>
-            <button class="btn" onclick="showSection('settings')">⚙️ Configuración</button>
+            <button class="btn" onclick="showSection('dashboard'); toggleSidebar()">📊 Dashboard</button>
+            <button class="btn" onclick="showSection('members'); toggleSidebar()">👥 Miembros</button>
+            <button class="btn" onclick="showSection('instructors'); toggleSidebar()">🥋 Instructores</button>
+            <button class="btn" onclick="showSection('schools'); toggleSidebar()">🏫 Colegios</button>
+            <button class="btn" onclick="showSection('fees'); toggleSidebar()">💵 Montos</button>
+            <button class="btn" onclick="showSection('attendance'); toggleSidebar()">📅 Asistencia</button>
+            <button class="btn" onclick="showSection('news'); toggleSidebar()">📰 Noticias</button>
+            <button class="btn" onclick="showSection('settings'); toggleSidebar()">⚙️ Configuración</button>
           </nav>
         </div>
 
@@ -328,6 +333,10 @@
           </div>
           <input type="text" id="address" placeholder="Dirección" style="width: 100%;">
           <input type="text" id="association" placeholder="Asociación (ej: Srs. Preuniversitario Federico Santa María)" style="width: 100%;">
+          <div style="width: 100%;">
+            <label for="joinDate" style="display: block; margin-bottom: 5px; font-weight: 600; color: #555; font-size: 13px;">📅 Fecha de Ingreso:</label>
+            <input type="date" id="joinDate" placeholder="Fecha de ingreso" style="width: 100%;">
+          </div>
         </div>
 
         <h4>🎓 Condición</h4>

@@ -115,7 +115,7 @@ router.post('/', requireAdmin, (req, res) => {
     is_board_member, board_position, profession, weight, medical_conditions,
     is_guardian, guardian_info, create_user, user_role,
     condition, school_id, education_level, grade_course,
-    is_commission_member, commission_type
+    is_commission_member, commission_type, join_date
   } = req.body;
 
   if (!first_name || !last_name) {
@@ -136,8 +136,8 @@ router.post('/', requireAdmin, (req, res) => {
 
   try {
     const stmt = db.prepare(`
-      INSERT INTO members (first_name, last_name, email, phone, date_of_birth, address, association, emergency_contact, emergency_phone, medical_info, rut, document_type, member_type, is_honorary, guardian_id, is_board_member, board_position, profession, weight, medical_conditions, is_guardian, condition, school_id, education_level, grade_course)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO members (first_name, last_name, email, phone, date_of_birth, address, association, emergency_contact, emergency_phone, medical_info, rut, document_type, member_type, is_honorary, guardian_id, is_board_member, board_position, profession, weight, medical_conditions, is_guardian, condition, school_id, education_level, grade_course, join_date)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     const result = stmt.run(
@@ -152,7 +152,8 @@ router.post('/', requireAdmin, (req, res) => {
       condition || 'profession',
       school_id || null,
       education_level || null,
-      grade_course || null
+      grade_course || null,
+      join_date || null
     );
 
     const memberId = result.lastInsertRowid;
@@ -207,7 +208,7 @@ router.put('/:id', requireAdmin, (req, res) => {
     rut, member_type, is_honorary, guardian_id,
     is_board_member, board_position,
     profession, weight, medical_conditions, is_guardian,
-    guardian_info, condition, school_id, education_level, grade_course
+    guardian_info, condition, school_id, education_level, grade_course, join_date
   } = req.body;
 
   // Validar RUT si se proporciona
@@ -245,6 +246,7 @@ router.put('/:id', requireAdmin, (req, res) => {
         school_id = COALESCE(?, school_id),
         education_level = COALESCE(?, education_level),
         grade_course = COALESCE(?, grade_course),
+        join_date = COALESCE(?, join_date),
         updated_at = CURRENT_TIMESTAMP
       WHERE id = ?
     `);
@@ -256,7 +258,7 @@ router.put('/:id', requireAdmin, (req, res) => {
       is_honorary, guardian_id,
       is_board_member, board_position,
       profession, weight, medical_conditions,
-      is_guardian, condition, school_id, education_level, grade_course, id
+      is_guardian, condition, school_id, education_level, grade_course, join_date, id
     );
 
     // Update guardian info

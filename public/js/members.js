@@ -355,7 +355,7 @@ async function loadMemberAttendance(memberId) {
       fetch(`${API}/api/attendance?member_id=${memberId}`, {
         headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
       }),
-      fetch(`${API}/api/attendance/summary?member_id=${memberId}`, {
+      fetch(`${API}/api/attendance/summary/member?member_id=${memberId}`, {
         headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
       })
     ]);
@@ -364,11 +364,11 @@ async function loadMemberAttendance(memberId) {
     const summary = await summaryRes.json();
 
     // Calculate stats
-    const totalAsistencias = attendance.length;
-    const asistenciasRegular = attendance.filter(a => a.class_type === 'regular').length;
-    const asistenciasCompetencia = attendance.filter(a => a.class_type === 'competition').length;
-    const asistenciasExamen = attendance.filter(a => a.class_type === 'grading').length;
-    const asistenciasEspeciales = attendance.filter(a => a.class_type === 'special').length;
+    const totalAsistencias = summary.total_asistencias || attendance.length;
+    const asistenciasRegular = summary.regulares || 0;
+    const asistenciasCompetencia = summary.competencias || 0;
+    const asistenciasExamen = summary.examenes || 0;
+    const asistenciasEspeciales = summary.especiales || 0;
 
     const statsHtml = `
       <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px;">
@@ -535,6 +535,7 @@ async function saveMember() {
     date_of_birth: convertDateToISO(document.getElementById('dob').value),
     address: document.getElementById('address').value,
     association: document.getElementById('association').value || null,
+    join_date: document.getElementById('joinDate').value || null,
     profession: condition === 'profession' ? document.getElementById('profession').value : null,
     weight: document.getElementById('weight').value || null,
     emergency_contact: document.getElementById('emergencyContact').value,
@@ -630,6 +631,7 @@ async function editMember(id) {
   document.getElementById('dob').value = m.date_of_birth ? m.date_of_birth.split('-').reverse().join('-') : '';
   document.getElementById('address').value = m.address;
   document.getElementById('association').value = m.association || '';
+  document.getElementById('joinDate').value = m.join_date || '';
   document.getElementById('profession').value = m.profession || '';
   
   // Verificar edad y mostrar/ocultar apoderado

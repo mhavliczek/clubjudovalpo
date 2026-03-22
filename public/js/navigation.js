@@ -2,6 +2,17 @@
    CLUB DE JUDO - NAVIGATION MODULE
    =================================== */
 
+// Toggle mobile sidebar
+function toggleSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('sidebarOverlay');
+  
+  if (sidebar && overlay) {
+    sidebar.classList.toggle('active');
+    overlay.classList.toggle('active');
+  }
+}
+
 // Show section in right panel
 function showSection(sectionName) {
   // Hide all sections

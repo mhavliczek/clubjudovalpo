@@ -385,13 +385,402 @@ details.summary-apoderado summary { color: #495057; }
 
 /* Responsive */
 @media (max-width: 768px) {
+  body {
+    padding: 10px;
+  }
+  
+  .container {
+    height: calc(100vh - 20px);
+  }
+  
   .main-layout {
     grid-template-columns: 1fr;
   }
+  
   .members-layout {
     grid-template-columns: 1fr;
   }
+  
   .sidebar {
     min-width: 100%;
+  }
+}
+
+/* ===================================
+   MOBILE RESPONSIVE STYLES
+   =================================== */
+
+/* Header Mobile */
+@media (max-width: 768px) {
+  .header {
+    flex-direction: column;
+    gap: 15px;
+    padding: 15px;
+  }
+  
+  .header h1 {
+    text-align: center;
+    font-size: 18px;
+  }
+  
+  .header #headerLogo {
+    height: 50px !important;
+  }
+  
+  .user-info {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+  }
+  
+  .user-info span {
+    font-size: 12px;
+  }
+  
+  .user-info .btn {
+    padding: 8px 12px;
+    font-size: 12px;
+    margin: 2px;
+  }
+  
+  .role-badge {
+    font-size: 11px;
+    padding: 3px 10px;
+  }
+}
+
+/* Sidebar Mobile - Hamburger Menu */
+@media (max-width: 768px) {
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: -100%;
+    width: 80%;
+    max-width: 300px;
+    height: 100vh;
+    z-index: 1000;
+    transition: left 0.3s ease;
+    box-shadow: 2px 0 10px rgba(0,0,0,0.2);
+    overflow-y: auto;
+  }
+  
+  .sidebar.active {
+    left: 0;
+  }
+  
+  .sidebar-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    z-index: 999;
+    display: none;
+  }
+  
+  .sidebar-overlay.active {
+    display: block;
+  }
+  
+  .mobile-menu-toggle {
+    display: block !important;
+    background: #1877f2;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 20px;
+    margin-right: 10px;
+  }
+  
+  .sidebar-close {
+    display: block;
+    background: #dc3545;
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 6px;
+    margin-bottom: 15px;
+    cursor: pointer;
+    font-size: 16px;
+  }
+}
+
+@media (min-width: 769px) {
+  .mobile-menu-toggle {
+    display: none !important;
+  }
+  
+  .sidebar-close {
+    display: none !important;
+  }
+}
+
+/* Content Area Mobile */
+@media (max-width: 768px) {
+  .content-area {
+    padding: 0;
+  }
+  
+  .section {
+    padding: 15px;
+    margin-bottom: 15px;
+  }
+  
+  h1 {
+    font-size: 20px;
+  }
+  
+  h2 {
+    font-size: 18px;
+  }
+  
+  h3 {
+    font-size: 16px;
+  }
+  
+  .btn {
+    padding: 8px 12px;
+    font-size: 13px;
+    margin: 3px;
+  }
+  
+  .form-row {
+    flex-direction: column;
+  }
+  
+  .form-row input,
+  .form-row select,
+  .form-row textarea {
+    width: 100%;
+    margin: 5px 0;
+  }
+  
+  input, select, textarea {
+    width: 100%;
+    margin: 5px 0;
+  }
+  
+  table {
+    font-size: 12px;
+  }
+  
+  th, td {
+    padding: 8px 4px;
+  }
+}
+
+/* Members List Mobile */
+@media (max-width: 768px) {
+  .members-list-container {
+    padding: 10px;
+  }
+  
+  .member-item {
+    padding: 12px;
+    margin-bottom: 8px;
+  }
+  
+  .member-item h4 {
+    font-size: 14px;
+    margin-bottom: 5px;
+  }
+  
+  .member-item p {
+    font-size: 12px;
+  }
+  
+  .member-detail {
+    padding: 10px;
+  }
+}
+
+/* Modal Mobile */
+@media (max-width: 768px) {
+  .modal {
+    min-width: 90%;
+    max-width: 95%;
+    padding: 20px;
+    max-height: 90vh;
+  }
+  
+  .modal h3 {
+    font-size: 18px;
+    margin-bottom: 15px;
+  }
+}
+
+/* Stats Grid Mobile */
+@media (max-width: 768px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  
+  .stat-card {
+    padding: 15px;
+  }
+  
+  .stat-card h3 {
+    font-size: 24px;
+  }
+}
+
+/* News Cards Mobile */
+@media (max-width: 768px) {
+  .news-card {
+    padding: 12px;
+  }
+  
+  .news-card h3 {
+    font-size: 16px;
+  }
+  
+  .news-card .meta {
+    font-size: 11px;
+  }
+  
+  .news-card .content {
+    font-size: 13px;
+  }
+}
+
+/* Login Mobile */
+@media (max-width: 768px) {
+  .login-container {
+    margin: 20px auto;
+    padding: 20px;
+    max-width: 95%;
+  }
+  
+  .login-container h1 {
+    font-size: 24px;
+  }
+}
+
+/* Member Portal Mobile */
+@media (max-width: 768px) {
+  .member-portal {
+    padding: 10px;
+  }
+  
+  .member-portal h2 {
+    font-size: 18px;
+  }
+  
+  .member-portal h3 {
+    font-size: 16px;
+  }
+}
+
+/* Details/Collapsible Mobile */
+@media (max-width: 768px) {
+  details {
+    padding: 12px;
+    margin-bottom: 10px;
+  }
+  
+  details summary {
+    font-size: 14px;
+  }
+}
+
+/* Tables Mobile - Horizontal Scroll */
+@media (max-width: 768px) {
+  .table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  table {
+    min-width: 600px;
+  }
+}
+
+/* Curriculum/Tournaments Mobile */
+@media (max-width: 768px) {
+  #curriculumForm {
+    padding: 12px !important;
+  }
+  
+  #curriculumForm input,
+  #curriculumForm select {
+    font-size: 14px;
+  }
+}
+
+/* QR Section Mobile */
+@media (max-width: 768px) {
+  #qrCodeContainer {
+    padding: 10px;
+  }
+  
+  #photoInput {
+    max-width: 100%;
+  }
+}
+
+/* Attendance Filters Mobile */
+@media (max-width: 768px) {
+  #attendanceFilters {
+    padding: 12px;
+  }
+  
+  #attendanceFilters input,
+  #attendanceFilters select,
+  #attendanceFilters .btn {
+    width: 100%;
+    margin: 5px 0;
+  }
+}
+
+/* Settings Section Mobile */
+@media (max-width: 768px) {
+  #settingsSection {
+    padding: 10px;
+  }
+  
+  #settingsSection h3 {
+    font-size: 16px;
+  }
+  
+  #settingsSection input[type="file"] {
+    max-width: 100%;
+  }
+}
+
+/* Payment/Months Grid Mobile */
+@media (max-width: 768px) {
+  .months-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+}
+
+/* Utility Classes for Mobile */
+.mobile-only {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .mobile-only {
+    display: block !important;
+  }
+  
+  .desktop-only {
+    display: none !important;
+  }
+}
+
+/* Touch-friendly buttons */
+@media (max-width: 768px) {
+  .btn {
+    min-height: 44px; /* Apple's recommended touch target size */
+  }
+  
+  input, select, textarea {
+    min-height: 44px;
   }
 }
