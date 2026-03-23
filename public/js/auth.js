@@ -78,12 +78,34 @@ function logout() {
 }
 
 // Initialize App
-function initApp() {
+async function initApp() {
   const stored = localStorage.getItem('user');
+  const token = localStorage.getItem('token');
+  
+  if (!token) {
+    logout();
+    return;
+  }
+
   if (stored) {
     currentUser = JSON.parse(stored);
     document.getElementById('userEmail').textContent = currentUser.email;
     document.getElementById('userRole').textContent = currentUser.role === 'admin' ? 'Administrador' : 'Miembro';
+
+    // Validate token by making a test request
+    try {
+      const res = await fetch(`${API}/api/stats`, {
+        headers: { 'Authorization': 'Bearer ' + token }
+      });
+      if (res.status === 401) {
+        throw new Error('Token inválido o expirado');
+      }
+    } catch (e) {
+      console.error('Token validation failed:', e);
+      logout();
+      alert('Tu sesión ha expirado. Por favor inicia sesión nuevamente.');
+      return;
+    }
 
     if (currentUser.role === 'admin') {
       document.getElementById('adminPanel').classList.remove('hidden');
@@ -91,7 +113,7 @@ function initApp() {
       document.getElementById('memberPortal').classList.add('hidden');
       showSection('dashboard');
       loadMembersSelect();
-      
+
       // Initialize QR Scan module for admin
       if (window.QRScanModule) {
         QRScanModule.init();

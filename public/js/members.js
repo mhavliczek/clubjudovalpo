@@ -4,9 +4,16 @@
 
 // Load members list
 async function loadMembers() {
+  const token = localStorage.getItem('token');
+  if (!token) {
+    document.getElementById('membersList').innerHTML = '<p style="color: red; text-align: center;">No autorizado. Por favor inicia sesión.</p>';
+    setTimeout(() => logout(), 1000);
+    return;
+  }
+
   try {
     const res = await fetch(`${API}/api/members`, {
-      headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+      headers: { 'Authorization': 'Bearer ' + token }
     });
     const data = await res.json();
 
