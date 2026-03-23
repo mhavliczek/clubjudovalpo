@@ -310,6 +310,44 @@ db.exec(`
   );
 `);
 
+// Create documents table (for statutes and administrative documents)
+db.exec(`
+  CREATE TABLE IF NOT EXISTS documents (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    description TEXT,
+    file_path TEXT NOT NULL,
+    file_name TEXT NOT NULL,
+    file_type TEXT,
+    category TEXT NOT NULL DEFAULT 'estatuto',
+    is_active INTEGER DEFAULT 1,
+    created_by INTEGER,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
+  );
+`);
+
+// Create tournament documents table (for tournament rules and bases)
+db.exec(`
+  CREATE TABLE IF NOT EXISTS tournament_documents (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    description TEXT,
+    file_path TEXT NOT NULL,
+    file_name TEXT NOT NULL,
+    file_type TEXT,
+    tournament_name TEXT,
+    tournament_date TEXT,
+    category TEXT NOT NULL DEFAULT 'bases',
+    is_active INTEGER DEFAULT 1,
+    created_by INTEGER,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
+  );
+`);
+
 // Migrate existing belt_grades to belt_grade_history
 try {
   const existingGrades = db.prepare('SELECT * FROM belt_grades').all();

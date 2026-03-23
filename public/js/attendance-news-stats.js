@@ -17,33 +17,78 @@ async function loadStats() {
   } catch (e) { document.getElementById('stats').innerHTML = '<p>Error: ' + e.message + '</p>'; }
 }
 
+// Variables de paginación
+let currentPage = 1;
+let currentYearFilter = new Date().getFullYear();
+let currentMonthFilter = null;
+
 // Load attendance
-async function loadAttendance() {
+async function loadAttendance(page = 1) {
   try {
-    const res = await fetch(`${API}/api/attendance`, {
+    const year = document.getElementById('attendanceYearFilter')?.value || currentYearFilter;
+    const month = document.getElementById('attendanceMonthFilter')?.value || '';
+    
+    currentYearFilter = year;
+    currentMonthFilter = month ? parseInt(month) : null;
+    
+    let url = `${API}/api/attendance?year=${year}&page=${page}&limit=20`;
+    if (month) url += `&month=${month}`;
+    
+    const res = await fetch(url, {
       headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
     });
-    const records = await res.json();
-    if (records.length === 0) {
-      document.getElementById('attendanceList').innerHTML = '<p>No hay registros de asistencia</p>';
+    const result = await res.json();
+    const records = result.data || result;
+    const pagination = result.pagination;
+    
+    if (!records || records.length === 0) {
+      document.getElementById('attendanceList').innerHTML = '<p style="text-align: center; color: #999; padding: 20px;">No hay registros de asistencia</p>';
+      document.getElementById('attendancePagination').innerHTML = '';
       return;
     }
-    document.getElementById('attendanceList').innerHTML = `
-      <table>
-        <tr><th>Fecha</th><th>Miembro</th><th>RUT</th><th>Tipo</th><th>Notas</th><th>Acciones</th></tr>
-        ${records.map(r => `
-          <tr style="${r.notes === 'Registrado vía QR' ? 'background: #e8f5e9;' : ''}">
-            <td>${formatDateChile(r.class_date)}</td>
-            <td><strong>${r.first_name} ${r.last_name}</strong></td>
-            <td>${r.rut || 'Sin RUT'}</td>
-            <td>${r.class_type === 'regular' ? '📅 Regular' : r.class_type}</td>
-            <td>${r.notes || '-'}</td>
-            <td><button class="btn btn-danger" onclick="deleteAttendance(${r.id})">🗑️ Eliminar</button></td>
+    
+    let html = `
+      <div style="overflow-x: auto;">
+        <table style="width: 100%; font-size: 13px;">
+          <tr style="background: #0066cc; color: white;">
+            <th style="padding: 10px; text-align: left;">Fecha</th>
+            <th style="padding: 10px; text-align: left;">Miembro</th>
+            <th style="padding: 10px; text-align: left;">RUT</th>
+            <th style="padding: 10px; text-align: left;">Tipo</th>
+            <th style="padding: 10px; text-align: left;">Notas</th>
+            <th style="padding: 10px; text-align: center;">Acciones</th>
           </tr>
-        `).join('')}
-      </table>
+          ${records.map(r => `
+            <tr style="border-bottom: 1px solid #ddd; ${r.notes === 'Registrado vía QR' ? 'background: #e8f5e9;' : ''}">
+              <td style="padding: 8px;">${formatDateChile(r.class_date)}</td>
+              <td style="padding: 8px;"><strong>${r.first_name} ${r.last_name}</strong></td>
+              <td style="padding: 8px;">${r.rut || 'Sin RUT'}</td>
+              <td style="padding: 8px;">${r.class_type === 'regular' ? '📅 Regular' : r.class_type}</td>
+              <td style="padding: 8px;">${r.notes || '-'}</td>
+              <td style="padding: 8px; text-align: center;">
+                <button class="btn btn-sm btn-danger" onclick="deleteAttendance(${r.id})">🗑️ Eliminar</button>
+              </td>
+            </tr>
+          `).join('')}
+        </table>
+      </div>
     `;
-  } catch (e) { document.getElementById('attendanceList').innerHTML = '<p>Error: ' + e.message + '</p>'; }
+    
+    // Paginación
+    if (pagination && pagination.totalPages > 1) {
+      html += `
+        <div style="display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 15px; padding: 10px;">
+          <button class="btn btn-sm" onclick="loadAttendance(${pagination.page - 1})" ${pagination.page === 1 ? 'disabled' : ''}>⬅️ Anterior</button>
+          <span style="font-weight: bold;">Página ${pagination.page} de ${pagination.totalPages}</span>
+          <button class="btn btn-sm" onclick="loadAttendance(${pagination.page + 1})" ${pagination.page >= pagination.totalPages ? 'disabled' : ''}>Siguiente ➡️</button>
+        </div>
+      `;
+    }
+    
+    document.getElementById('attendanceList').innerHTML = html;
+  } catch (e) { 
+    document.getElementById('attendanceList').innerHTML = '<p>Error: ' + e.message + '</p>'; 
+  }
 }
 
 // Save attendance
@@ -228,12 +273,13 @@ async function loadMyInfo() {
     loadMyGrade();
     loadMyAttendance();
     loadMyPayments();
+    loadMemberDocuments();
 
     // Initialize curriculum
     if (window.CurriculumModule) {
       CurriculumModule.init(currentUser.member_id);
     }
-    
+
     // Initialize QR module
     if (window.QRModule) {
       QRModule.init(currentUser.member_id, false);
@@ -268,29 +314,53 @@ async function loadMyGrade() {
   } catch (e) { document.getElementById('myGrade').innerHTML = '<p>Error: ' + e.message + '</p>'; }
 }
 
-async function loadMyAttendance() {
+async function loadMyAttendance(page = 1) {
   if (!currentUser?.member_id) return;
   try {
-    const res = await fetch(`${API}/api/attendance?member_id=${currentUser.member_id}`, {
+    const year = new Date().getFullYear();
+    const res = await fetch(`${API}/api/attendance?member_id=${currentUser.member_id}&year=${year}&page=${page}&limit=10`, {
       headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
     });
-    const records = await res.json();
-    if (records.length === 0) {
-      document.getElementById('myAttendance').innerHTML = '<p>Sin registros de asistencia</p>';
+    const result = await res.json();
+    const records = result.data || result;
+    const pagination = result.pagination;
+    
+    if (!records || records.length === 0) {
+      document.getElementById('myAttendance').innerHTML = '<p style="text-align: center; color: #999; padding: 15px;">Sin registros de asistencia este año</p>';
       return;
     }
-    document.getElementById('myAttendance').innerHTML = `
-      <table>
-        <tr><th>Fecha</th><th>Tipo</th><th>Notas</th></tr>
-        ${records.map(r => `
-          <tr style="${r.notes === 'Registrado vía QR' ? 'background: #e8f5e9;' : ''}">
-            <td>${formatDateChile(r.class_date)}</td>
-            <td>${r.class_type === 'regular' ? '📅 Regular' : r.class_type}</td>
-            <td>${r.notes === 'Registrado vía QR' ? '✅ Registrado vía QR' : (r.notes || '-')}</td>
+    
+    let html = `
+      <div style="overflow-x: auto;">
+        <table style="width: 100%; font-size: 13px;">
+          <tr style="background: #0066cc; color: white;">
+            <th style="padding: 8px; text-align: left;">Fecha</th>
+            <th style="padding: 8px; text-align: left;">Tipo</th>
+            <th style="padding: 8px; text-align: left;">Notas</th>
           </tr>
-        `).join('')}
-      </table>
+          ${records.map(r => `
+            <tr style="border-bottom: 1px solid #ddd; ${r.notes === 'Registrado vía QR' ? 'background: #e8f5e9;' : ''}">
+              <td style="padding: 8px;">${formatDateChile(r.class_date)}</td>
+              <td style="padding: 8px;">${r.class_type === 'regular' ? '📅 Regular' : r.class_type}</td>
+              <td style="padding: 8px;">${r.notes === 'Registrado vía QR' ? '✅ Registrado vía QR' : (r.notes || '-')}</td>
+            </tr>
+          `).join('')}
+        </table>
+      </div>
     `;
+    
+    // Paginación
+    if (pagination && pagination.totalPages > 1) {
+      html += `
+        <div style="display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 15px; padding: 10px;">
+          <button class="btn btn-sm" onclick="loadMyAttendance(${pagination.page - 1})" ${pagination.page === 1 ? 'disabled' : ''}>⬅️ Anterior</button>
+          <span style="font-weight: bold;">Página ${pagination.page} de ${pagination.totalPages}</span>
+          <button class="btn btn-sm" onclick="loadMyAttendance(${pagination.page + 1})" ${pagination.page >= pagination.totalPages ? 'disabled' : ''}>Siguiente ➡️</button>
+        </div>
+      `;
+    }
+    
+    document.getElementById('myAttendance').innerHTML = html;
   } catch (e) { document.getElementById('myAttendance').innerHTML = '<p>Error: ' + e.message + '</p>'; }
 }
 

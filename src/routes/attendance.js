@@ -35,7 +35,7 @@ router.get('/report', requireAdmin, (req, res) => {
 
 // Get attendance records
 router.get('/', (req, res) => {
-  const { member_id, start_date, end_date, class_type } = req.query;
+  const { member_id, start_date, end_date, class_type, year, month, page = 1, limit = 20 } = req.query;
 
   // Non-admin users can only view their own attendance
   const viewMemberId = req.user.role !== 'admin' ? req.user.member_id : member_id;
@@ -55,6 +55,24 @@ router.get('/', (req, res) => {
     query += ' AND a.member_id = ?';
     params.push(member_id);
   }
+  
+  // Filtros por año y mes
+  if (year) {
+    const startYear = `${year}-01-01`;
+    const endYear = `${year}-12-31`;
+    query += ' AND a.class_date >= ? AND a.class_date <= ?';
+    params.push(startYear, endYear);
+    
+    if (month) {
+      const monthStart = `${year}-${String(month).padStart(2, '0')}-01`;
+      const nextMonth = month === 12 ? 1 : month + 1;
+      const nextYear = month === 12 ? parseInt(year) + 1 : parseInt(year);
+      const monthEnd = `${nextYear}-${String(nextMonth).padStart(2, '0')}-01`;
+      query += ' AND a.class_date >= ? AND a.class_date < ?';
+      params.push(monthStart, monthEnd);
+    }
+  }
+  
   if (start_date) {
     query += ' AND a.class_date >= ?';
     params.push(start_date);
@@ -68,11 +86,29 @@ router.get('/', (req, res) => {
     params.push(class_type);
   }
 
-  query += ' ORDER BY a.class_date DESC, m.last_name';
+  // Count total records
+  const countQuery = query.replace('SELECT a.*, m.first_name, m.last_name, m.rut, m.photo', 'SELECT COUNT(*) as total');
+  const total = db.prepare(countQuery).get(...params).total;
+
+  // Pagination
+  const pageNum = parseInt(page);
+  const pageSize = parseInt(limit);
+  const offset = (pageNum - 1) * pageSize;
+
+  query += ' ORDER BY a.class_date DESC, m.last_name LIMIT ? OFFSET ?';
+  params.push(pageSize, offset);
 
   try {
     const records = db.prepare(query).all(...params);
-    res.json(records);
+    res.json({
+      data: records,
+      pagination: {
+        page: pageNum,
+        limit: pageSize,
+        total,
+        totalPages: Math.ceil(total / pageSize)
+      }
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

@@ -8,12 +8,20 @@ A backend API for managing a judo club, built with Express and SQLite.
 - **Roles**: Admin and Member roles
 - **Members**: Register and manage club members with 4 membership types
 - **Belt Grades**: Track member progression through belt ranks
-- **Attendance**: Record and track class attendance
+- **Attendance**: Record and track class attendance with pagination and filters
+- **Attendance Statistics**: Monthly, semester, and yearly attendance tracking with color-coded percentages
 - **Payments**: Manage membership fees and payments
 - **Member Portal**: Each member can view their own info
 - **Curriculum**: Track tournaments and generate sports CV
 - **Certificates**: Generate PDF certificates with club logo
 - **Guardians**: Manage guardians for minor members
+- **Documents**: Administrative documents (statutes, regulations) management
+- **Tournament Documents**: Tournament rules and bases management
+- **QR System**: QR code generation for attendance tracking
+- **Instructors**: Manage club instructors
+- **Schools**: Manage schools for student members
+- **Annual Fees**: Configure annual enrollment and monthly fees
+- **UF Value**: Integration with UF (Unidad de Fomento) value
 
 ---
 
@@ -279,6 +287,193 @@ El código QR contiene la siguiente información en formato JSON:
 
 ---
 
+## 📊 Estadísticas de Asistencia con Colores
+
+### **Descripción General**
+
+El sistema calcula automáticamente el porcentaje de asistencia de cada judoka en tres períodos: mensual, semestral y anual. Los porcentajes se muestran con código de colores para identificación rápida.
+
+### **Código de Colores de Asistencia**
+
+| Color | Porcentaje | Estado | Descripción |
+|-------|------------|--------|-------------|
+| 🔴 **Rojo** | < 75% | **Bajo** | Asistencia insuficiente |
+| 🟡 **Amarillo** | 75% - 84.9% | **Regular** | Asistencia aceptable |
+| 🟢 **Verde** | ≥ 85% | **Excelente** | Asistencia destacada |
+
+### **Períodos de Medición**
+
+| Período | Cálculo | Esperado |
+|---------|---------|----------|
+| **Mensual** | Asistencias del mes seleccionado | 8 clases (2 por semana) |
+| **Semestral** | Asistencias del semestre (6 meses) | 48 clases |
+| **Anual** | Asistencias del año completo | 96 clases |
+
+### **Funcionalidades Admin**
+
+| Función | Descripción |
+|---------|-------------|
+| **Filtrar por Mes/Año** | Seleccionar período específico |
+| **Vista Tabular** | Todos los judokas con sus porcentajes |
+| **Detalle Mensual** | Ver mes a mes la asistencia de cada judoka |
+| **Carga Masiva** | Llenar asistencia para múltiples judokas de una vez |
+
+### **Carga Masiva de Asistencia**
+
+El administrador puede cargar automáticamente la asistencia para:
+- ✅ Múltiples judokas seleccionados
+- ✅ Todos los martes y jueves del mes seleccionado
+- ✅ Tipo de clase configurable (regular, competición, examen)
+
+**Flujo:**
+1. Seleccionar año y mes
+2. Marcar judokas a incluir
+3. Click en "Guardar Asistencia Masiva"
+4. El sistema crea registros para todos los días de entrenamiento
+
+---
+
+### **API Endpoints - Estadísticas de Asistencia**
+
+| Endpoint | Método | Descripción |
+|----------|--------|-------------|
+| `/api/attendance/statistics` | GET | Obtener estadísticas (mensual/semestral/anual) |
+| `/api/attendance/by-month` | GET | Obtener asistencia por mes |
+| `/api/attendance/bulk-month` | POST | Carga masiva de asistencia |
+| `/api/attendance/member-stats` | GET | Estadísticas mensuales de un miembro |
+
+---
+
+## 📄 Gestión de Documentos
+
+### **Descripción General**
+
+El sistema permite administrar dos tipos de documentos que son visibles para todos los socios en su perfil personal.
+
+### **Tipos de Documentos**
+
+#### **1. Estatutos y Documentos Administrativos** 📄
+
+Documentos oficiales del club visibles para todos los socios.
+
+**Categorías:**
+- 📜 Estatuto
+- 📋 Reglamento
+- 📝 Acta de Reunión
+- 📢 Circular
+- 📄 Otro
+
+**Formatos Soportados:**
+- PDF, DOC, DOCX, TXT, XLS, XLSX, JPG, PNG
+- Tamaño máximo: 10 MB
+
+#### **2. Documentos de Torneos** 🏆
+
+Bases, inscripciones y resultados de torneos.
+
+**Categorías:**
+- 📋 Bases de Torneo
+- 📝 Inscripción
+- 🏆 Resultados
+- 📄 Otro
+
+**Campos Adicionales:**
+- Nombre del torneo
+- Fecha del torneo
+- Descripción
+
+---
+
+### **Funcionalidades Admin**
+
+| Acción | Descripción |
+|--------|-------------|
+| **Subir Documento** | Cargar archivo con título, descripción y categoría |
+| **Editar Documento** | Modificar metadatos o reemplazar archivo |
+| **Eliminar Documento** | Dar de baja documento (soft delete) |
+| **Ver Lista** | Listar todos los documentos con vista previa |
+
+---
+
+### **Funcionalidades Socio**
+
+| Acción | Descripción |
+|--------|-------------|
+| **Ver Documentos** | Ver documentos administrativos en su perfil |
+| **Ver Torneos** | Ver documentos de torneos en su perfil |
+| **Descargar** | Descargar archivos PDF directamente |
+
+---
+
+### **API Endpoints - Documentos**
+
+| Endpoint | Método | Descripción |
+|----------|--------|-------------|
+| `/api/documents` | GET | Listar documentos administrativos |
+| `/api/documents/:id` | GET | Obtener documento específico |
+| `/api/documents` | POST | Subir nuevo documento (admin) |
+| `/api/documents/:id` | PUT | Actualizar documento (admin) |
+| `/api/documents/:id` | DELETE | Eliminar documento (admin) |
+| `/api/documents/tournaments` | GET | Listar documentos de torneos |
+| `/api/documents/tournaments/:id` | GET | Obtener documento de torneo |
+| `/api/documents/tournaments` | POST | Subir documento de torneo (admin) |
+| `/api/documents/tournaments/:id` | PUT | Actualizar documento de torneo (admin) |
+| `/api/documents/tournaments/:id` | DELETE | Eliminar documento de torneo (admin) |
+
+---
+
+## 📅 Asistencia con Paginación y Filtros
+
+### **Descripción General**
+
+El módulo de asistencia ahora incluye paginación y filtros para mejorar la visualización y navegación de los registros.
+
+### **Funcionalidades**
+
+| Filtro | Descripción |
+|--------|-------------|
+| **Por Año** | Filtrar asistencias por año (2024, 2025, 2026) |
+| **Por Mes** | Filtrar por mes específico o ver todos |
+| **Paginación** | 10-20 registros por página (configurable) |
+| **Navegación** | Botones "Anterior" y "Siguiente" |
+
+### **Vista por Rol**
+
+#### **Admin**
+- ✅ Ver todas las asistencias de todos los miembros
+- ✅ Filtrar por año y mes
+- ✅ Navegar entre páginas
+- ✅ Eliminar registros individuales
+
+#### **Socio (Perfil Personal)**
+- ✅ Ver solo sus propias asistencias
+- ✅ Filtrado automático por año actual
+- ✅ Paginación de 10 registros por página
+- ✅ Ver tipo de clase y notas
+
+---
+
+### **API Endpoints - Asistencia con Paginación**
+
+| Endpoint | Método | Parámetros | Descripción |
+|----------|--------|------------|-------------|
+| `/api/attendance` | GET | `page`, `limit`, `year`, `month` | Listar con paginación |
+
+**Respuesta:**
+```json
+{
+  "data": [...],
+  "pagination": {
+    "page": 1,
+    "limit": 10,
+    "total": 50,
+    "totalPages": 5
+  }
+}
+```
+
+---
+
 ## Installation
 
 ```bash
@@ -320,22 +515,100 @@ The server will start on `http://localhost:3000`
 - `GET /health` - Health check
 
 ### Protected Endpoints (Require Auth)
+
+#### **Dashboard & Stats**
 - `GET /api/stats` - Dashboard statistics
+- `GET /api/config` - Club configuration
+
+#### **Members**
 - `GET /api/members` - List all members (admin only)
 - `GET /api/members/:id` - Get member by ID
 - `POST /api/members` - Create new member (admin only)
 - `PUT /api/members/:id` - Update member (admin only)
 - `DELETE /api/members/:id` - Delete member (admin only)
+
+#### **Belt Grades**
 - `GET /api/grades` - Get all grades (admin only)
 - `GET /api/grades/member/:memberId` - Get grades for a member
 - `POST /api/grades` - Record new grade (admin only)
 - `DELETE /api/grades/:id` - Delete grade (admin only)
-- `GET /api/attendance` - List attendance records
+
+#### **Attendance**
+- `GET /api/attendance` - List attendance records (with pagination: `?page=1&limit=10&year=2025&month=3`)
 - `POST /api/attendance` - Record attendance (admin only)
 - `DELETE /api/attendance/:id` - Delete attendance (admin only)
+- `GET /api/attendance/statistics` - Get attendance statistics (monthly/semester/yearly)
+- `GET /api/attendance/by-month` - Get attendance by month
+- `POST /api/attendance/bulk-month` - Bulk fill attendance for multiple members
+- `GET /api/attendance/member-stats` - Get member monthly statistics
+- `GET /api/attendance/summary` - Get attendance summary
+- `GET /api/attendance/report` - Get attendance report (admin only)
+- `GET /api/attendance/report/excel` - Export attendance report to Excel (admin only)
+
+#### **Payments**
 - `GET /api/payments` - List payments
 - `POST /api/payments` - Record payment (admin only)
 - `DELETE /api/payments/:id` - Delete payment (admin only)
+
+#### **Documents (Admin Only)**
+- `GET /api/documents` - List administrative documents
+- `GET /api/documents/:id` - Get specific document
+- `POST /api/documents` - Upload new document
+- `PUT /api/documents/:id` - Update document
+- `DELETE /api/documents/:id` - Delete document
+- `GET /api/documents/tournaments` - List tournament documents
+- `GET /api/documents/tournaments/:id` - Get specific tournament document
+- `POST /api/documents/tournaments` - Upload tournament document
+- `PUT /api/documents/tournaments/:id` - Update tournament document
+- `DELETE /api/documents/tournaments/:id` - Delete tournament document
+
+#### **Curriculum (Tournaments)**
+- `GET /api/curriculum/member/:memberId` - Get member's tournaments
+- `POST /api/curriculum` - Add tournament record
+- `DELETE /api/curriculum/:id` - Delete tournament record
+- `GET /api/curriculum/member/:memberId/excel` - Export curriculum to Excel
+- `GET /api/curriculum/certificate/:memberId/pdf` - Generate sports certificate PDF
+- `GET /api/curriculum/curriculum/:memberId/pdf` - Generate curriculum PDF
+
+#### **QR System**
+- `POST /api/qr/upload-photo` - Upload member photo
+- `GET /api/qr/generate-qr/:memberId` - Generate QR code
+- `GET /api/qr/my-children` - Get apoderado's children list
+- `POST /api/qr/scan-qr` - Scan and validate QR (admin only)
+
+#### **Instructors (Admin Only)**
+- `GET /api/instructors` - List instructors
+- `POST /api/instructors` - Create instructor
+- `PUT /api/instructors/:id` - Update instructor
+- `DELETE /api/instructors/:id` - Delete instructor
+
+#### **Schools (Admin Only)**
+- `GET /api/schools` - List schools
+- `POST /api/schools` - Create school
+- `PUT /api/schools/:id` - Update school
+- `DELETE /api/schools/:id` - Delete school
+
+#### **Annual Fees (Admin Only)**
+- `GET /api/fees` - List annual fees
+- `POST /api/fees` - Create/update annual fees
+- `GET /api/uf/value` - Get current UF value
+
+#### **News**
+- `GET /api/news` - List news articles
+- `POST /api/news` - Create news article (admin only)
+- `DELETE /api/news/:id` - Delete news article (admin only)
+
+#### **Settings (Admin Only)**
+- `GET /api/settings` - Get all settings
+- `POST /api/settings/club-logo` - Upload club logo
+- `POST /api/settings/director-signature` - Upload director signature
+- `POST /api/settings/club-director` - Set club director name
+
+#### **Authentication**
+- `POST /api/auth/login` - Login
+- `POST /api/auth/register` - Register new user (admin only)
+- `GET /api/auth/me` - Get current user info
+- `PUT /api/auth/change-password` - Change password
 
 ## Deploy to Render
 

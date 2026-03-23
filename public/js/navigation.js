@@ -32,6 +32,8 @@ function showSection(sectionName) {
     'fees': () => loadFees(),
     'attendance': () => loadAttendance(),
     'attendanceStats': () => loadAttendanceStatistics(),
+    'documents': () => loadDocuments(),
+    'tournamentDocs': () => loadTournamentDocuments(),
     'news': () => loadNews(),
     'settings': () => window.SettingsModule?.init()
   };

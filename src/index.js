@@ -16,6 +16,7 @@ const ufRouter = require('./routes/uf');
 const curriculumRouter = require('./routes/curriculum');
 const settingsRouter = require('./routes/settings');
 const qrRouter = require('./routes/qr');
+const documentsRouter = require('./routes/documents');
 const { authenticate, requireAdmin } = require('./middleware/auth');
 
 const app = express();
@@ -48,6 +49,7 @@ app.use('/api/uf', authenticate, ufRouter);
 app.use('/api/curriculum', curriculumRouter);
 app.use('/api/settings', settingsRouter);
 app.use('/api/qr', qrRouter);
+app.use('/api/documents', authenticate, documentsRouter);
 
 // Config endpoint (public)
 app.get('/api/config', (req, res) => {

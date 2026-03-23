@@ -67,6 +67,8 @@
             <button class="btn" onclick="showSection('fees'); toggleSidebar()">💵 Montos</button>
             <button class="btn" onclick="showSection('attendance'); toggleSidebar()">📅 Asistencia</button>
             <button class="btn" onclick="showSection('attendanceStats'); toggleSidebar()">📊 Estadísticas Asistencia</button>
+            <button class="btn" onclick="showSection('documents'); toggleSidebar()">📄 Estatutos</button>
+            <button class="btn" onclick="showSection('tournamentDocs'); toggleSidebar()">🏆 Torneos</button>
             <button class="btn" onclick="showSection('news'); toggleSidebar()">📰 Noticias</button>
             <button class="btn" onclick="showSection('settings'); toggleSidebar()">⚙️ Configuración</button>
           </nav>
@@ -190,10 +192,35 @@
           <div id="attendanceSection" class="content-section hidden">
             <div class="section">
               <h2>📅 Asistencia</h2>
-              <button class="btn" onclick="loadAttendance()">Cargar Asistencia</button>
-              <button class="btn btn-success" onclick="showForm('attendanceForm')">Registrar Manual</button>
-              <button class="btn" onclick="QRScanModule.showScanModal()" style="background: #9c27b0; color: white;">📱 Escanear QR</button>
-              <button class="btn" onclick="exportAttendanceReport()" style="background: #28a745; color: white;">📊 Exportar Reporte</button>
+              <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px;">
+                <button class="btn" onclick="loadAttendance()">Cargar Asistencia</button>
+                <button class="btn btn-success" onclick="showForm('attendanceForm')">Registrar Manual</button>
+                <button class="btn" onclick="QRScanModule.showScanModal()" style="background: #9c27b0; color: white;">📱 Escanear QR</button>
+                <button class="btn" onclick="exportAttendanceReport()" style="background: #28a745; color: white;">📊 Exportar Reporte</button>
+                
+                <!-- Filtros de Año y Mes -->
+                <select id="attendanceYearFilter" style="width: 120px;" onchange="loadAttendance(1)">
+                  <option value="2024">2024</option>
+                  <option value="2025" selected>2025</option>
+                  <option value="2026">2026</option>
+                </select>
+                <select id="attendanceMonthFilter" style="width: 130px;" onchange="loadAttendance(1)">
+                  <option value="">Todos los meses</option>
+                  <option value="1">Enero</option>
+                  <option value="2">Febrero</option>
+                  <option value="3">Marzo</option>
+                  <option value="4">Abril</option>
+                  <option value="5">Mayo</option>
+                  <option value="6">Junio</option>
+                  <option value="7">Julio</option>
+                  <option value="8">Agosto</option>
+                  <option value="9">Septiembre</option>
+                  <option value="10">Octubre</option>
+                  <option value="11">Noviembre</option>
+                  <option value="12">Diciembre</option>
+                </select>
+              </div>
+              
               <div id="attendanceFilters" class="hidden" style="margin-top: 15px; padding: 10px; background: #f8f9fa; border-radius: 5px;">
                 <div class="form-row">
                   <input type="date" id="reportStartDate" placeholder="Desde">
@@ -218,6 +245,7 @@
                 <button class="btn" onclick="hideForm('attendanceForm')">Cancelar</button>
               </div>
               <div id="attendanceList" class="result"></div>
+              <div id="attendancePagination" style="margin-top: 15px;"></div>
             </div>
           </div>
 
@@ -266,7 +294,7 @@
                 </span>
                 <span style="display: inline-flex; align-items: center; gap: 5px;">
                   <span style="width: 20px; height: 20px; background: #28a745; border-radius: 3px;"></span>
-                  <span>�� 85% (Excelente)</span>
+                  <span>��� 85% (Excelente)</span>
                 </span>
               </div>
 
@@ -349,6 +377,81 @@
               </div>
               <button class="btn" onclick="loadNews()">Actualizar Noticias</button>
               <div id="newsList" style="margin-top: 15px;"></div>
+            </div>
+          </div>
+
+          <!-- Documents (Estatutos) -->
+          <div id="documentsSection" class="content-section hidden">
+            <div class="section">
+              <h2>📄 Estatutos y Documentos Administrativos</h2>
+              <p style="color: #666; margin-bottom: 15px;">Gestiona los estatutos y documentos administrativos del club. Estos documentos serán visibles para todos los socios en su perfil.</p>
+              
+              <button class="btn btn-success" onclick="showDocumentForm()">+ Nuevo Documento</button>
+              <button class="btn" onclick="loadDocuments()">🔄 Actualizar Lista</button>
+              
+              <!-- Formulario para subir documentos -->
+              <div id="documentForm" class="hidden" style="margin-top: 20px; padding: 20px; background: #f8f9fa; border-radius: 5px;">
+                <h3 id="documentFormTitle">Subir Nuevo Documento</h3>
+                <div class="form-row" style="flex-direction: column; gap: 10px;">
+                  <input type="text" id="docTitle" placeholder="Título del documento" style="width: 100%;">
+                  <textarea id="docDescription" placeholder="Descripción (opcional)" style="width: 100%; height: 80px;"></textarea>
+                  <select id="docCategory" style="width: 100%;">
+                    <option value="estatuto">Estatuto</option>
+                    <option value="reglamento">Reglamento</option>
+                    <option value="acta">Acta de Reunión</option>
+                    <option value="circulares">Circular</option>
+                    <option value="otro">Otro</option>
+                  </select>
+                  <input type="file" id="docFile" accept=".pdf,.doc,.docx,.txt,.xls,.xlsx,.jpg,.jpeg,.png" style="width: 100%;">
+                  <small style="color: #666;">Formatos permitidos: PDF, DOC, DOCX, TXT, XLS, XLSX, JPG, PNG (Máx 10MB)</small>
+                </div>
+                <div style="margin-top: 15px; display: flex; gap: 10px;">
+                  <button class="btn btn-success" onclick="saveDocument()">💾 Guardar Documento</button>
+                  <button class="btn" onclick="hideDocumentForm()">Cancelar</button>
+                </div>
+                <input type="hidden" id="editDocumentId">
+              </div>
+              
+              <!-- Lista de documentos -->
+              <div id="documentsList" style="margin-top: 20px;"></div>
+            </div>
+          </div>
+
+          <!-- Tournament Documents -->
+          <div id="tournamentDocsSection" class="content-section hidden">
+            <div class="section">
+              <h2>🏆 Documentos de Torneos</h2>
+              <p style="color: #666; margin-bottom: 15px;">Gestiona las bases y documentos de torneos. Estos documentos serán visibles para todos los socios en su perfil.</p>
+              
+              <button class="btn btn-success" onclick="showTournamentDocumentForm()">+ Nuevo Documento de Torneo</button>
+              <button class="btn" onclick="loadTournamentDocuments()">🔄 Actualizar Lista</button>
+              
+              <!-- Formulario para subir documentos de torneos -->
+              <div id="tournamentDocumentForm" class="hidden" style="margin-top: 20px; padding: 20px; background: #f8f9fa; border-radius: 5px;">
+                <h3 id="tournamentDocumentFormTitle">Subir Nuevo Documento de Torneo</h3>
+                <div class="form-row" style="flex-direction: column; gap: 10px;">
+                  <input type="text" id="tournamentDocTitle" placeholder="Título del documento" style="width: 100%;">
+                  <textarea id="tournamentDocDescription" placeholder="Descripción (opcional)" style="width: 100%; height: 80px;"></textarea>
+                  <input type="text" id="tournamentName" placeholder="Nombre del torneo (opcional)" style="width: 100%;">
+                  <input type="date" id="tournamentDate" placeholder="Fecha del torneo" style="width: 100%;">
+                  <select id="tournamentDocCategory" style="width: 100%;">
+                    <option value="bases">Bases de Torneo</option>
+                    <option value="inscripcion">Inscripción</option>
+                    <option value="resultado">Resultados</option>
+                    <option value="otro">Otro</option>
+                  </select>
+                  <input type="file" id="tournamentDocFile" accept=".pdf,.doc,.docx,.txt,.xls,.xlsx,.jpg,.jpeg,.png" style="width: 100%;">
+                  <small style="color: #666;">Formatos permitidos: PDF, DOC, DOCX, TXT, XLS, XLSX, JPG, PNG (Máx 10MB)</small>
+                </div>
+                <div style="margin-top: 15px; display: flex; gap: 10px;">
+                  <button class="btn btn-success" onclick="saveTournamentDocument()">💾 Guardar Documento</button>
+                  <button class="btn" onclick="hideTournamentDocumentForm()">Cancelar</button>
+                </div>
+                <input type="hidden" id="editTournamentDocumentId">
+              </div>
+              
+              <!-- Lista de documentos de torneos -->
+              <div id="tournamentDocumentsList" style="margin-top: 20px;"></div>
             </div>
           </div>
 
@@ -718,7 +821,25 @@
       <div id="myAttendance"></div>
       <h3>💰 Mis Pagos</h3>
       <div id="myPayments"></div>
-      
+
+      <!-- Documentos Administrativos -->
+      <h3 style="margin-top: 30px;">📄 Estatutos y Documentos Administrativos</h3>
+      <div style="background: #f3e5f5; padding: 20px; border-radius: 8px; border-left: 4px solid #9c27b0;">
+        <p style="margin-bottom: 15px; color: #7b1fa2;">Descarga los estatutos, reglamentos y documentos administrativos del club.</p>
+        <div id="memberDocumentsList">
+          <p style="color: #999; text-align: center;">Cargando documentos...</p>
+        </div>
+      </div>
+
+      <!-- Documentos de Torneos -->
+      <h3 style="margin-top: 30px;">🏆 Documentos de Torneos</h3>
+      <div style="background: #fff3e0; padding: 20px; border-radius: 8px; border-left: 4px solid #ff9800;">
+        <p style="margin-bottom: 15px; color: #e65100;">Descarga las bases, inscripciones y resultados de torneos.</p>
+        <div id="memberTournamentDocumentsList">
+          <p style="color: #999; text-align: center;">Cargando documentos...</p>
+        </div>
+      </div>
+
       <!-- Curriculum Deportivo -->
       <h3 style="margin-top: 30px;">🏆 Curriculum Deportivo</h3>
       <div style="background: #f3e5f5; padding: 20px; border-radius: 8px; border-left: 4px solid #9c27b0;">
@@ -797,6 +918,7 @@
   <script src="js/fees.js"></script>
   <script src="js/grades-payments.js"></script>
   <script src="js/attendance-news-stats.js"></script>
+  <script src="js/documents.js"></script>
   <script src="js/modules/curriculum.js"></script>
   <script src="js/modules/qr.js"></script>
   <script src="js/modules/qr-scan.js"></script>
