@@ -31,6 +31,7 @@ function showSection(sectionName) {
     'schools': () => loadSchools(),
     'fees': () => loadFees(),
     'attendance': () => loadAttendance(),
+    'attendanceStats': () => loadAttendanceStatistics(),
     'news': () => loadNews(),
     'settings': () => window.SettingsModule?.init()
   };

@@ -66,6 +66,7 @@
             <button class="btn" onclick="showSection('schools'); toggleSidebar()">🏫 Colegios</button>
             <button class="btn" onclick="showSection('fees'); toggleSidebar()">💵 Montos</button>
             <button class="btn" onclick="showSection('attendance'); toggleSidebar()">📅 Asistencia</button>
+            <button class="btn" onclick="showSection('attendanceStats'); toggleSidebar()">📊 Estadísticas Asistencia</button>
             <button class="btn" onclick="showSection('news'); toggleSidebar()">📰 Noticias</button>
             <button class="btn" onclick="showSection('settings'); toggleSidebar()">⚙️ Configuración</button>
           </nav>
@@ -217,6 +218,115 @@
                 <button class="btn" onclick="hideForm('attendanceForm')">Cancelar</button>
               </div>
               <div id="attendanceList" class="result"></div>
+            </div>
+          </div>
+
+          <!-- Attendance Statistics -->
+          <div id="attendanceStatsSection" class="content-section hidden">
+            <div class="section">
+              <h2>📊 Estadísticas de Asistencia</h2>
+              
+              <!-- Filters -->
+              <div style="margin-top: 15px; padding: 15px; background: #f8f9fa; border-radius: 5px;">
+                <div class="form-row" style="flex-wrap: wrap; gap: 10px;">
+                  <select id="statsYear" style="width: 150px;" onchange="loadAttendanceStatistics()">
+                    <option value="2024">2024</option>
+                    <option value="2025" selected>2025</option>
+                    <option value="2026">2026</option>
+                  </select>
+                  <select id="statsMonth" style="width: 150px;" onchange="loadAttendanceStatistics()">
+                    <option value="1">Enero</option>
+                    <option value="2">Febrero</option>
+                    <option value="3">Marzo</option>
+                    <option value="4">Abril</option>
+                    <option value="5">Mayo</option>
+                    <option value="6">Junio</option>
+                    <option value="7">Julio</option>
+                    <option value="8">Agosto</option>
+                    <option value="9">Septiembre</option>
+                    <option value="10">Octubre</option>
+                    <option value="11">Noviembre</option>
+                    <option value="12">Diciembre</option>
+                  </select>
+                  <button class="btn" onclick="loadAttendanceStatistics()">🔄 Actualizar</button>
+                  <button class="btn btn-success" onclick="showBulkAttendanceForm()">📝 Llenar Asistencia Masiva</button>
+                </div>
+              </div>
+
+              <!-- Color Legend -->
+              <div style="margin-top: 15px; padding: 10px; background: #fff3cd; border-radius: 5px; display: flex; gap: 20px; flex-wrap: wrap; align-items: center;">
+                <strong>📍 Leyenda:</strong>
+                <span style="display: inline-flex; align-items: center; gap: 5px;">
+                  <span style="width: 20px; height: 20px; background: #dc3545; border-radius: 3px;"></span>
+                  <span>&lt; 75% (Bajo)</span>
+                </span>
+                <span style="display: inline-flex; align-items: center; gap: 5px;">
+                  <span style="width: 20px; height: 20px; background: #ffc107; border-radius: 3px;"></span>
+                  <span>75% - 84.9% (Regular)</span>
+                </span>
+                <span style="display: inline-flex; align-items: center; gap: 5px;">
+                  <span style="width: 20px; height: 20px; background: #28a745; border-radius: 3px;"></span>
+                  <span>�� 85% (Excelente)</span>
+                </span>
+              </div>
+
+              <!-- Statistics Table -->
+              <div id="attendanceStatsTable" style="margin-top: 20px;"></div>
+
+              <!-- Bulk Attendance Form -->
+              <div id="bulkAttendanceForm" class="hidden" style="margin-top: 20px; padding: 20px; background: #e8f5e9; border-radius: 5px; border-left: 4px solid #28a745;">
+                <h3>📝 Llenar Asistencia por Mes</h3>
+                <p style="color: #666; margin-bottom: 15px;">
+                  Esta herramienta llenará automáticamente la asistencia para todos los días de entrenamiento (martes y jueves) del mes seleccionado.
+                </p>
+                <div class="form-row" style="flex-wrap: wrap; gap: 10px;">
+                  <select id="bulkYear" style="width: 150px;">
+                    <option value="2024">2024</option>
+                    <option value="2025" selected>2025</option>
+                    <option value="2026">2026</option>
+                  </select>
+                  <select id="bulkMonth" style="width: 150px;">
+                    <option value="1">Enero</option>
+                    <option value="2">Febrero</option>
+                    <option value="3">Marzo</option>
+                    <option value="4">Abril</option>
+                    <option value="5">Mayo</option>
+                    <option value="6">Junio</option>
+                    <option value="7">Julio</option>
+                    <option value="8">Agosto</option>
+                    <option value="9">Septiembre</option>
+                    <option value="10">Octubre</option>
+                    <option value="11">Noviembre</option>
+                    <option value="12">Diciembre</option>
+                  </select>
+                  <select id="bulkClassType" style="width: 150px;">
+                    <option value="regular">Regular</option>
+                    <option value="competition">Competición</option>
+                    <option value="grading">Examen</option>
+                    <option value="special">Especial</option>
+                  </select>
+                </div>
+                <div style="margin-top: 15px;">
+                  <label style="display: block; margin-bottom: 10px; font-weight: 600;">Seleccionar Judokas:</label>
+                  <div id="bulkMemberCheckboxes" style="max-height: 300px; overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px;">
+                    <!-- Checkboxes will be populated dynamically -->
+                  </div>
+                  <div style="margin-top: 15px; display: flex; gap: 10px;">
+                    <button class="btn btn-sm" onclick="selectAllMembers(true)">Seleccionar Todos</button>
+                    <button class="btn btn-sm" onclick="selectAllMembers(false)">Deseleccionar Todos</button>
+                  </div>
+                </div>
+                <div style="margin-top: 20px; display: flex; gap: 10px;">
+                  <button class="btn btn-success" onclick="saveBulkAttendance()">💾 Guardar Asistencia Masiva</button>
+                  <button class="btn" onclick="hideBulkAttendanceForm()">Cancelar</button>
+                </div>
+              </div>
+
+              <!-- Monthly Detail View -->
+              <div id="monthlyDetailView" style="margin-top: 20px;" class="hidden">
+                <h3>📅 Detalle Mensual por Judoka</h3>
+                <div id="monthlyDetailContent"></div>
+              </div>
             </div>
           </div>
 

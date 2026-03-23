@@ -275,4 +275,256 @@ router.get('/report/excel', requireAdmin, (req, res) => {
   }
 });
 
+// Get attendance statistics for all members (monthly, semester, yearly)
+router.get('/statistics', requireAdmin, (req, res) => {
+  const { year, month } = req.query;
+  const currentYear = year || new Date().getFullYear();
+  const currentMonth = month ? parseInt(month) : null;
+
+  try {
+    // Get all active members who are judokas (deportistas/judocas) with their current belt color
+    const members = db.prepare(`
+      SELECT 
+        m.id, 
+        m.first_name, 
+        m.last_name, 
+        m.rut,
+        (SELECT bg.belt_color FROM belt_grades bg WHERE bg.member_id = m.id ORDER BY bg.grade_date DESC LIMIT 1) as belt_color
+      FROM members m
+      WHERE m.status = 'active' AND (m.member_type = 'deportista' OR m.member_type = 'judoca' OR m.member_type IS NULL)
+      ORDER BY m.last_name, m.first_name
+    `).all();
+
+    const statistics = members.map(member => {
+      const stats = {
+        id: member.id,
+        first_name: member.first_name,
+        last_name: member.last_name,
+        rut: member.rut,
+        belt_color: member.belt_color,
+        monthly: { attendance: 0, total: 0, percentage: 0 },
+        semester: { attendance: 0, total: 0, percentage: 0 },
+        yearly: { attendance: 0, total: 0, percentage: 0 }
+      };
+
+      // Monthly attendance (current month or specified month)
+      const monthNum = currentMonth || new Date().getMonth() + 1;
+      const monthStart = `${currentYear}-${String(monthNum).padStart(2, '0')}-01`;
+      const nextMonth = monthNum === 12 ? 1 : monthNum + 1;
+      const nextYear = monthNum === 12 ? parseInt(currentYear) + 1 : currentYear;
+      const monthEnd = `${nextYear}-${String(nextMonth).padStart(2, '0')}-01`;
+
+      const monthlyData = db.prepare(`
+        SELECT COUNT(*) as count
+        FROM attendance
+        WHERE member_id = ? AND class_date >= ? AND class_date < ?
+      `).get(member.id, monthStart, monthEnd);
+
+      // Calculate expected monthly attendance (2 classes per week = ~8-9 per month)
+      const expectedMonthly = 8;
+      stats.monthly.attendance = monthlyData.count;
+      stats.monthly.total = expectedMonthly;
+      stats.monthly.percentage = expectedMonthly > 0 
+        ? Math.min(100, (monthlyData.count / expectedMonthly) * 100) 
+        : 0;
+
+      // Semester attendance (6 months)
+      const semesterStartMonth = monthNum <= 6 ? 1 : 7;
+      const semesterStart = `${currentYear}-${String(semesterStartMonth).padStart(2, '0')}-01`;
+      const semesterEndMonth = monthNum <= 6 ? 6 : 12;
+      const nextMonthSem = semesterEndMonth === 12 ? 1 : semesterEndMonth + 1;
+      const nextYearSem = semesterEndMonth === 12 ? parseInt(currentYear) + 1 : currentYear;
+      const semesterEnd = `${nextYearSem}-${String(nextMonthSem).padStart(2, '0')}-01`;
+
+      const semesterData = db.prepare(`
+        SELECT COUNT(*) as count
+        FROM attendance
+        WHERE member_id = ? AND class_date >= ? AND class_date < ?
+      `).get(member.id, semesterStart, semesterEnd);
+
+      // Expected semester attendance (~48 classes)
+      const expectedSemester = 48;
+      stats.semester.attendance = semesterData.count;
+      stats.semester.total = expectedSemester;
+      stats.semester.percentage = expectedSemester > 0 
+        ? Math.min(100, (semesterData.count / expectedSemester) * 100) 
+        : 0;
+
+      // Yearly attendance
+      const yearStart = `${currentYear}-01-01`;
+      const yearEnd = `${parseInt(currentYear) + 1}-01-01`;
+
+      const yearData = db.prepare(`
+        SELECT COUNT(*) as count
+        FROM attendance
+        WHERE member_id = ? AND class_date >= ? AND class_date < ?
+      `).get(member.id, yearStart, yearEnd);
+
+      // Expected yearly attendance (~96 classes)
+      const expectedYearly = 96;
+      stats.yearly.attendance = yearData.count;
+      stats.yearly.total = expectedYearly;
+      stats.yearly.percentage = expectedYearly > 0 
+        ? Math.min(100, (yearData.count / expectedYearly) * 100) 
+        : 0;
+
+      return stats;
+    });
+
+    res.json(statistics);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get attendance by month for all members
+router.get('/by-month', requireAdmin, (req, res) => {
+  const { year, month } = req.query;
+  const currentYear = year || new Date().getFullYear();
+  const currentMonth = month ? parseInt(month) : new Date().getMonth() + 1;
+
+  try {
+    const monthStart = `${currentYear}-${String(currentMonth).padStart(2, '0')}-01`;
+    const nextMonth = currentMonth === 12 ? 1 : currentMonth + 1;
+    const nextYear = currentMonth === 12 ? parseInt(currentYear) + 1 : currentYear;
+    const monthEnd = `${nextYear}-${String(nextMonth).padStart(2, '0')}-01`;
+
+    const attendance = db.prepare(`
+      SELECT 
+        m.id,
+        m.first_name,
+        m.last_name,
+        m.rut,
+        (SELECT bg.belt_color FROM belt_grades bg WHERE bg.member_id = m.id ORDER BY bg.grade_date DESC LIMIT 1) as belt_color,
+        a.class_date,
+        a.class_type
+      FROM members m
+      LEFT JOIN attendance a ON m.id = a.member_id 
+        AND a.class_date >= ? AND a.class_date < ?
+      WHERE m.status = 'active' AND (m.member_type = 'deportista' OR m.member_type = 'judoca' OR m.member_type IS NULL)
+      ORDER BY m.last_name, m.first_name, a.class_date
+    `).all(monthStart, monthEnd);
+
+    // Group by member
+    const membersMap = new Map();
+    attendance.forEach(record => {
+      if (!membersMap.has(record.id)) {
+        membersMap.set(record.id, {
+          id: record.id,
+          first_name: record.first_name,
+          last_name: record.last_name,
+          rut: record.rut,
+          belt_color: record.belt_color,
+          attendance_dates: []
+        });
+      }
+      if (record.class_date) {
+        membersMap.get(record.id).attendance_dates.push({
+          date: record.class_date,
+          type: record.class_type
+        });
+      }
+    });
+
+    res.json(Array.from(membersMap.values()));
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Bulk save attendance for multiple members for a specific month
+router.post('/bulk-month', requireAdmin, (req, res) => {
+  const { year, month, member_ids, class_type } = req.body;
+
+  if (!year || !month || !Array.isArray(member_ids)) {
+    return res.status(400).json({ error: 'Year, month, and member_ids are required' });
+  }
+
+  try {
+    // Define training days (Tuesdays and Thursdays)
+    const yearNum = parseInt(year);
+    const monthNum = parseInt(month);
+    const daysInMonth = new Date(yearNum, monthNum, 0).getDate();
+    
+    const trainingDates = [];
+    for (let day = 1; day <= daysInMonth; day++) {
+      const date = new Date(yearNum, monthNum - 1, day);
+      const dayOfWeek = date.getDay();
+      // Tuesday (2) or Thursday (4)
+      if (dayOfWeek === 2 || dayOfWeek === 4) {
+        const dateStr = date.toISOString().split('T')[0];
+        trainingDates.push(dateStr);
+      }
+    }
+
+    const stmt = db.prepare(`
+      INSERT OR REPLACE INTO attendance (member_id, class_date, class_type)
+      VALUES (?, ?, ?)
+    `);
+
+    const insertMany = db.transaction((memberIds, dates, type) => {
+      for (const memberId of memberIds) {
+        for (const date of dates) {
+          stmt.run(memberId, date, type || 'regular');
+        }
+      }
+    });
+
+    insertMany(member_ids, trainingDates, class_type || 'regular');
+
+    res.json({ 
+      message: `Attendance recorded for ${member_ids.length} members on ${trainingDates.length} training days`,
+      training_dates: trainingDates,
+      members_count: member_ids.length
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get monthly attendance summary for a specific member
+router.get('/member-stats', (req, res) => {
+  const { member_id, year } = req.query;
+
+  if (!member_id) {
+    return res.status(400).json({ error: 'Member ID is required' });
+  }
+
+  const currentYear = year || new Date().getFullYear();
+
+  try {
+    const monthlyStats = [];
+    
+    for (let month = 1; month <= 12; month++) {
+      const monthStart = `${currentYear}-${String(month).padStart(2, '0')}-01`;
+      const nextMonth = month === 12 ? 1 : month + 1;
+      const nextYear = month === 12 ? parseInt(currentYear) + 1 : currentYear;
+      const monthEnd = `${nextYear}-${String(nextMonth).padStart(2, '0')}-01`;
+
+      const attendanceData = db.prepare(`
+        SELECT COUNT(*) as count
+        FROM attendance
+        WHERE member_id = ? AND class_date >= ? AND class_date < ?
+      `).get(member_id, monthStart, monthEnd);
+
+      const expectedMonthly = 8;
+      const percentage = expectedMonthly > 0 
+        ? Math.min(100, (attendanceData.count / expectedMonthly) * 100) 
+        : 0;
+
+      monthlyStats.push({
+        month: month,
+        month_name: new Date(currentYear, month - 1).toLocaleDateString('es-CL', { month: 'long' }),
+        attendance: attendanceData.count,
+        expected: expectedMonthly,
+        percentage: Math.round(percentage * 10) / 10
+      });
+    }
+
+    res.json(monthlyStats);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 module.exports = router;
