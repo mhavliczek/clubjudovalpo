@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../database');
 const { requireAdmin } = require('../middleware/auth');
-const puppeteer = require('puppeteer');
+const PDFDocument = require('pdfkit');
 const path = require('path');
 const fs = require('fs');
 
@@ -82,7 +82,7 @@ router.put('/:id', requireAdmin, (req, res) => {
 });
 
 // Generar PDF de certificado
-router.get('/:id/pdf', requireAdmin, async (req, res) => {
+router.get('/:id/pdf', requireAdmin, (req, res) => {
   const { id } = req.params;
 
   try {
@@ -91,83 +91,129 @@ router.get('/:id/pdf', requireAdmin, async (req, res) => {
       return res.status(404).json({ error: 'Certificado no encontrado' });
     }
 
-    // Obtener logo del club como base64
-    let logoBase64 = null;
+    // Obtener logo del club
+    let logoPath = null;
     try {
       const logo = db.prepare("SELECT value FROM settings WHERE key = 'club_logo'").get();
       if (logo && logo.value) {
-        const logoPath = path.join(__dirname, '..', 'uploads', 'logo.png');
-        if (fs.existsSync(logoPath)) {
-          const logoBuffer = fs.readFileSync(logoPath);
-          const mimeType = 'image/png'; // Asumir PNG
-          logoBase64 = `data:${mimeType};base64,${logoBuffer.toString('base64')}`;
+        logoPath = path.join(__dirname, '..', 'uploads', 'logo.png');
+        if (!fs.existsSync(logoPath)) {
+          logoPath = null;
         }
       }
     } catch (e) {
       console.error('Error al cargar logo:', e);
     }
 
-    // Generar HTML con marca de agua
-    const html = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="UTF-8">
-        <style>
-          body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 40px;
-            position: relative;
-          }
-          .logo-small {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            width: 80px;
-            height: auto;
-          }
-          .watermark {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%) rotate(-45deg);
-            opacity: 0.1;
-            width: 300px;
-            height: auto;
-            z-index: -1;
-          }
-          .content {
-            position: relative;
-            z-index: 1;
-          }
-          h1 {
-            text-align: center;
-            margin-bottom: 30px;
-          }
-        </style>
-      </head>
-      <body>
-        ${logoBase64 ? `<img src="${logoBase64}" class="logo-small" alt="Logo">` : ''}
-        ${logoBase64 ? `<img src="${logoBase64}" class="watermark" alt="Marca de agua">` : ''}
-        <div class="content">
-          <h1>${certificate.title}</h1>
-          ${certificate.content}
-        </div>
-      </body>
-      </html>
-    `;
+    // Obtener firma del director
+    let signaturePath = null;
+    try {
+      const signature = db.prepare("SELECT value FROM settings WHERE key = 'director_signature'").get();
+      if (signature && signature.value) {
+        signaturePath = path.join(__dirname, '..', 'uploads', 'signature.png');
+        if (!fs.existsSync(signaturePath)) {
+          signaturePath = null;
+        }
+      }
+    } catch (e) {
+      console.error('Error al cargar firma:', e);
+    }
 
-    // Generar PDF con Puppeteer
-    const browser = await puppeteer.launch();
-    const page = await browser.newPage();
-    await page.setContent(html);
-    const pdfBuffer = await page.pdf({ format: 'A4', printBackground: true });
-    await browser.close();
+    const clubName = process.env.CLUB_NAME || 'Club de Judo Valparaíso';
+    const city = process.env.CLUB_CITY || 'Valparaíso';
+
+    const doc = new PDFDocument({
+      size: 'A4',
+      margins: { top: 80, bottom: 80, left: 60, right: 60 }
+    });
 
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="${certificate.title}.pdf"`);
-    res.send(pdfBuffer);
+
+    doc.pipe(res);
+
+    // ========== LOGO EN ESQUINA SUPERIOR DERECHA ==========
+    if (logoPath) {
+      doc.image(logoPath, doc.page.width - 120, 40, { width: 80 });
+    }
+
+    // ========== MARCA DE AGUA ==========
+    if (logoPath) {
+      doc.save();
+      doc.opacity(0.1);
+      doc.image(logoPath, (doc.page.width - 200) / 2, (doc.page.height - 200) / 2, { width: 200 });
+      doc.restore();
+    }
+
+    // ========== TÍTULO ==========
+    doc.moveDown(2);
+    doc.fontSize(24).text(certificate.title, { align: 'center' });
+    doc.moveDown(2);
+
+    // ========== CONTENIDO ==========
+    // Convertir HTML básico a texto (simplificado)
+    let content = certificate.content.replace(/<br\s*\/?>/gi, '\n');
+    content = content.replace(/<\/p>/gi, '\n\n');
+    content = content.replace(/<p>/gi, '');
+    content = content.replace(/<strong>/gi, '');
+    content = content.replace(/<\/strong>/gi, '');
+    content = content.replace(/<em>/gi, '');
+    content = content.replace(/<\/em>/gi, '');
+    content = content.replace(/<u>/gi, '');
+    content = content.replace(/<\/u>/gi, '');
+    content = content.replace(/&nbsp;/gi, ' ');
+
+    doc.fontSize(12).text(content, {
+      align: 'justify',
+      lineGap: 5
+    });
+
+    // ========== FECHA Y LUGAR ==========
+    doc.moveDown(3);
+    const today = new Date();
+    const options = { year: 'numeric', month: 'long', day: 'numeric' };
+    const formattedDate = today.toLocaleDateString('es-CL', options);
+
+    doc.fontSize(11)
+       .text(`${city}, ${formattedDate}`, doc.page.width - 200, doc.y, { align: 'right' });
+
+    doc.moveDown(3);
+
+    // ========== FIRMA DEL DIRECTOR ==========
+    const signatureY = doc.y;
+    const signatureX = (doc.page.width / 2) - 100;
+
+    // Dibujar firma del director (si existe)
+    if (signaturePath) {
+      try {
+        const signatureWidth = 200;
+        const signatureHeight = 80;
+        const signatureImageX = signatureX + (200 - signatureWidth) / 2;
+        doc.image(signaturePath, signatureImageX, signatureY - 50, {
+          width: signatureWidth,
+          height: signatureHeight,
+          align: 'center'
+        });
+      } catch (e) {
+        console.error('Error al agregar firma:', e);
+      }
+    }
+
+    // Línea para firma
+    doc.moveTo(signatureX, signatureY)
+       .lineTo(signatureX + 200, signatureY)
+       .stroke();
+
+    // Nombre del director
+    const directorName = db.prepare("SELECT value FROM settings WHERE key = 'club_director'").get();
+    if (directorName && directorName.value) {
+      doc.fontSize(10).text(directorName.value, signatureX, signatureY + 5, {
+        width: 200,
+        align: 'center'
+      });
+    }
+
+    doc.end();
 
   } catch (error) {
     console.error('Error al generar PDF:', error);
