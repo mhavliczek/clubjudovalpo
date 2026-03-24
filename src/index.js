@@ -15,6 +15,7 @@ const feesRouter = require('./routes/fees');
 const ufRouter = require('./routes/uf');
 const curriculumRouter = require('./routes/curriculum');
 const settingsRouter = require('./routes/settings');
+const certificatesRouter = require('./routes/certificates');
 const qrRouter = require('./routes/qr');
 const documentsRouter = require('./routes/documents');
 const { authenticate, requireAdmin } = require('./middleware/auth');
@@ -48,6 +49,7 @@ app.use('/api/fees', authenticate, feesRouter);
 app.use('/api/uf', authenticate, ufRouter);
 app.use('/api/curriculum', curriculumRouter);
 app.use('/api/settings', settingsRouter);
+app.use('/api/certificates', certificatesRouter);
 app.use('/api/qr', qrRouter);
 app.use('/api/documents', authenticate, documentsRouter);
 

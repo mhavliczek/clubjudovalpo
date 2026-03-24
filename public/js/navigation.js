@@ -35,7 +35,8 @@ function showSection(sectionName) {
     'documents': () => loadDocuments(),
     'tournamentDocs': () => loadTournamentDocuments(),
     'news': () => loadNews(),
-    'settings': () => window.SettingsModule?.init()
+    'settings': () => window.SettingsModule?.init(),
+    'certificates': () => initCertificates()
   };
 
   if (loaders[sectionName]) {

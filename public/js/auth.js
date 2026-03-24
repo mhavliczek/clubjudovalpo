@@ -92,6 +92,12 @@ async function initApp() {
     document.getElementById('userEmail').textContent = currentUser.email;
     document.getElementById('userRole').textContent = currentUser.role === 'admin' ? 'Administrador' : 'Miembro';
 
+    // Show/hide admin-only features
+    const certificatesBtn = document.getElementById('certificatesBtn');
+    if (certificatesBtn) {
+      certificatesBtn.style.display = currentUser.role === 'admin' ? 'block' : 'none';
+    }
+
     // Validate token by making a test request
     try {
       const res = await fetch(`${API}/api/stats`, {
