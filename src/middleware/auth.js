@@ -1,3 +1,4 @@
+require('dotenv').config({ path: require('path').resolve(__dirname, '..', '.env') });
 const jwt = require('jsonwebtoken');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'judo-club-secret-key-change-in-production';

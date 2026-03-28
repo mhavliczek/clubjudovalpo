@@ -37,23 +37,31 @@ async function loadClubLogo() {
 
 // Login
 async function login() {
-  const email = document.getElementById('loginEmail').value;
+  const rut = document.getElementById('loginRut').value.trim();
   const password = document.getElementById('loginPassword').value;
-  
-  if (!email || !password) {
-    document.getElementById('loginError').textContent = 'Ingresa email y contraseña';
+
+  if (!rut || !password) {
+    document.getElementById('loginError').textContent = 'Ingresa RUT o email y contraseña';
     document.getElementById('loginError').classList.remove('hidden');
     return;
   }
 
   try {
+    // Determinar si es email (admin) o RUT
+    const isEmail = rut.includes('@');
+    
+    // Si es RUT, limpiar formato (quitar puntos)
+    const cleanRut = isEmail ? rut : rut.replace(/\./g, '').toUpperCase();
+    
+    const loginData = isEmail ? { email: cleanRut, password } : { rut: cleanRut, password };
+
     const res = await fetch(`${API}/api/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password })
+      body: JSON.stringify(loginData)
     });
     const data = await res.json();
-    
+
     if (!res.ok) throw new Error(data.error);
 
     localStorage.setItem('token', data.token);

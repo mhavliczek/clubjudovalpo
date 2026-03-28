@@ -157,9 +157,15 @@ router.post('/scan-qr', requireAdmin, (req, res) => {
   try {
     const { qr_data } = req.body;
 
+    console.log('📱 QR Scan recibido:', qr_data);
+
     if (!qr_data || qr_data.type !== 'judo_member') {
       return res.status(400).json({ error: 'QR inválido' });
     }
+
+    // Asegurar que member_id sea número
+    const memberId = parseInt(qr_data.member_id);
+    console.log('🔍 Buscando miembro con ID:', memberId);
 
     const member = db.prepare(`
       SELECT m.id, m.first_name, m.last_name, m.rut, m.photo, m.status, m.guardian_id,
@@ -167,11 +173,14 @@ router.post('/scan-qr', requireAdmin, (req, res) => {
       FROM members m
       LEFT JOIN members g ON m.guardian_id = g.id
       WHERE m.id = ?
-    `).get(qr_data.member_id);
+    `).get(memberId);
 
     if (!member) {
+      console.log('❌ Miembro NO encontrado con ID:', memberId);
       return res.status(404).json({ error: 'Miembro no encontrado' });
     }
+
+    console.log('✅ Miembro encontrado:', member.first_name, member.last_name);
 
     // Verificar que el RUT coincida
     if (member.rut !== qr_data.rut) {

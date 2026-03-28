@@ -2,8 +2,8 @@
    CLUB DE JUDO - API & UTILS
    =================================== */
 
-// Make API global
-window.API = '';
+// Make API global - use empty string for same origin
+window.API = window.location.origin;
 let currentUser = null;
 let clubName = 'Judo Club';
 
@@ -34,6 +34,16 @@ function showForm(id) {
   }
 }
 function hideForm(id) { document.getElementById(id).classList.add('hidden'); }
+
+// Format RUT without dots, only with dash (for login field - only if not email)
+function formatLoginInput(input) {
+  // Si contiene @, es email, no formatear
+  if (input.value.includes('@')) {
+    return;
+  }
+  // Si no, formatear como RUT
+  formatRut(input);
+}
 
 // Format RUT without dots, only with dash
 function formatRut(input) {

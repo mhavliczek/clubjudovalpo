@@ -1,3 +1,4 @@
+require('dotenv').config({ path: require('path').resolve(__dirname, '..', '.env') });
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
@@ -6,7 +7,8 @@ const db = require('../database');
 const { requireAdmin } = require('../middleware/auth');
 const { obtenerCuerpoRut } = require('../utils/rut');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'judo-club-secret-key-change-in-production';
+// Usar el mismo JWT_SECRET hardcodeado en todos lados
+const JWT_SECRET = 'clubdejudovalpo-secret-key-2026';
 
 // Get all users (admin only) - MUST be before /:id routes
 router.get('/users', requireAdmin, (req, res) => {
@@ -30,21 +32,45 @@ router.get('/users', requireAdmin, (req, res) => {
 
 // Login endpoint
 router.post('/login', (req, res) => {
-  const { email, password } = req.body;
+  const { rut, email, password } = req.body;
 
-  if (!email || !password) {
-    return res.status(400).json({ error: 'Email y contraseña son requeridos' });
+  if ((!rut && !email) || !password) {
+    return res.status(400).json({ error: 'RUT o email y contraseña son requeridos' });
   }
 
   try {
-    const user = db.prepare('SELECT * FROM users WHERE email = ?').get(email);
-    
+    let user;
+
+    // Si es email (administrador u otros usuarios con email)
+    if (email && email.includes('@')) {
+      user = db.prepare('SELECT * FROM users WHERE email = ?').get(email);
+    }
+    // Si es RUT, buscar por member_id
+    else if (rut) {
+      // Limpiar formato del RUT (quitar puntos, dejar guión)
+      const rutLimpio = rut.replace(/\./g, '').toUpperCase();
+
+      // Buscar miembro por RUT
+      const member = db.prepare('SELECT id FROM members WHERE rut = ?').get(rutLimpio);
+
+      if (!member) {
+        return res.status(401).json({ error: 'Credenciales inválidas. RUT no encontrado.' });
+      }
+
+      // Buscar usuario por member_id
+      user = db.prepare('SELECT * FROM users WHERE member_id = ?').get(member.id);
+      
+      if (!user) {
+        return res.status(401).json({ error: 'Credenciales inválidas. Usuario no encontrado.' });
+      }
+    }
+
     if (!user) {
       return res.status(401).json({ error: 'Credenciales inválidas' });
     }
 
     const validPassword = bcrypt.compareSync(password, user.password);
-    
+
     if (!validPassword) {
       return res.status(401).json({ error: 'Credenciales inválidas' });
     }

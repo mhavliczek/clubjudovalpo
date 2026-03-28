@@ -208,6 +208,11 @@ try {
   db.exec(`ALTER TABLE members ADD COLUMN photo TEXT`);
 } catch (e) { /* Column may already exist */ }
 
+// Add gender field
+try {
+  db.exec(`ALTER TABLE members ADD COLUMN gender TEXT`);
+} catch (e) { /* Column may already exist */ }
+
 // Create schools table (for students)
 db.exec(`
   CREATE TABLE IF NOT EXISTS schools (

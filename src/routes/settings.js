@@ -239,6 +239,86 @@ router.get('/director-signature', (req, res) => {
   }
 });
 
+// Configurar multer para logo federación
+const federationStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const uploadsDir = path.join(__dirname, '..', 'uploads');
+    if (!fs.existsSync(uploadsDir)) {
+      fs.mkdirSync(uploadsDir, { recursive: true });
+    }
+    cb(null, uploadsDir);
+  },
+  filename: (req, file, cb) => {
+    cb(null, 'federation-logo-' + Date.now() + '.png');
+  }
+});
+
+const federationUpload = multer({
+  storage: federationStorage,
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Solo se permiten imágenes'));
+    }
+  }
+});
+
+// Subir logo federación
+router.post('/federation-logo', requireAdmin, federationUpload.single('logo'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No se subió ninguna imagen' });
+    }
+
+    const uploadsDir = path.join(__dirname, '..', 'uploads');
+    const inputPath = req.file.path;
+    const outputPath = path.join(uploadsDir, 'federation-logo.png');
+
+    // Procesar imagen
+    try {
+      await sharp(inputPath)
+        .resize(200, 100, { fit: 'contain', background: { r: 255, g: 255, b: 255, alpha: 1 } })
+        .png()
+        .toFile(outputPath);
+    } catch (e) {
+      await fs.promises.copyFile(inputPath, outputPath);
+    }
+
+    // Eliminar archivo temporal
+    try {
+      await fs.promises.unlink(inputPath);
+    } catch (e) {}
+
+    const logoUrl = '/uploads/federation-logo.png';
+
+    // Guardar en configuración
+    db.prepare(`
+      INSERT OR REPLACE INTO settings (key, value, updated_at)
+      VALUES ('federation_logo', ?, CURRENT_TIMESTAMP)
+    `).run(logoUrl);
+
+    res.json({
+      message: 'Logo de federación subido exitosamente',
+      url: logoUrl
+    });
+  } catch (error) {
+    console.error('Federation logo upload error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Obtener logo federación
+router.get('/federation-logo', (req, res) => {
+  try {
+    const logo = db.prepare("SELECT value FROM settings WHERE key = 'federation_logo'").get();
+    res.json({ url: logo ? logo.value : null });
+  } catch (error) {
+    res.json({ url: null });
+  }
+});
+
 // Obtener configuración del club
 router.get('/config', (req, res) => {
   try {

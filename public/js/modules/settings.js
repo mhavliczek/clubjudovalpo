@@ -13,6 +13,7 @@ const SettingsModule = {
     this.loadLogo();
     this.loadDirector();
     this.loadSignature();
+    this.loadFederationLogo();
   },
 
   async loadLogo() {
@@ -68,6 +69,27 @@ const SettingsModule = {
       }
     } catch (error) {
       console.error('Error loading signature:', error);
+    }
+  },
+
+  async loadFederationLogo() {
+    try {
+      const res = await fetch(`${SETTINGS_API_BASE}/api/settings/federation-logo`);
+      const data = await res.json();
+
+      const img = document.getElementById('currentFederationLogo');
+      const noLogoText = document.getElementById('noFederationLogoText');
+
+      if (data.url) {
+        img.src = data.url;
+        img.style.display = 'block';
+        noLogoText.style.display = 'none';
+      } else {
+        img.style.display = 'none';
+        noLogoText.style.display = 'block';
+      }
+    } catch (error) {
+      console.error('Error loading federation logo:', error);
     }
   },
 
@@ -319,6 +341,77 @@ const SettingsModule = {
       uploadBtn.textContent = originalText;
       uploadBtn.disabled = false;
     }
+  },
+
+  async uploadFederationLogo() {
+    const fileInput = document.getElementById('federationLogoInput');
+    
+    if (!fileInput.files[0]) {
+      alert('⚠️ Selecciona una imagen para el logo');
+      return;
+    }
+
+    const file = fileInput.files[0];
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert('⚠️ El archivo es demasiado grande (máx 5MB)');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('logo', file);
+
+    const uploadBtn = document.querySelector('button[onclick="uploadFederationLogo()"]');
+    const originalText = uploadBtn.textContent;
+    uploadBtn.textContent = '⏳ Subiendo...';
+    uploadBtn.disabled = true;
+
+    try {
+      const res = await fetch(`${SETTINGS_API_BASE}/api/settings/federation-logo`, {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer ' + SETTINGS_getToken()
+        },
+        body: formData
+      });
+
+      const result = await res.json();
+
+      if (!res.ok) {
+        throw new Error(result.error || 'Error al subir');
+      }
+
+      alert('✅ Logo de federación subido exitosamente\n\nEl logo ahora aparecerá en:\n• Tarjetas de identificación (dorso)');
+      fileInput.value = '';
+      this.loadFederationLogo();
+    } catch (error) {
+      console.error('Error uploading federation logo:', error);
+      alert('❌ Error al subir: ' + error.message);
+    } finally {
+      uploadBtn.textContent = originalText;
+      uploadBtn.disabled = false;
+    }
+  },
+
+  previewFederationLogo() {
+    const fileInput = document.getElementById('federationLogoInput');
+    const img = document.getElementById('currentFederationLogo');
+    
+    if (!fileInput.files[0]) {
+      alert('⚠️ Selecciona una imagen primero');
+      return;
+    }
+
+    const file = fileInput.files[0];
+    const reader = new FileReader();
+
+    reader.onload = (e) => {
+      img.src = e.target.result;
+      img.style.display = 'block';
+      document.getElementById('noFederationLogoText').style.display = 'none';
+    };
+
+    reader.readAsDataURL(file);
   }
 };
 
@@ -330,3 +423,5 @@ window.previewLogo = () => SettingsModule.previewLogo();
 window.saveClubDirector = () => SettingsModule.saveDirector();
 window.uploadDirectorSignature = () => SettingsModule.uploadDirectorSignature();
 window.previewSignature = () => SettingsModule.previewSignature();
+window.uploadFederationLogo = () => SettingsModule.uploadFederationLogo();
+window.previewFederationLogo = () => SettingsModule.previewFederationLogo();

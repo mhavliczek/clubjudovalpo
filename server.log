@@ -1,3 +1,5 @@
+[dotenv@17.3.1] injecting env (0) from src/.env -- tip: 🔐 encrypt with Dotenvx: https://dotenvx.com
+[dotenv@17.3.1] injecting env (0) from src/.env -- tip: ⚙️  override existing env vars with { override: true }
 Judo Club Server running on http://localhost:3000
 API Endpoints:
   GET    /health
@@ -10,3 +12,4 @@ API Endpoints:
   POST   /api/attendance
   GET    /api/payments
   POST   /api/payments
+📱 QR generado para member_id: 5 RUT: 16664930-7

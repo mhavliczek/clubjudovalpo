@@ -242,8 +242,8 @@ function showTournamentDocumentForm() {
   document.getElementById('editTournamentDocumentId').value = '';
   document.getElementById('tournamentDocTitle').value = '';
   document.getElementById('tournamentDocDescription').value = '';
-  document.getElementById('tournamentName').value = '';
-  document.getElementById('tournamentDate').value = '';
+  document.getElementById('tournamentDocName').value = '';
+  document.getElementById('tournamentDocDate').value = '';
   document.getElementById('tournamentDocCategory').value = 'bases';
   document.getElementById('tournamentDocFile').value = '';
 }
@@ -257,8 +257,8 @@ function hideTournamentDocumentForm() {
 async function saveTournamentDocument() {
   const title = document.getElementById('tournamentDocTitle').value;
   const description = document.getElementById('tournamentDocDescription').value;
-  const tournamentName = document.getElementById('tournamentName').value;
-  const tournamentDate = document.getElementById('tournamentDate').value;
+  const tournamentName = document.getElementById('tournamentDocName').value;
+  const tournamentDate = document.getElementById('tournamentDocDate').value;
   const category = document.getElementById('tournamentDocCategory').value;
   const fileInput = document.getElementById('tournamentDocFile');
   const editId = document.getElementById('editTournamentDocumentId').value;
@@ -313,8 +313,8 @@ async function editTournamentDocument(id) {
     document.getElementById('editTournamentDocumentId').value = doc.id;
     document.getElementById('tournamentDocTitle').value = doc.title;
     document.getElementById('tournamentDocDescription').value = doc.description || '';
-    document.getElementById('tournamentName').value = doc.tournament_name || '';
-    document.getElementById('tournamentDate').value = doc.tournament_date || '';
+    document.getElementById('tournamentDocName').value = doc.tournament_name || '';
+    document.getElementById('tournamentDocDate').value = doc.tournament_date || '';
     document.getElementById('tournamentDocCategory').value = doc.category;
     document.getElementById('tournamentDocFile').value = '';
   } catch (e) {
