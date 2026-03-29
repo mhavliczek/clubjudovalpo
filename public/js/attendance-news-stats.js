@@ -404,8 +404,17 @@ function getAttendanceColor(percentage) {
 
 // Load attendance statistics
 async function loadAttendanceStatistics() {
-  const year = document.getElementById('statsYear')?.value || new Date().getFullYear();
-  const month = document.getElementById('statsMonth')?.value || (new Date().getMonth() + 1);
+  const yearSelect = document.getElementById('statsYear');
+  const monthSelect = document.getElementById('statsMonth');
+  
+  // Set current year as default if not selected
+  const currentYear = new Date().getFullYear();
+  if (yearSelect && !yearSelect.value) {
+    yearSelect.value = currentYear;
+  }
+  
+  const year = yearSelect?.value || currentYear;
+  const month = monthSelect?.value || (new Date().getMonth() + 1);
 
   try {
     const res = await fetch(`${API}/api/attendance/statistics?year=${year}&month=${month}`, {
