@@ -27,6 +27,7 @@ function showSection(sectionName) {
   const loaders = {
     'dashboard': () => loadStats(),
     'members': () => loadMembers(),
+    'registrationRequests': () => loadRegistrationRequests(),
     'instructors': () => loadInstructorsSection(),
     'schools': () => loadSchools(),
     'fees': () => loadFees(),

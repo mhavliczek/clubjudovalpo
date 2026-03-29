@@ -67,9 +67,26 @@ db.exec(`
     FOREIGN KEY (member_id) REFERENCES members(id) ON DELETE CASCADE
   );
 
+  -- Tabla para solicitudes de registro con RUT
+  CREATE TABLE IF NOT EXISTS registration_requests (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    rut TEXT UNIQUE NOT NULL,
+    first_name TEXT NOT NULL,
+    last_name TEXT NOT NULL,
+    phone TEXT,
+    email TEXT,
+    status TEXT DEFAULT 'pending',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    reviewed_at DATETIME,
+    reviewed_by INTEGER,
+    review_notes TEXT,
+    FOREIGN KEY (reviewed_by) REFERENCES users(id) ON DELETE SET NULL
+  );
+
   CREATE INDEX IF NOT EXISTS idx_members_status ON members(status);
   CREATE INDEX IF NOT EXISTS idx_attendance_date ON attendance(class_date);
   CREATE INDEX IF NOT EXISTS idx_payments_date ON payments(payment_date);
+  CREATE INDEX IF NOT EXISTS idx_registration_status ON registration_requests(status);
 `);
 
 // Create default admin user if not exists

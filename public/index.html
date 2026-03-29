@@ -18,6 +18,28 @@
     <input type="text" id="loginRut" placeholder="RUT o Email (Admin)" autocomplete="off">
     <input type="password" id="loginPassword" placeholder="Contraseña">
     <button class="btn" onclick="login()">Ingresar</button>
+    <div style="margin-top: 15px; text-align: center;">
+      <p style="color: #666; font-size: 14px; margin-bottom: 10px;">¿No tienes cuenta?</p>
+      <button class="btn btn-success" onclick="showRegisterForm()" style="font-size: 13px; padding: 8px 15px;">📝 Registrarse con RUT</button>
+    </div>
+  </div>
+
+  <!-- Register Form Modal -->
+  <div id="registerForm" class="modal hidden">
+    <h3>📝 Registro de Nuevo Socio</h3>
+    <p style="color: #666; font-size: 14px; margin-bottom: 15px;">Completa tus datos. El administrador aprobará tu registro.</p>
+    <div style="display: flex; flex-direction: column; gap: 10px;">
+      <input type="text" id="registerRut" placeholder="RUT (ej: 12345678-9)" style="width: 100%;">
+      <input type="text" id="registerFirstName" placeholder="Nombre" style="width: 100%;">
+      <input type="text" id="registerLastName" placeholder="Apellido" style="width: 100%;">
+      <input type="tel" id="registerPhone" placeholder="Teléfono (opcional)" style="width: 100%;">
+      <input type="email" id="registerEmail" placeholder="Email (opcional)" style="width: 100%;">
+    </div>
+    <div id="registerMessage" style="margin-top: 10px; font-size: 14px;"></div>
+    <div style="margin-top: 20px; display: flex; gap: 10px;">
+      <button class="btn btn-success" onclick="register()">Enviar Solicitud</button>
+      <button class="btn" onclick="hideRegisterForm()">Cancelar</button>
+    </div>
   </div>
 
   <!-- Main App View -->
@@ -63,6 +85,7 @@
           <nav>
             <button class="btn" onclick="showSection('dashboard'); toggleSidebar()">📊 Dashboard</button>
             <button class="btn" onclick="showSection('members'); toggleSidebar()">👥 Miembros</button>
+            <button class="btn" id="adminRequestsBtn" onclick="showSection('registrationRequests'); toggleSidebar()" style="display: none;">📋 Solicitudes Pendientes</button>
             <button class="btn" onclick="showSection('instructors'); toggleSidebar()">🥋 Instructores</button>
             <button class="btn" onclick="showSection('schools'); toggleSidebar()">🏫 Colegios</button>
             <button class="btn" onclick="showSection('fees'); toggleSidebar()">💵 Montos</button>
@@ -84,6 +107,16 @@
               <h2>📊 Dashboard</h2>
               <button class="btn" onclick="loadStats()">Actualizar Estadísticas</button>
               <div id="stats" class="stats-grid" style="margin-top: 15px;"></div>
+            </div>
+          </div>
+
+          <!-- Registration Requests (Admin) -->
+          <div id="registrationRequestsSection" class="content-section hidden">
+            <div class="section">
+              <h2>📋 Solicitudes de Registro</h2>
+              <p style="color: #666; margin-bottom: 15px;">Aprueba o rechaza las solicitudes de registro de nuevos socios.</p>
+              <button class="btn" onclick="loadRegistrationRequests()">🔄 Actualizar Lista</button>
+              <div id="registrationRequestsList" style="margin-top: 20px;"></div>
             </div>
           </div>
 
