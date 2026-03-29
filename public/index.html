@@ -904,15 +904,19 @@
     <!-- Member Portal -->
     <div id="memberPortal" class="section member-portal hidden">
       <h2>📰 Noticias del Club</h2>
-      <div id="memberNewsList" style="margin-top: 15px;"></div>
-      <h2>📋 Mi Información</h2>
-      <div id="myInfo"></div>
-      <button class="btn" onclick="showEditProfileForm()" style="margin-top: 10px;">✏️ Editar Mi Perfil</button>
-      <button class="btn btn-success" onclick="downloadMembershipCard()" style="margin-top: 10px; margin-left: 10px;">📄 Descargar Tarjeta PDF</button>
-      <p id="cardDownloadNote" style="color: #666; font-size: 12px; margin-top: 5px; display: none;">ℹ️ Solo los miembros con perfil registrado pueden descargar la tarjeta</p>
+      <div id="memberNewsList" class="news-list" style="margin-top: 15px;"></div>
       
+      <h2>📋 Mi Información</h2>
+      <div id="myInfo" class="member-info"></div>
+      
+      <div class="action-buttons" style="margin-top: 15px; display: flex; flex-wrap: wrap; gap: 10px;">
+        <button class="btn" onclick="showEditProfileForm()" style="flex: 1; min-width: 200px;">✏️ Editar Mi Perfil</button>
+        <button class="btn btn-success" onclick="downloadMembershipCard()" style="flex: 1; min-width: 200px;">📄 Descargar Tarjeta PDF</button>
+      </div>
+      <p id="cardDownloadNote" style="color: #666; font-size: 12px; margin-top: 5px; display: none;">ℹ️ Solo los miembros con perfil registrado pueden descargar la tarjeta</p>
+
       <!-- Edit Profile Form -->
-      <div id="editProfileForm" class="hidden" style="margin-top: 20px; padding: 20px; background: #f8f9fa; border-radius: 5px;">
+      <div id="editProfileForm" class="hidden edit-profile-form" style="margin-top: 20px; padding: 20px; background: #f8f9fa; border-radius: 5px;">
         <h3>✏️ Editar Mi Perfil</h3>
         <div class="form-row" style="flex-direction: column; gap: 10px;">
           <input type="tel" id="editPhone" placeholder="Teléfono" style="width: 100%;">
@@ -929,22 +933,24 @@
           <input type="text" id="editEmergencyContact" placeholder="Contacto de Emergencia (nombre)" style="width: 100%;">
           <input type="tel" id="editEmergencyPhone" placeholder="Teléfono Emergencia" style="width: 100%;">
         </div>
-        <div style="margin-top: 15px; display: flex; gap: 10px;">
-          <button class="btn btn-success" onclick="saveProfile()">💾 Guardar Cambios</button>
-          <button class="btn" onclick="hideEditProfileForm()">Cancelar</button>
+        <div style="margin-top: 15px; display: flex; flex-wrap: wrap; gap: 10px;">
+          <button class="btn btn-success" onclick="saveProfile()" style="flex: 1; min-width: 150px;">💾 Guardar Cambios</button>
+          <button class="btn" onclick="hideEditProfileForm()" style="flex: 1; min-width: 150px;">Cancelar</button>
         </div>
       </div>
-      
+
       <h3>🎗️ Mi Cinturón</h3>
-      <div id="myGrade"></div>
+      <div id="myGrade" class="belt-info"></div>
+      
       <h3>📅 Mi Asistencia</h3>
-      <div id="myAttendance"></div>
+      <div id="myAttendance" class="attendance-info"></div>
+      
       <h3>💰 Mis Pagos</h3>
-      <div id="myPayments"></div>
+      <div id="myPayments" class="payments-info"></div>
 
       <!-- Documentos Administrativos -->
       <h3 style="margin-top: 30px;">📄 Estatutos y Documentos Administrativos</h3>
-      <div style="background: #f3e5f5; padding: 20px; border-radius: 8px; border-left: 4px solid #9c27b0;">
+      <div class="documents-section" style="background: #f3e5f5; padding: 20px; border-radius: 8px; border-left: 4px solid #9c27b0;">
         <p style="margin-bottom: 15px; color: #7b1fa2;">Descarga los estatutos, reglamentos y documentos administrativos del club.</p>
         <div id="memberDocumentsList">
           <p style="color: #999; text-align: center;">Cargando documentos...</p>
@@ -953,7 +959,7 @@
 
       <!-- Documentos de Torneos -->
       <h3 style="margin-top: 30px;">🏆 Documentos de Torneos</h3>
-      <div style="background: #fff3e0; padding: 20px; border-radius: 8px; border-left: 4px solid #ff9800;">
+      <div class="tournament-docs-section" style="background: #fff3e0; padding: 20px; border-radius: 8px; border-left: 4px solid #ff9800;">
         <p style="margin-bottom: 15px; color: #e65100;">Descarga las bases, inscripciones y resultados de torneos.</p>
         <div id="memberTournamentDocumentsList">
           <p style="color: #999; text-align: center;">Cargando documentos...</p>
@@ -962,13 +968,15 @@
 
       <!-- Curriculum Deportivo -->
       <h3 style="margin-top: 30px;">🏆 Curriculum Deportivo</h3>
-      <div style="background: #f3e5f5; padding: 20px; border-radius: 8px; border-left: 4px solid #9c27b0;">
+      <div class="curriculum-section" style="background: #f3e5f5; padding: 20px; border-radius: 8px; border-left: 4px solid #9c27b0;">
         <p style="margin-bottom: 15px; color: #7b1fa2;">Registra tus torneos y logros deportivos. Esta información se usará para generar tu certificado de deportista.</p>
 
-        <button class="btn btn-success" onclick="toggleCurriculumForm()" style="margin-bottom: 15px;">+ Agregar Torneo</button>
-        <button class="btn" onclick="CurriculumModule.exportExcel()">📊 Exportar Excel</button>
-        <button class="btn" onclick="CurriculumModule.generateCertificate()">📄 Certificado PDF</button>
-        <button class="btn" onclick="CurriculumModule.generateCurriculum()">📋 Curriculum Deportivo PDF</button>
+        <div class="curriculum-actions" style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 15px;">
+          <button class="btn btn-success" onclick="toggleCurriculumForm()" style="flex: 1; min-width: 150px;">+ Agregar Torneo</button>
+          <button class="btn" onclick="CurriculumModule.exportExcel()" style="flex: 1; min-width: 150px;">📊 Exportar Excel</button>
+          <button class="btn" onclick="CurriculumModule.generateCertificate()" style="flex: 1; min-width: 150px;">📄 Certificado PDF</button>
+          <button class="btn" onclick="CurriculumModule.generateCurriculum()" style="flex: 1; min-width: 150px;">📋 Curriculum Deportivo PDF</button>
+        </div>
         
         <div id="curriculumForm" class="hidden" style="margin-top: 15px; padding: 15px; background: #fff; border-radius: 5px;">
           <h4 style="margin-top: 0;">Agregar Torneo</h4>
@@ -984,10 +992,10 @@
             <input type="text" id="tournamentWeight" placeholder="Peso" style="width: 100%;">
             <input type="text" id="tournamentBelt" placeholder="Grado con que compite" style="width: 100%;">
             <input type="text" id="tournamentPlace" placeholder="Lugar obtenido (ej: 1er, 2do, 3ro)" style="width: 100%;">
-            <button class="btn btn-success" onclick="saveCurriculumTournament()">Guardar Torneo</button>
+            <button class="btn btn-success" onclick="saveCurriculumTournament()" style="width: 100%;">Guardar Torneo</button>
           </div>
         </div>
-        
+
         <div id="curriculumList" style="margin-top: 15px;">
           <p style="color: #999; text-align: center;">Cargando torneos...</p>
         </div>
@@ -995,7 +1003,7 @@
 
       <!-- Código QR -->
       <h3 style="margin-top: 30px;">📱 Mi Código QR</h3>
-      <div style="background: #e3f2fd; padding: 20px; border-radius: 8px; border-left: 4px solid #2196f3;">
+      <div id="qrCodeContainer" style="background: #e3f2fd; padding: 20px; border-radius: 8px; border-left: 4px solid #2196f3;">
         <p style="margin-bottom: 15px; color: #1976d2;">
           Genera tu código QR personal para registrar tu asistencia. Muestra tu foto y RUT.
         </p>
