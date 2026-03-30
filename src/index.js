@@ -61,7 +61,7 @@ app.get('/api/members/:id/card/pdf', async (req, res) => {
     }
 
     const jwt = require('jsonwebtoken');
-    const JWT_SECRET = process.env.JWT_SECRET || 'judo-club-secret-key-change-in-production';
+    const JWT_SECRET = process.env.JWT_SECRET || 'clubdejudovalpo-secret-key-2026';
 
     let decoded;
     try {
