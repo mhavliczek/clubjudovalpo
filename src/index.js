@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const db = require('./database');
+const { logError, logInfo, logWarning } = require('./utils/logger');
 
 const membersRouter = require('./routes/members');
 const gradesRouter = require('./routes/grades');
@@ -29,6 +30,31 @@ function formatDateChile(dateStr) {
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Logging middleware - Log all requests
+app.use((req, res, next) => {
+  const start = Date.now();
+  res.on('finish', () => {
+    const duration = Date.now() - start;
+    const logData = {
+      method: req.method,
+      path: req.path,
+      statusCode: res.statusCode,
+      duration: `${duration}ms`,
+      ip: req.ip,
+      userAgent: req.get('user-agent')
+    };
+    
+    if (res.statusCode >= 500) {
+      logError('Server Error', logData);
+    } else if (res.statusCode >= 400) {
+      logWarning('Client Error', logData);
+    } else {
+      logInfo('Request', logData);
+    }
+  });
+  next();
+});
 const CLUB_NAME = process.env.CLUB_NAME || 'Judo Club';
 
 // Middleware
@@ -325,6 +351,44 @@ app.use('/api/settings', settingsRouter);
 app.use('/api/certificates', certificatesRouter);
 app.use('/api/qr', qrRouter);
 app.use('/api/documents', authenticate, documentsRouter);
+
+// Admin-only endpoint to view logs
+app.get('/api/logs', requireAdmin, (req, res) => {
+  const fs = require('fs');
+  const path = require('path');
+  const logsDir = path.join(__dirname, 'logs');
+  
+  try {
+    if (!fs.existsSync(logsDir)) {
+      return res.json({ files: [], logs: [] });
+    }
+    
+    // List all log files
+    const files = fs.readdirSync(logsDir).filter(f => f.endsWith('.log'));
+    
+    // Get content of latest error log
+    const errorLogs = files.filter(f => f.startsWith('error-'));
+    const latestErrorLog = errorLogs[errorLogs.length - 1];
+    
+    let logContent = [];
+    if (latestErrorLog) {
+      const logPath = path.join(logsDir, latestErrorLog);
+      const content = fs.readFileSync(logPath, 'utf8');
+      logContent = content.split('\n').filter(line => line.trim()).map(line => {
+        try { return JSON.parse(line); } catch(e) { return null; }
+      }).filter(l => l !== null);
+    }
+    
+    res.json({
+      files,
+      latestErrorLog,
+      logs: logContent.slice(-50) // Last 50 errors
+    });
+  } catch (error) {
+    logError('Error reading logs', error);
+    res.status(500).json({ error: 'Error reading logs' });
+  }
+});
 
 // Config endpoint (public)
 app.get('/api/config', (req, res) => {

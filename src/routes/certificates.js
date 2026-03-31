@@ -5,6 +5,7 @@ const { requireAdmin } = require('../middleware/auth');
 const PDFDocument = require('pdfkit');
 const path = require('path');
 const fs = require('fs');
+const { logError, logInfo } = require('../utils/logger');
 
 // Helper function to format date in Chilean format
 function formatDateChile(dateString) {
@@ -253,7 +254,10 @@ router.get('/grades/:memberId', (req, res) => {
   const { memberId } = req.params;
   let token = req.query.token;
 
+  logInfo('Solicitud certificado de grados', { memberId, hasToken: !!token, userAgent: req.get('user-agent') });
+
   if (!token) {
+    logError('Token requerido', { memberId });
     return res.status(401).json({ error: 'Token requerido' });
   }
 
@@ -263,40 +267,48 @@ router.get('/grades/:memberId', (req, res) => {
   let decoded;
   try {
     decoded = jwt.verify(token, JWT_SECRET);
+    logInfo('Token verificado', { memberId, userId: decoded.id, role: decoded.role });
   } catch (e) {
+    logError('Token inválido', { memberId, error: e.message });
     return res.status(401).json({ error: 'Token inválido o expirado' });
   }
 
-  const member = db.prepare(`
-    SELECT m.*, g.belt_color as current_belt
-    FROM members m
-    LEFT JOIN (
-      SELECT member_id, belt_color, grade_date
+  try {
+    const member = db.prepare(`
+      SELECT m.*, g.belt_color as current_belt
+      FROM members m
+      LEFT JOIN (
+        SELECT member_id, belt_color, grade_date
+        FROM belt_grades
+        WHERE status = 'approved'
+        ORDER BY grade_date DESC
+        LIMIT 1
+      ) g ON m.id = g.member_id
+      WHERE m.id = ?
+    `).get(memberId);
+
+    if (!member) {
+      logError('Miembro no encontrado', { memberId, requestedBy: decoded.id });
+      return res.status(404).json({ error: 'Miembro no encontrado' });
+    }
+
+    logInfo('Miembro encontrado', { memberId, name: `${member.first_name} ${member.last_name}` });
+
+    // Get all approved grades
+    const grades = db.prepare(`
+      SELECT *
       FROM belt_grades
-      WHERE status = 'approved'
-      ORDER BY grade_date DESC
-      LIMIT 1
-    ) g ON m.id = g.member_id
-    WHERE m.id = ?
-  `).get(memberId);
+      WHERE member_id = ? AND status = 'approved'
+      ORDER BY grade_date ASC
+    `).all(memberId);
 
-  if (!member) {
-    return res.status(404).json({ error: 'Miembro no encontrado' });
-  }
+    logInfo('Grados obtenidos', { memberId, gradesCount: grades.length });
 
-  // Get all approved grades
-  const grades = db.prepare(`
-    SELECT *
-    FROM belt_grades
-    WHERE member_id = ? AND status = 'approved'
-    ORDER BY grade_date ASC
-  `).all(memberId);
-
-  const PDFDocument = require('pdfkit');
-  const doc = new PDFDocument({ size: 'A4' });
-  res.setHeader('Content-Type', 'application/pdf');
-  res.setHeader('Content-Disposition', `attachment; filename="certificado-grados-${member.first_name}-${member.last_name}.pdf"`);
-  doc.pipe(res);
+    const PDFDocument = require('pdfkit');
+    const doc = new PDFDocument({ size: 'A4' });
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="certificado-grados-${member.first_name}-${member.last_name}.pdf"`);
+    doc.pipe(res);
 
   // Logo
   try {
