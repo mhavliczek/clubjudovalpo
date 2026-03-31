@@ -213,13 +213,81 @@ async function loadNews() {
   }
 }
 
-// Save news
+// Show news form with CKEditor
+function showNewsForm() {
+  showForm('newsForm');
+
+  // Initialize CKEditor
+  if (window.ClassicEditor) {
+    // Destroy existing editor if any
+    if (window.newsEditor) {
+      window.newsEditor.destroy().catch(() => {});
+      window.newsEditor = null;
+    }
+    
+    // Wait for form to be visible then initialize
+    setTimeout(() => {
+      ClassicEditor
+        .create(document.querySelector('#newsContent'), {
+          toolbar: [
+            'heading', '|',
+            'bold', 'italic', 'link', 'bulletedList', 'numberedList', '|',
+            'blockQuote', 'insertTable', '|',
+            'alignment', '|',
+            'undo', 'redo'
+          ],
+          image: {
+            toolbar: ['imageStyle:full', 'imageStyle:side', '|', 'imageTextAlternative']
+          },
+          table: {
+            contentToolbar: ['tableColumn', 'tableRow', 'mergeTableCells']
+          }
+        })
+        .then(editor => {
+          window.newsEditor = editor;
+          console.log('CKEditor initialized successfully');
+        })
+        .catch(error => {
+          console.error('Error al cargar CKEditor:', error);
+        });
+    }, 100);
+  } else {
+    console.warn('CKEditor not loaded, using plain textarea');
+  }
+}
+
+// Hide news form and destroy editor
+function hideNewsForm() {
+  hideForm('newsForm');
+  
+  // Destroy CKEditor
+  if (window.newsEditor) {
+    window.newsEditor.destroy().then(() => {
+      window.newsEditor = null;
+    }).catch(() => {});
+  }
+  
+  // Clear form
+  document.getElementById('newsTitle').value = '';
+  if (window.newsEditor) {
+    window.newsEditor.setData('');
+  } else {
+    document.getElementById('newsContent').value = '';
+  }
+  document.getElementById('newsFile').value = '';
+}
+
+// Save news with CKEditor content
 async function saveNews() {
   const title = document.getElementById('newsTitle').value;
-  const content = document.getElementById('newsContent').value;
+  // Get content from CKEditor or fallback to textarea
+  const content = window.newsEditor ? window.newsEditor.getData() : document.getElementById('newsContent').value;
   const fileInput = document.getElementById('newsFile');
-  
-  if (!title || !content) { alert('Título y contenido son requeridos'); return; }
+
+  if (!title || !content) {
+    alert('Título y contenido son requeridos');
+    return;
+  }
 
   const formData = new FormData();
   formData.append('title', title);
@@ -234,13 +302,21 @@ async function saveNews() {
     });
     const result = await res.json();
     if (!res.ok) throw new Error(result.error);
-    alert('Noticia publicada');
+    alert('✅ Noticia publicada correctamente');
     hideForm('newsForm');
     document.getElementById('newsTitle').value = '';
-    document.getElementById('newsContent').value = '';
+    
+    // Clear CKEditor content
+    if (window.newsEditor) {
+      window.newsEditor.setData('');
+    } else {
+      document.getElementById('newsContent').value = '';
+    }
     document.getElementById('newsFile').value = '';
     loadNews();
-  } catch (e) { alert('Error: ' + e.message); }
+  } catch (e) { 
+    alert('❌ Error: ' + e.message); 
+  }
 }
 
 // Delete news

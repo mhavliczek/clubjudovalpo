@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../database');
-const { requireAdmin } = require('../middleware/auth');
+const { authenticate, requireAdmin } = require('../middleware/auth');
 
 // Get attendance report with summary for all members (admin only)
 router.get('/report', requireAdmin, (req, res) => {
@@ -34,7 +34,7 @@ router.get('/report', requireAdmin, (req, res) => {
 });
 
 // Get attendance records
-router.get('/', (req, res) => {
+router.get('/', authenticate, (req, res) => {
   const { member_id, start_date, end_date, class_type, year, month, page = 1, limit = 20 } = req.query;
 
   // Non-admin users can only view their own attendance
@@ -240,6 +240,279 @@ router.delete('/:id', requireAdmin, (req, res) => {
 });
 
 // Export attendance report to Excel (admin only)
+router.get('/report/excel', requireAdmin, (req, res) => {
+  const { start_date, end_date } = req.query;
+  const ExcelJS = require('exceljs');
+
+  try {
+    const query = `
+      SELECT 
+        m.id,
+        m.first_name,
+        m.last_name,
+        m.rut,
+        COUNT(a.id) as total_asistencias,
+        MAX(a.class_date) as ultima_asistencia,
+        GROUP_CONCAT(DISTINCT a.class_type) as tipos_clase
+      FROM members m
+      LEFT JOIN attendance a ON m.id = a.member_id
+        ${start_date || end_date ? `AND a.class_date BETWEEN '${start_date || '2000-01-01'}' AND '${end_date || date('now')}'` : ''}
+      GROUP BY m.id
+      ORDER BY total_asistencias DESC
+    `;
+
+    const report = db.prepare(query).all();
+
+    // Create workbook
+    const workbook = new ExcelJS.Workbook();
+    workbook.addWorksheet('Reporte de Asistencias');
+    const worksheet = workbook.getWorksheet('Reporte de Asistencias');
+
+    // Define columns
+    worksheet.columns = [
+      { header: 'ID', key: 'id', width: 10 },
+      { header: 'Nombre', key: 'first_name', width: 20 },
+      { header: 'Apellido', key: 'last_name', width: 20 },
+      { header: 'RUT', key: 'rut', width: 15 },
+      { header: 'Total Asistencias', key: 'total_asistencias', width: 20 },
+      { header: 'Última Asistencia', key: 'ultima_asistencia', width: 20 },
+      { header: 'Tipos de Clase', key: 'tipos_clase', width: 25 }
+    ];
+
+    // Add header style
+    worksheet.getRow(1).font = { bold: true };
+    worksheet.getRow(1).fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FF0066CC' }
+    };
+    worksheet.getRow(1).font = { color: { argb: 'FFFFFFFF' }, bold: true };
+
+    // Add data
+    report.forEach(row => {
+      worksheet.addRow(row);
+    });
+
+    // Set response headers
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    );
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="reporte_asistencias_${new Date().toISOString().split('T')[0]}.xlsx"`
+    );
+
+    return workbook.xlsx.write(res).then(() => {
+      res.end();
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Certificado de Asistencia PDF
+router.get('/certificate/:memberId', (req, res) => {
+  const memberId = parseInt(req.params.memberId);
+
+  let token = req.query.token;
+
+  if (!token) {
+    return res.status(401).json({ error: 'Token requerido' });
+  }
+
+  const jwt = require('jsonwebtoken');
+  const JWT_SECRET = process.env.JWT_SECRET || 'clubdejudovalpo-secret-key-2026';
+
+  try {
+    jwt.verify(token, JWT_SECRET);
+  } catch (e) {
+    return res.status(401).json({ error: 'Token inválido o expirado' });
+  }
+
+  const member = db.prepare('SELECT * FROM members WHERE id = ?').get(memberId);
+  if (!member) {
+    return res.status(404).json({ error: 'Miembro no encontrado' });
+  }
+
+  const stats = db.prepare(`
+    SELECT
+      COUNT(*) as total,
+      SUM(CASE WHEN class_type = 'regular' THEN 1 ELSE 0 END) as regulares
+    FROM attendance
+    WHERE member_id = ?
+  `).get(memberId);
+
+  // Obtener configuración del club
+  const clubLogo = db.prepare("SELECT value FROM settings WHERE key = 'club_logo'").get();
+  const federationLogo = db.prepare("SELECT value FROM settings WHERE key = 'federation_logo'").get();
+  const directorSignature = db.prepare("SELECT value FROM settings WHERE key = 'director_signature'").get();
+  const directorName = db.prepare("SELECT value FROM settings WHERE key = 'club_director'").get();
+  const city = process.env.CLUB_CITY || 'Valparaíso';
+
+  const PDFDocument = require('pdfkit');
+  const doc = new PDFDocument({ size: 'A4', margins: { top: 60, bottom: 60, left: 60, right: 60 } });
+  
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader('Content-Disposition', `attachment; filename="cert-asistencia-${member.first_name}-${member.last_name}.pdf"`);
+  doc.pipe(res);
+
+  try {
+    // ========== LOGO DEL CLUB (Esquina superior derecha) ==========
+    if (clubLogo && clubLogo.value) {
+      const logoPath = path.join(__dirname, '..', clubLogo.value);
+      if (fs.existsSync(logoPath)) {
+        doc.image(logoPath, doc.page.width - 120, 40, { width: 80 });
+      }
+    }
+
+    // ========== MARCA DE AGUA (Centro de la página) ==========
+    if (clubLogo && clubLogo.value) {
+      const logoPath = path.join(__dirname, '..', clubLogo.value);
+      if (fs.existsSync(logoPath)) {
+        doc.save();
+        doc.opacity(0.1);
+        doc.image(logoPath, (doc.page.width - 200) / 2, (doc.page.height - 200) / 2, { width: 200 });
+        doc.restore();
+      }
+    }
+
+    // ========== FECHA Y LUGAR ==========
+    const today = new Date();
+    const options = { year: 'numeric', month: 'long', day: 'numeric' };
+    const formattedDate = today.toLocaleDateString('es-CL', options);
+
+    doc.fontSize(11)
+       .text(`${city}, ${formattedDate}`, doc.page.width - 200, 140, { align: 'right' });
+
+    doc.moveDown(3);
+
+    // ========== TÍTULO ==========
+    doc.fontSize(24).font('Helvetica-Bold').fillColor('#000000').text('CERTIFICADO DE ASISTENCIA', 50, doc.y, { align: 'center' });
+
+    doc.moveDown(2);
+
+    // ========== CUERPO DEL CERTIFICADO ==========
+    doc.fontSize(12).font('Helvetica').fillColor('#333333');
+    
+    const bodyText = `El Club de Judo Valparaíso certifica que:`;
+    doc.text(bodyText, 50, doc.y, { align: 'center', width: doc.page.width - 100 });
+
+    doc.moveDown(1);
+
+    // Nombre del miembro (grande y en negrita)
+    doc.fontSize(16).font('Helvetica-Bold').fillColor('#000000')
+       .text(`${member.first_name.toUpperCase()} ${member.last_name.toUpperCase()}`, 50, doc.y, { align: 'center', width: doc.page.width - 100 });
+
+    doc.moveDown(0.5);
+
+    // RUT
+    doc.fontSize(12).font('Helvetica').fillColor('#666666')
+       .text(`RUT: ${member.rut || 'N/A'}`, 50, doc.y, { align: 'center', width: doc.page.width - 100 });
+
+    doc.moveDown(2);
+
+    // Texto de asistencia
+    const attendanceText = `Ha asistido a un total de ${stats.total || 0} clases de judo en nuestro club, de las cuales ${stats.regulares || 0} corresponden a clases regulares.`;
+    doc.fontSize(12).font('Helvetica').fillColor('#333333')
+       .text(attendanceText, 50, doc.y, { align: 'center', width: doc.page.width - 100, lineGap: 5 });
+
+    doc.moveDown(3);
+
+    // ========== DETALLE DE ASISTENCIAS ==========
+    doc.fontSize(14).font('Helvetica-Bold').fillColor('#000000').text('Detalle de Asistencias:', 50, doc.y);
+    doc.moveDown(0.5);
+
+    // Tabla simple de estadísticas
+    const tableTop = doc.y;
+    const tableLeft = 50;
+    const colWidth = 200;
+    const rowHeight = 25;
+
+    // Encabezados
+    doc.fontSize(11).font('Helvetica-Bold').fillColor('#ffffff');
+    doc.rect(tableLeft, tableTop, colWidth, rowHeight).fill('#0066cc');
+    doc.text('Tipo de Clase', tableLeft + 10, tableTop + 7, { width: colWidth - 20 });
+    
+    doc.rect(tableLeft + colWidth, tableTop, colWidth, rowHeight).fill('#0066cc');
+    doc.text('Cantidad', tableLeft + colWidth + 10, tableTop + 7, { width: colWidth - 20 });
+
+    // Datos
+    doc.fontSize(11).font('Helvetica').fillColor('#333333');
+    
+    // Fila 1: Total
+    doc.rect(tableLeft, tableTop + rowHeight, colWidth, rowHeight).fill('#f8f9fa');
+    doc.text('Total Asistencias', tableLeft + 10, tableTop + rowHeight + 7, { width: colWidth - 20 });
+    doc.rect(tableLeft + colWidth, tableTop + rowHeight, colWidth, rowHeight).fill('#f8f9fa');
+    doc.text(`${stats.total || 0}`, tableLeft + colWidth + 10, tableTop + rowHeight + 7, { width: colWidth - 20 });
+
+    // Fila 2: Regulares
+    doc.rect(tableLeft, tableTop + rowHeight * 2, colWidth, rowHeight).fill('#ffffff');
+    doc.text('Clases Regulares', tableLeft + 10, tableTop + rowHeight * 2 + 7, { width: colWidth - 20 });
+    doc.rect(tableLeft + colWidth, tableTop + rowHeight * 2, colWidth, rowHeight).fill('#ffffff');
+    doc.text(`${stats.regulares || 0}`, tableLeft + colWidth + 10, tableTop + rowHeight * 2 + 7, { width: colWidth - 20 });
+
+    doc.y = tableTop + rowHeight * 3 + 20;
+
+    doc.moveDown(2);
+
+    // ========== CIERRE ==========
+    doc.fontSize(11).font('Helvetica').fillColor('#666666')
+       .text('Se expide el presente certificado a solicitud del interesado para los fines que estime conveniente.', 50, doc.y, { align: 'center', width: doc.page.width - 100 });
+
+    doc.moveDown(4);
+
+    // ========== FIRMA DEL DIRECTOR ==========
+    const signatureY = doc.y;
+    const signatureX = (doc.page.width / 2) - 100;
+
+    // Línea para firma
+    doc.moveTo(signatureX, signatureY)
+       .lineTo(signatureX + 200, signatureY)
+       .stroke();
+
+    // Imagen de firma (si existe)
+    if (directorSignature && directorSignature.value) {
+      const signaturePath = path.join(__dirname, '..', directorSignature.value);
+      if (fs.existsSync(signaturePath)) {
+        doc.image(signaturePath, signatureX, signatureY - 50, {
+          width: 200,
+          height: 80,
+          align: 'center'
+        });
+      }
+    }
+
+    // Nombre del director
+    if (directorName && directorName.value) {
+      doc.fontSize(11).font('Helvetica-Bold').fillColor('#000000')
+         .text(directorName.value, signatureX, signatureY + 10, { width: 200, align: 'center' });
+    }
+
+    doc.fontSize(10).font('Helvetica').fillColor('#666666')
+       .text('Director Técnico', signatureX, signatureY + 25, { width: 200, align: 'center' })
+       .text('Club de Judo Valparaíso', signatureX, signatureY + 40, { width: 200, align: 'center' });
+
+    // ========== LOGO FEDERACIÓN (abajo a la derecha) ==========
+    if (federationLogo && federationLogo.value) {
+      const fedLogoPath = path.join(__dirname, '..', federationLogo.value);
+      if (fs.existsSync(fedLogoPath)) {
+        doc.image(fedLogoPath, doc.page.width - 150, doc.page.height - 100, { width: 100, height: 100 });
+      }
+    }
+
+    // Finalizar PDF
+    doc.end();
+    
+  } catch (error) {
+    console.error('Error generando certificado de asistencia:', error);
+    if (!res.headersSent) {
+      res.status(500).json({ error: error.message });
+    }
+  }
+});
+
+// Reporte de asistencia Excel (admin only)
 router.get('/report/excel', requireAdmin, (req, res) => {
   const { start_date, end_date } = req.query;
   const ExcelJS = require('exceljs');

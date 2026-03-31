@@ -6,6 +6,17 @@ const PDFDocument = require('pdfkit');
 const path = require('path');
 const fs = require('fs');
 
+// Helper function to format date in Chilean format
+function formatDateChile(dateString) {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  return date.toLocaleDateString('es-CL', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric'
+  });
+}
+
 // Crear tabla de certificados si no existe
 db.exec(`
   CREATE TABLE IF NOT EXISTS certificates (
@@ -235,6 +246,92 @@ router.delete('/:id', requireAdmin, (req, res) => {
     console.error('Error al eliminar certificado:', error);
     res.status(500).json({ error: 'Error interno del servidor' });
   }
+});
+
+// Certificado de Grados
+router.get('/grades/:memberId', (req, res) => {
+  const { memberId } = req.params;
+  let token = req.query.token;
+
+  if (!token) {
+    return res.status(401).json({ error: 'Token requerido' });
+  }
+
+  const jwt = require('jsonwebtoken');
+  const JWT_SECRET = process.env.JWT_SECRET || 'clubdejudovalpo-secret-key-2026';
+
+  let decoded;
+  try {
+    decoded = jwt.verify(token, JWT_SECRET);
+  } catch (e) {
+    return res.status(401).json({ error: 'Token inválido o expirado' });
+  }
+
+  const member = db.prepare(`
+    SELECT m.*, g.belt_color as current_belt
+    FROM members m
+    LEFT JOIN (
+      SELECT member_id, belt_color, grade_date
+      FROM belt_grades
+      WHERE status = 'approved'
+      ORDER BY grade_date DESC
+      LIMIT 1
+    ) g ON m.id = g.member_id
+    WHERE m.id = ?
+  `).get(memberId);
+
+  if (!member) {
+    return res.status(404).json({ error: 'Miembro no encontrado' });
+  }
+
+  // Get all approved grades
+  const grades = db.prepare(`
+    SELECT *
+    FROM belt_grades
+    WHERE member_id = ? AND status = 'approved'
+    ORDER BY grade_date ASC
+  `).all(memberId);
+
+  const PDFDocument = require('pdfkit');
+  const doc = new PDFDocument({ size: 'A4' });
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader('Content-Disposition', `attachment; filename="certificado-grados-${member.first_name}-${member.last_name}.pdf"`);
+  doc.pipe(res);
+
+  // Logo
+  try {
+    const logo = db.prepare("SELECT value FROM settings WHERE key = 'club_logo'").get();
+    if (logo) {
+      const logoPath = path.join(__dirname, '..', logo.value);
+      if (fs.existsSync(logoPath)) doc.image(logoPath, 450, 30, { width: 100 });
+    }
+  } catch (e) {}
+
+  doc.fontSize(20).text('CERTIFICADO DE GRADOS', 50, 100, { align: 'center' });
+  doc.moveDown(1);
+  doc.fontSize(14).text(`${member.first_name.toUpperCase()} ${member.last_name.toUpperCase()}`, 50, 150, { align: 'center' });
+  doc.fontSize(12).text(`RUT: ${member.rut || 'N/A'}`, 50, 180, { align: 'center' });
+  doc.moveDown(1);
+
+  doc.text('Historial de Grados Obtenidos:', 50, doc.y);
+  doc.moveDown(0.5);
+
+  grades.forEach((g, i) => {
+    doc.text(`${i+1}. ${g.belt_color.toUpperCase()} - ${formatDateChile(g.grade_date)}${g.instructor ? ` (Instructor: ${g.instructor})` : ''}`, 50, doc.y);
+    doc.moveDown(0.3);
+  });
+
+  doc.moveDown(2);
+  doc.text('Este certificado es emitido por el Club de Judo Valparaíso para todos los efectos legales.', 50, doc.y, { align: 'justify' });
+
+  const director = db.prepare("SELECT value FROM settings WHERE key = 'club_director'").get();
+  if (director) {
+    doc.moveDown(2);
+    doc.text(director.value, 50, doc.y, { align: 'center', underline: true });
+    doc.text('Director Técnico', 50, doc.y + 10, { align: 'center' });
+  }
+
+  doc.end();
 });
 
 module.exports = router;

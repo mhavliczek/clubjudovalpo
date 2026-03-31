@@ -118,7 +118,7 @@ function generateCertificatePDF(req, res) {
     if (token) {
       try {
         const jwt = require('jsonwebtoken');
-        const JWT_SECRET = process.env.JWT_SECRET || 'judo-club-secret-key-change-in-production';
+        const JWT_SECRET = 'clubdejudovalpo-secret-key-2026';
         jwt.verify(token, JWT_SECRET);
       } catch (e) {
         return res.status(401).json({ error: 'Token inválido' });
@@ -342,7 +342,7 @@ router.get('/curriculum/:memberId/pdf', async (req, res) => {
     if (token) {
       try {
         const jwt = require('jsonwebtoken');
-        const JWT_SECRET = process.env.JWT_SECRET || 'judo-club-secret-key-change-in-production';
+        const JWT_SECRET = 'clubdejudovalpo-secret-key-2026';
         jwt.verify(token, JWT_SECRET);
       } catch (e) {
         return res.status(401).json({ error: 'Token inválido' });

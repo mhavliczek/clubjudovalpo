@@ -214,12 +214,23 @@ app.get('/api/members/:id/card/pdf', async (req, res) => {
 
     // Datos (centro)
     const dataX = cardX + 80;
-    const dataY = cardY + 35;
-    doc.fontSize(9).font('Helvetica-Bold').fillColor('#000000').text(`${member.first_name} ${member.last_name}`, dataX, dataY, { width: cardW - 150 });
-    doc.fontSize(7).fillColor('#333333').text(`RUT: ${member.rut || 'Sin RUT'}`, dataX, dataY + 12);
-    doc.fontSize(7).fillColor('#1a237e').text(`Grado: ${member.belt_color || 'No reg.'}`, dataX, dataY + 22);
-    doc.fontSize(6).fillColor('#666666').text(`Ingreso: ${member.join_date ? formatDateChile(member.join_date) : 'No reg.'}`, dataX, dataY + 32);
-    doc.fontSize(5).text(`${member.gender || 'No reg.'} | ${member.date_of_birth ? formatDateChile(member.date_of_birth) : 'No reg.'}`, dataX, dataY + 42);
+    const dataY = cardY + 30;
+    
+    // Nombre (más grande)
+    doc.fontSize(8).font('Helvetica-Bold').fillColor('#000000').text(`${member.first_name} ${member.last_name}`, dataX, dataY, { width: cardW - 150, align: 'left' });
+    
+    // Grado (azul)
+    doc.fontSize(6.5).font('Helvetica-Bold').fillColor('#1a237e').text(`Grado: ${member.belt_color || 'Sin grado'}`, dataX, dataY + 14);
+    
+    // Fecha de ingreso
+    doc.fontSize(5.5).font('Helvetica').fillColor('#666666').text(`Ingreso: ${member.join_date ? formatDateChile(member.join_date) : 'No reg.'}`, dataX, dataY + 26);
+    
+    // RUT (grande y claro, sin "No reg.")
+    const rutText = member.rut || 'Sin RUT';
+    doc.fontSize(7).font('Helvetica-Bold').fillColor('#000000').text(`RUT: ${rutText}`, dataX, dataY + 40, { width: cardW - 150 });
+    
+    // Teléfono (pequeño abajo)
+    doc.fontSize(5).font('Helvetica').fillColor('#666666').text(`${member.phone || 'Sin teléfono'}`, dataX, dataY + 54);
 
     // ==========================================
     // DORSO - DATOS Y LOGO FEDERACION (ABAJO)
@@ -302,7 +313,7 @@ app.get('/api/members/:id/card/pdf', async (req, res) => {
 // API Routes (protected)
 app.use('/api/members', authenticate, membersRouter);
 app.use('/api/grades', authenticate, gradesRouter);
-app.use('/api/attendance', authenticate, attendanceRouter);
+app.use('/api/attendance', attendanceRouter);
 app.use('/api/payments', authenticate, paymentsRouter);
 app.use('/api/news', authenticate, newsRouter);
 app.use('/api/instructors', authenticate, instructorsRouter);

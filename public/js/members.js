@@ -3,6 +3,8 @@
    =================================== */
 
 // Load members list
+let expandedMemberId = null; // Track which member is expanded
+
 async function loadMembers() {
   const token = localStorage.getItem('token');
   if (!token) {
@@ -26,30 +28,293 @@ async function loadMembers() {
       return;
     }
 
-    document.getElementById('membersList').innerHTML = members.map(m => `
-      <div class="member-item" onclick="showMemberDetail(${m.id})">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-          <div>
-            <p style="margin: 0; font-weight: bold; color: #333;">🥋 ${m.first_name} ${m.last_name}</p>
-            <p style="margin: 3px 0 0 0; font-size: 13px; color: #666;">RUT: ${m.rut || 'Sin RUT'}</p>
-            <p style="margin: 3px 0 0 0; font-size: 12px; color: #999;">Nacimiento: ${formatDateChile(m.date_of_birth)}</p>
-          </div>
-          <span class="status-badge" style="background: ${m.status === 'active' ? '#d4edda' : '#f8d7da'};">
-            ${m.status === 'active' ? 'Activo' : 'Inactivo'}
-          </span>
-        </div>
-      </div>
-    `).join('');
-
-    document.getElementById('memberDetail').innerHTML = `
-      <div style="text-align: center; color: #999; padding: 50px;">
-        <p style="font-size: 48px; margin-bottom: 10px;">👈</p>
-        <p>Selecciona un miembro para ver su información</p>
+    // Show all members in a single horizontal line as a table/registry
+    document.getElementById('membersList').innerHTML = `
+      <div style="overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; min-width: 800px;">
+          <thead>
+            <tr style="background: #0066cc; color: white;">
+              <th style="padding: 12px; text-align: left; border-radius: 8px 0 0 0;">#</th>
+              <th style="padding: 12px; text-align: left;">Nombre</th>
+              <th style="padding: 12px; text-align: left;">RUT</th>
+              <th style="padding: 12px; text-align: left;">Email</th>
+              <th style="padding: 12px; text-align: left;">Teléfono</th>
+              <th style="padding: 12px; text-align: left;">Grado</th>
+              <th style="padding: 12px; text-align: left; border-radius: 0 8px 0 0;">Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${members.map((m, index) => `
+              <tr id="memberRow${m.id}" style="border-bottom: 1px solid #ddd; transition: background 0.2s; cursor: pointer;" onclick="toggleMemberDetail(${m.id})">
+                <td style="padding: 12px; color: #666;">${index + 1}</td>
+                <td style="padding: 12px; font-weight: bold; color: #333;">${m.first_name} ${m.last_name}</td>
+                <td style="padding: 12px; color: #666;">${m.rut || 'Sin RUT'}</td>
+                <td style="padding: 12px; color: #666;">${m.email || 'Sin email'}</td>
+                <td style="padding: 12px; color: #666;">${m.phone || 'Sin teléfono'}</td>
+                <td style="padding: 12px;"><span style="background: #e3f2fd; color: #0066cc; padding: 4px 8px; border-radius: 4px; font-size: 12px;">${m.current_belt || 'Sin grado'}</span></td>
+                <td style="padding: 12px;"><span style="background: ${m.status === 'active' ? '#d4edda' : '#f8d7da'}; color: ${m.status === 'active' ? '#155724' : '#721c24'}; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold;">${m.status === 'active' ? 'Activo' : 'Inactivo'}</span></td>
+              </tr>
+              <tr id="memberDetailRow${m.id}" style="display: none;">
+                <td colspan="7" style="padding: 0; background: #f8f9fa;">
+                  <div id="memberDetail${m.id}" style="padding: 20px;"></div>
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
       </div>
     `;
   } catch (e) {
     document.getElementById('membersList').innerHTML = '<p style="color: red; text-align: center;">Error: ' + e.message + '</p>';
   }
+}
+
+// Toggle member detail (collapse/expand)
+async function toggleMemberDetail(memberId) {
+  const detailRow = document.getElementById(`memberDetailRow${memberId}`);
+  const detailDiv = document.getElementById(`memberDetail${memberId}`);
+  
+  // If this member is already expanded, collapse it
+  if (expandedMemberId === memberId) {
+    detailRow.style.display = 'none';
+    expandedMemberId = null;
+    return;
+  }
+  
+  // Collapse any other expanded member
+  if (expandedMemberId) {
+    const prevDetailRow = document.getElementById(`memberDetailRow${expandedMemberId}`);
+    if (prevDetailRow) prevDetailRow.style.display = 'none';
+  }
+  
+  // Expand this member
+  detailRow.style.display = 'table-row';
+  expandedMemberId = memberId;
+  
+  // Load member detail if not already loaded
+  if (detailDiv.innerHTML === '') {
+    try {
+      const res = await fetch(`${API}/api/members/${memberId}`, {
+        headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+      });
+      const m = await res.json();
+
+      if (!res.ok) throw new Error('Error al cargar datos del miembro');
+
+      const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+      const isAdmin = currentUser.role === 'admin';
+
+      // Calculate payment status
+      const currentYear = new Date().getFullYear();
+      const payments = m.payments || [];
+      const hasEnrollment = payments.some(p => p.payment_type === 'enrollment' && new Date(p.payment_date).getFullYear() === currentYear);
+      const hasLicense = payments.some(p => p.payment_type === 'license' && new Date(p.payment_date).getFullYear() === currentYear);
+      const monthNamesFull = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+      
+      const paidMonths = [];
+      payments.filter(p => p.payment_type === 'monthly' && new Date(p.payment_date).getFullYear() === currentYear)
+        .forEach(p => {
+          const descLower = (p.description || '').toLowerCase();
+          for (let i = 0; i < 12; i++) {
+            if (descLower.includes(monthNamesFull[i].toLowerCase())) {
+              paidMonths.push(i);
+            }
+          }
+        });
+
+      // Build detail HTML
+      const detailHTML = `
+        <div style="background: white; border: 2px solid #0066cc; border-radius: 12px; padding: 20px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #0066cc;">
+            <h3 style="margin: 0; color: #0066cc; font-size: 20px;">🥋 ${m.first_name} ${m.last_name}</h3>
+            <div>
+              ${isAdmin ? `
+                <button class="btn" onclick="editMember(${m.id}); event.stopPropagation();" style="background: #0066cc; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; margin-right: 5px;">✏️ Editar</button>
+                <button class="btn btn-danger" onclick="deleteMember(${m.id}); event.stopPropagation();" style="background: #dc3545; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer;">🗑️ Eliminar</button>
+              ` : ''}
+              <button onclick="toggleMemberDetail(${m.id}); event.stopPropagation();" style="background: #6c757d; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; margin-left: 5px;">✕ Cerrar</button>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 20px;">
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
+              <h4 style="margin: 0 0 10px 0; color: #0066cc; font-size: 14px;">📋 Datos Personales</h4>
+              <p style="margin: 5px 0; font-size: 13px;"><strong>RUT:</strong> ${m.rut || 'Sin RUT'}</p>
+              <p style="margin: 5px 0; font-size: 13px;"><strong>Email:</strong> ${m.email || 'Sin email'}</p>
+              <p style="margin: 5px 0; font-size: 13px;"><strong>Teléfono:</strong> ${m.phone || 'Sin teléfono'}</p>
+              <p style="margin: 5px 0; font-size: 13px;"><strong>Fecha Nacimiento:</strong> ${formatDateChile(m.date_of_birth)}</p>
+              <p style="margin: 5px 0; font-size: 13px;"><strong>Profesión:</strong> ${m.profession || 'Sin profesión'}</p>
+            </div>
+
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
+              <h4 style="margin: 0 0 10px 0; color: #0066cc; font-size: 14px;">🥋 Datos de Judo</h4>
+              <p style="margin: 5px 0; font-size: 13px;"><strong>Grado Actual:</strong> ${m.current_belt || 'Sin grado'}</p>
+              <p style="margin: 5px 0; font-size: 13px;"><strong>Peso:</strong> ${m.weight ? m.weight + ' kg' : 'Sin peso'}</p>
+              <p style="margin: 5px 0; font-size: 13px;"><strong>Estado:</strong> <span style="color: ${m.status === 'active' ? 'green' : 'red'};">${m.status === 'active' ? 'Activo' : 'Inactivo'}</span></p>
+              ${m.is_board_member ? `<p style="margin: 5px 0; font-size: 13px;"><strong>Cargo Directiva:</strong> ${m.board_position || 'Directiva'}</p>` : ''}
+            </div>
+
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
+              <h4 style="margin: 0 0 10px 0; color: #0066cc; font-size: 14px;">💰 Estado de Pagos ${currentYear}</h4>
+              <p style="margin: 5px 0; font-size: 13px;"><strong>Matrícula:</strong> ${hasEnrollment ? '✅ Pagada' : '❌ Pendiente'}</p>
+              <p style="margin: 5px 0; font-size: 13px;"><strong>Licencia:</strong> ${hasLicense ? '✅ Pagada' : '❌ Pendiente'}</p>
+              <p style="margin: 5px 0; font-size: 13px;"><strong>Mensualidades:</strong></p>
+              <div style="display: flex; gap: 5px; flex-wrap: wrap; margin-top: 5px;">
+                ${monthNamesFull.map((month, i) => `
+                  <span style="background: ${paidMonths.includes(i) ? '#d4edda' : '#f8d7da'}; color: ${paidMonths.includes(i) ? '#155724' : '#721c24'}; padding: 2px 6px; border-radius: 3px; font-size: 11px; font-weight: bold;">${month}</span>
+                `).join('')}
+              </div>
+            </div>
+          </div>
+
+          ${m.belt_grade_history && m.belt_grade_history.length > 0 ? `
+            <div style="margin-top: 20px;">
+              <h4 style="color: #0066cc; font-size: 16px; margin-bottom: 10px;">🎗️ Historial de Grados</h4>
+              <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse;">
+                  <thead>
+                    <tr style="background: #e3f2fd;">
+                      <th style="padding: 10px; text-align: left;">Grado</th>
+                      <th style="padding: 10px; text-align: left;">Fecha</th>
+                      <th style="padding: 10px; text-align: left;">Instructor</th>
+                      <th style="padding: 10px; text-align: left;">Notas</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${m.belt_grade_history.map(g => `
+                      <tr style="border-bottom: 1px solid #ddd;">
+                        <td style="padding: 10px;"><span style="background: #0066cc; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">${g.belt_color}</span></td>
+                        <td style="padding: 10px;">${formatDateChile(g.grade_date)}</td>
+                        <td style="padding: 10px;">${g.instructor || '-'}</td>
+                        <td style="padding: 10px;">${g.notes || '-'}</td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          ` : ''}
+
+          ${m.payments && m.payments.length > 0 ? `
+            <div style="margin-top: 20px;">
+              <h4 style="color: #0066cc; font-size: 16px; margin-bottom: 10px;">💰 Historial de Pagos</h4>
+              <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse;">
+                  <thead>
+                    <tr style="background: #e3f2fd;">
+                      <th style="padding: 10px; text-align: left;">Fecha</th>
+                      <th style="padding: 10px; text-align: left;">Tipo</th>
+                      <th style="padding: 10px; text-align: left;">Descripción</th>
+                      <th style="padding: 10px; text-align: right;">Monto</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${m.payments.map(p => {
+                      const typeNames = {
+                        'monthly': 'Mensualidad',
+                        'quarterly': 'Trimestral',
+                        'annual': 'Anual',
+                        'enrollment': 'Matrícula',
+                        'license': 'Licencia',
+                        'grading': 'Examen',
+                        'competition': 'Competencia',
+                        'other': 'Otro'
+                      };
+                      return `
+                        <tr style="border-bottom: 1px solid #ddd;">
+                          <td style="padding: 10px;">${formatDateChile(p.payment_date)}</td>
+                          <td style="padding: 10px;"><span style="background: #28a745; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">${typeNames[p.payment_type] || p.payment_type}</span></td>
+                          <td style="padding: 10px;">${p.description || '-'}</td>
+                          <td style="padding: 10px; text-align: right; font-weight: bold;">$${parseInt(p.amount).toLocaleString()}</td>
+                        </tr>
+                      `;
+                    }).join('')}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          ` : ''}
+
+          <!-- Botones de Certificados y CV -->
+          <div style="margin-top: 20px; padding-top: 20px; border-top: 2px solid #0066cc;">
+            <h4 style="color: #0066cc; font-size: 16px; margin-bottom: 15px;">📄 Certificados y Documentos</h4>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+              <button onclick="generateMemberCertificate(${m.id}, 'student'); event.stopPropagation();" style="background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-size: 13px;">
+                🎓 Certificado de Alumno Regular
+              </button>
+              <button onclick="generateMemberCertificate(${m.id}, 'grades'); event.stopPropagation();" style="background: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-size: 13px;">
+                🏅 Certificado de Grados
+              </button>
+              <button onclick="generateMemberCertificate(${m.id}, 'attendance'); event.stopPropagation();" style="background: #17a2b8; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-size: 13px;">
+                📅 Certificado de Asistencia
+              </button>
+              <button onclick="generateMemberCertificate(${m.id}, 'curriculum'); event.stopPropagation();" style="background: #ffc107; color: #333; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-size: 13px;">
+                🏆 Curriculum Deportivo
+              </button>
+              <button onclick="generateMemberCertificate(${m.id}, 'credential'); event.stopPropagation();" style="background: #6c757d; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-size: 13px;">
+                🆔 Credencial
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+
+      detailDiv.innerHTML = detailHTML;
+    } catch (e) {
+      console.error('Error loading member detail:', e);
+      detailDiv.innerHTML = '<p style="color: red;">Error al cargar detalle</p>';
+    }
+  }
+}
+
+// Generate certificate for member
+function generateMemberCertificate(memberId, type) {
+  let url = '';
+  let title = '';
+  
+  switch(type) {
+    case 'student':
+      url = `/api/curriculum/certificate/${memberId}/pdf`;
+      title = 'Certificado de Alumno Regular';
+      break;
+    case 'grades':
+      url = `/api/certificates/grades/${memberId}`;
+      title = 'Certificado de Grados';
+      break;
+    case 'attendance':
+      url = `/api/attendance/certificate/${memberId}`;
+      title = 'Certificado de Asistencia';
+      break;
+    case 'curriculum':
+      url = `/api/curriculum/curriculum/${memberId}/pdf`;
+      title = 'Curriculum Deportivo';
+      break;
+    case 'credential':
+      url = `/api/members/${memberId}/card/pdf`;
+      title = 'Credencial';
+      break;
+  }
+  
+  const token = localStorage.getItem('token');
+  
+  Swal.fire({
+    title: 'Generando...',
+    text: `Preparando ${title}`,
+    allowOutsideClick: false,
+    didOpen: () => Swal.showLoading()
+  });
+  
+  const fullUrl = `${url}?token=${encodeURIComponent(token)}`;
+  window.open(fullUrl, '_blank');
+  
+  setTimeout(() => {
+    Swal.fire({
+      icon: 'success',
+      title: 'Certificado Generado',
+      text: 'Si no se descargó, revise la ventana emergente',
+      timer: 3000
+    });
+  }, 2000);
 }
 
 // Show member detail
