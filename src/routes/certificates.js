@@ -344,6 +344,13 @@ router.get('/grades/:memberId', (req, res) => {
   }
 
   doc.end();
+  
+  } catch (error) {
+    logError('Error generando certificado de grados', { memberId, error: error.message });
+    if (!res.headersSent) {
+      res.status(500).json({ error: 'Error generando certificado' });
+    }
+  }
 });
 
 module.exports = router;
